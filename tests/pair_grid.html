@@ -1,0 +1,268 @@
+<!doctype html>
+<!-- Linked plots and grid -->
+
+<title>Parallel Coordinates Testbed</title>
+
+<!-- SlickGrid -->
+<link rel="stylesheet" href="lib/slickgrid/slick.grid.css" type="text/css" />
+<link rel="stylesheet" href="lib/slickgrid/jquery-ui-1.8.16.custom.css" type="text/css" />
+<link rel="stylesheet" href="lib/slickgrid/examples.css" type="text/css" />
+<script src="lib/slickgrid/jquery-1.7.min.js"></script>
+<script src="lib/slickgrid/jquery.event.drag-2.0.min.js"></script>
+<script src="lib/slickgrid/slick.core.js"></script>
+<script src="lib/slickgrid/slick.grid.js"></script>
+<script src="lib/slickgrid/slick.dataview.js"></script>
+<!-- End SlickGrid -->
+
+<link rel="stylesheet" type="text/css" href="../d3.parcoords.css">
+<link rel="stylesheet" type="text/css" href="style.css">
+
+<style>
+  /* white text shadow on ticks */
+  svg {
+    font: 10px sans-serif;
+  }
+  .axis text {
+    text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+    cursor: move;
+  }
+
+  body,
+  html {
+    margin: 10px;
+    height: 100%;
+    width: 98%;
+    overflow: hidden;
+    /*font-size: 12px*/;
+  }
+
+  #grid {
+    position: fixed;
+    font-size: 12px;
+    width: 96%;
+  }
+
+  #grid {
+    bottom: 10px;
+    height: 150px;
+  }
+
+  .slick-row:hover {
+    /*background: #ddd;*/
+    background: #99cdd8
+  }
+</style>
+
+
+<body>
+  <script src="lib/d3.min.js"></script>
+  <script src="../d3.parcoords.js"></script>
+  <script src="lib/divgrid.js"></script>
+
+  <h1>Parallel Coordinates</h1>
+  <p>Linked plots with slickgrid.</p>
+  <input type="file" id="uploader">
+  <p>
+    <button id="brush-reset">Reset Brushes</button>
+  </p>
+  <div id="row-1" class="parcoords" style="height:200px;"></div>
+  <div id="row-2" class="parcoords" style="height:200px;"></div>
+  <div id="grid"></div>
+
+  <script>
+
+    // define parallel coordinates variable
+    var pc1 = d3.parcoords()("#row-1")
+      .alpha(0.4)
+      .mode("queue")
+      .width(document.body.clientWidth)
+      .height(200)
+      // .height(d3.max([document.body.clientHeight-326, 180]))
+      .margin({
+        top: 16,
+        left: 16,
+        right: 16,
+        bottom: 16
+      });
+
+    var pc2 = d3.parcoords()("#row-2")
+      .alpha(0.4)
+      .mode("queue")
+      .width(document.body.clientWidth)
+      .height(200)
+      // .height(d3.max([document.body.clientHeight-326, 180]))
+      .margin({
+        top: 16,
+        left: 16,
+        right: 16,
+        bottom: 16
+      });
+
+    // create chart from loaded data
+    function parallelCoordinates(data) {
+
+      // slickgrid needs each data element to have an id
+      data.forEach(function(d, i) {
+        d.id = d.id || i;
+      });
+
+      // implement: allow user to determine which columns are which
+      var decision_vars = d3.keys(data[0]).slice(0,3)
+      var objective_vars = d3.keys(data[0]).slice(3)
+
+      // objective space
+      pc1
+        .data(data)
+        .hideAxis(objective_vars)
+        .render().mode("queue")
+        .shadows()
+        .reorderable()
+        .brushMode("1D-axes")
+        .on("brush", function(brushed) {
+          if (pc2 !== pc1) {
+            //pc2.brushReset(); //reset not necessary, but brushes not maintained between plots
+            pc2.brushed(brushed);
+            pc2.render().mode("queue");
+          }
+          gridUpdate(brushed);
+        });
+
+      // decision space
+      pc2
+        .data(data)
+        .hideAxis(decision_vars)
+        .render().mode("queue")
+        .reorderable()
+        .brushMode("1D-axes")
+        .shadows()
+        .on("brush", function(brushed) {
+          if (pc1 !== pc2) {
+            //pc1.brushReset();
+            pc1.brushed(brushed);
+            pc1.render().mode("queue");
+          }
+          gridUpdate(brushed);
+        });
+
+      // setting up grid
+      var column_keys = d3.keys(data[0]);
+      var columns = column_keys.map(function(key, i) {
+        return {
+          id: key,
+          name: key,
+          field: key,
+          sortable: true
+        }
+      });
+
+      var options = {
+        enableCellNavigation: true,
+        enableColumnReorder: false,
+        multiColumnSort: false
+      };
+
+      var dataView = new Slick.Data.DataView();
+      var grid = new Slick.Grid("#grid", dataView, columns, options);
+
+      // wire up model events to drive the grid
+      dataView.onRowCountChanged.subscribe(function(e, args) {
+        grid.updateRowCount();
+        grid.render();
+      });
+
+      dataView.onRowsChanged.subscribe(function(e, args) {
+        grid.invalidateRows(args.rows);
+        grid.render();
+      });
+
+      // column sorting
+      var sortcol = column_keys[0];
+      var sortdir = 1;
+
+      function comparer(a, b) {
+        var x = a[sortcol],
+          y = b[sortcol];
+        return (x == y ? 0 : (x > y ? 1 : -1));
+      }
+
+      // click header to sort grid column
+      grid.onSort.subscribe(function(e, args) {
+        sortdir = args.sortAsc ? 1 : -1;
+        sortcol = args.sortCol.field;
+
+        if ($.browser.msie && $.browser.version <= 8) {
+          dataView.fastSort(sortcol, args.sortAsc);
+        } else {
+          dataView.sort(comparer, args.sortAsc);
+        }
+      });
+
+      // highlight row in chart
+      grid.onMouseEnter.subscribe(function(e, args) {
+        var i = grid.getCellFromEvent(e).row;
+        var d1 = pc1.brushed() || data;
+        var d2 = pc2.brushed() || data;
+        pc1.highlight([d1[i]]);
+        pc2.highlight([d2[i]]);
+      });
+      grid.onMouseLeave.subscribe(function(e, args) {
+        pc1.unhighlight();
+        pc2.unhighlight();
+      });
+
+      // fill grid with data
+      gridUpdate(data);
+
+      /*
+      // update grid on brush
+      pc1.on("brush", function(d) {
+        gridUpdate(d);
+      });
+      pc2.on("brush", function(d) {
+        gridUpdate(d);
+      });
+      */
+
+      function gridUpdate(data) {
+        dataView.beginUpdate();
+        dataView.setItems(data);
+        dataView.endUpdate();
+      };
+
+    };
+
+    // reset brushes
+    d3.select('#brush-reset').on('click', function() {
+      pc1.brushReset();
+      pc2.brushReset();
+    })
+
+    // CSV Uploader
+    var uploader = document.getElementById("uploader");
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+      var contents = e.target.result;
+      var data = d3.csv.parse(contents);
+
+      // this part is just for my sanity with the cars dataset
+      data.forEach(function(car) {
+        delete car.name;
+        delete car.year;
+      });
+
+      parallelCoordinates(data);
+
+      // remove button, since re-initializing doesn't work for now
+      uploader.parentNode.removeChild(uploader);
+    };
+
+    uploader.addEventListener("change", handleFiles, false);
+
+    function handleFiles() {
+      var file = this.files[0];
+      reader.readAsText(file);
+    };
+  </script>
+</body>
+<html>

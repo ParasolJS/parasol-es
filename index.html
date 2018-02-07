@@ -1,0 +1,572 @@
+<!doctype html>
+<title>Parallel Coordinates</title>
+<link rel="stylesheet" type="text/css" href="d3.parcoords.css">
+<script src="examples/lib/d3.min.js"></script>
+<script src="examples/lib/sylvester.js"></script>
+<script src="examples/lib/slickgrid/jquery-1.7.min.js"></script>
+<script src="examples/lib/underscore.js"></script>
+<script src="examples/lib/underscore.math.js"></script>
+<script src="d3.parcoords.js"></script>
+<link rel="stylesheet" type="text/css" href="style.css">
+<a href="https://github.com/syntagmatic/parallel-coordinates"><img style="position: absolute; top: 0; right: 0; border: 0;" src="forkme.png" alt="Fork me on GitHub"></a>
+<h1>Parallel Coordinates <small>(0.7.0)</small></h1>
+<p style="color: #a00;"></p>
+<p>A visual toolkit for <a href="http://www.cs.ucdavis.edu/~ma/ECS289H/papers/Inselberg1997.pdf">multidimensional detectives</a>.</p>
+<p><strong><a href="d3.parcoords.js">d3.parcoords.js</a></strong> <small> - requires <strong><a href="http://d3js.org/">D3.js</a></strong></small><br/>
+<strong><a href="d3.parcoords.css">d3.parcoords.css</a></strong> <small> - default styles</small></p>
+<p>This library is unstable and in development, but you're welcome to try it out.</p>
+<ul>
+  <li><a href="https://github.com/syntagmatic/parallel-coordinates#resources">Resources</a></li>
+  <li><a href="https://github.com/syntagmatic/parallel-coordinates#parallel-coordinates">API Reference</a></li>
+  <li><a href="https://github.com/syntagmatic/parallel-coordinates/issues">Issues</a></li>
+</ul>
+<h3>Examples</h3>
+<p>These standalone examples can be used as starting places for your own application.</p>
+<ul>
+  <li><a href="examples/basic.html">Basic</a></li>
+  <li><a href="examples/brushing.html">Brushing</a></li>
+  <li><a href="examples/table.html">Linking with a Data Table</a></li>
+  <li><a href="examples/slickgrid.html">Progressive Rendering and SlickGrid</a> - for larger datasets: 2k-200k rows</li>
+  <li><a href="examples/veterans.html">Wyoming Veteran Gravesites</a></li>
+  <li><a href="examples/upload.html">CSV Upload</a></li>
+  <li><a href="examples/reddit.html">Reddit Top 100</a></li>
+  <li><a href="examples/superformula.html">Superformula</a></li>
+  <li><a href="examples/download.html">Download screenshot of parallel coordinate</a></li>
+</ul>
+
+<h3>Brushing</h3>
+<p>Click and drag along an axis to filter data</p>
+<div id="example1" class="parcoords"></div>
+<pre><a href="#" class="show-code" data-code="brushing">Show code</a></pre>
+
+<script id="brushing">// linear color scale
+var blue_to_brown = d3.scale.linear()
+  .domain([9, 50])
+  .range(["steelblue", "brown"])
+  .interpolate(d3.interpolateLab);
+
+// interact with this variable from a javascript console
+var pc1;
+
+// load csv file and create the chart
+d3.csv('examples/data/cars.csv', function(data) {
+  pc1 = d3.parcoords()("#example1")
+    .data(data)
+    .hideAxis(["name"])
+    .composite("darken")
+    .color(function(d) { return blue_to_brown(d['economy (mpg)']); })  // quantitative color scale
+    .alpha(0.35)
+    .render()
+    .brushMode("1D-axes")  // enable brushing
+    .interactive()  // command line mode
+
+  var explore_count = 0;
+  var exploring = {};
+  var explore_start = false;
+  pc1.svg
+    .selectAll(".dimension")
+    .style("cursor", "pointer")
+    .on("click", function(d) {
+      exploring[d] = d in exploring ? false : true;
+      event.preventDefault();
+      if (exploring[d]) d3.timer(explore(d,explore_count));
+    });
+
+  function explore(dimension,count) {
+    if (!explore_start) {
+      explore_start = true;
+      d3.timer(pc1.brush);
+    }
+    var speed = (Math.round(Math.random()) ? 1 : -1) * (Math.random()+0.5);
+    return function(t) {
+      if (!exploring[dimension]) return true;
+      var domain = pc1.yscale[dimension].domain();
+      var width = (domain[1] - domain[0])/4;
+
+      var center = width*1.5*(1+Math.sin(speed*t/1200)) + domain[0];
+
+      pc1.yscale[dimension].brush.extent([
+        d3.max([center-width*0.01, domain[0]-width/400]),
+        d3.min([center+width*1.01, domain[1]+width/100])
+      ])(pc1.g()
+          .filter(function(d) {
+            return d == dimension;
+          })
+      );
+    };
+  };
+
+});
+</script>
+
+<h3>Minimal Example</h3>
+<div id="example" class="parcoords" style="width:360px;height:150px"></div>
+<pre>
+&lt;script src="<a href="http://d3js.org/d3.v3.min.js"><strong>http://d3js.org/d3.v3.min.js</strong></a>"&gt;&lt;/script&gt;
+&lt;script src="<a href="d3.parcoords.js"><strong>d3.parcoords.js</strong></a>"&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" type="text/css" href="<a href="d3.parcoords.css"><strong>d3.parcoords.css</strong><a/>"&gt;
+&lt;div id="<strong>example</strong>" class="parcoords" style="width:360px;height:150px"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+var data = [
+  [0,-0,0,0,0,3 ],
+  [1,-1,1,2,1,6 ],
+  [2,-2,4,4,0.5,2],
+  [3,-3,9,6,0.33,4],
+  [4,-4,16,8,0.25,9]
+];
+
+var pc = d3.parcoords()("#<strong>example</strong>")
+  .data(<strong>data</strong>)
+  .render()
+  .createAxes();
+&lt;/script&gt;
+</pre>
+<script>
+var data = [
+  [0,-0,0,0,0,3 ],
+  [1,-1,1,2,1,6 ],
+  [2,-2,4,4,0.5,2],
+  [3,-3,9,6,0.33,4],
+  [4,-4,16,8,0.25,9]
+];
+
+var pc = d3.parcoords()("#example")
+  .data(data)
+  .render()
+  .createAxes();
+</script>
+
+
+<h3>Reordering</h3>
+<p>
+Data for this chart is generated from built-in <a href="https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Math">JavaScript math functions</a>.
+</p>
+<p>
+Pure mathematical relationships may emerge in your explorations, though real data tends to be much noisier. The cars dataset has several roughly inverse relationships, revealed by dense crossings. The first two dimensions in this chart, <em>-x</em> and <em>x</em>, have a perfectly inverse relationship. All lines between those axes meet at a single point.
+</p>
+<p>
+Only relationships between adjacent dimensions are revealed.<br/>
+Learn more about <a href="http://une-terre.blogspot.fr/2012/09/parallel-coordinates-read-out-patterns.html">read out patterns here</a>.<br/>
+Drag the axes titles around to reorder the dimensions.
+</p>
+<p>
+<a href="#" id="reorder-dance">Shuffle dimensions!</a>
+</p>
+<script>
+d3.select("#reorder-dance").on("click", function() {
+  event.preventDefault();
+  function dance() {
+    pc2.dimensions( _.shuffle(d3.keys(pc2.dimensions())) )
+    .render()
+    .updateAxes();
+  };
+  dance();
+});
+</script>
+<div id="example2" class="parcoords"></div>
+<pre><a href="#" class="show-code" data-code="reordering">Show code</a></pre>
+<script id="reordering">var data2 = d3.range(0,2*Math.PI,Math.PI/40)
+  .map(function(x) {
+    return {
+      "-x": -x,
+      x: x,
+      "sin(x)": Math.sin(x),
+      "cos(x)": Math.cos(x),
+      "atan(x)": Math.atan(x),
+      "exp(x)": Math.exp(x),
+      "square(x)": x*x,
+      "sqrt(x)": Math.sqrt(x),
+    };
+  });
+
+var pc2 = d3.parcoords()("#example2");
+
+pc2
+  .data(data2)
+  .color("#000")
+  .alpha(0.2)
+  .margin({ top: 24, left: 0, bottom: 12, right: 0 })
+  .render()
+  .reorderable();
+</script>
+<script id="coloring">// generate data with math functions
+var data3 = d3.range(-2*Math.PI,2*Math.PI,Math.PI/40)
+  .map(function(x) {
+    return {
+      "sin(x)": Math.sin(x),
+      "cos(x)": Math.cos(x),
+      "sin(x/2)": Math.sin(x/2),
+      "sin(x*2)": Math.sin(x*2),
+      "cos(x/2)": Math.cos(x/2),
+    };
+  });
+</script>
+
+<h3>Color</h3>
+<p>CSS color string. This group of plots is colored with values from <a href="https://github.com/mbostock/d3/wiki/Ordinal-Scales#wiki-category10">d3.scale.category20b()</a>.</p>
+<div id="example-coloring-0" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-1" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-2" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-3" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-4" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-5" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-6" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-7" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-8" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-9" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-10" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-11" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-12" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-13" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-14" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-15" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-16" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-17" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-18" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div id="example-coloring-19" class="parcoords parcoords-coloring float" style="width:180px;height:76px"></div>
+<div style="clear:both"></div>
+<pre><a href="#" class="show-code" data-code="coloring-basic">Show code</a></pre>
+<script id="coloring-basic">var colors = d3.scale.category20b();
+
+// create a chart in every element with class "parcoords-coloring"
+d3.selectAll(".parcoords-coloring")
+  .each(function(d,i) {
+    var color = colors(i);
+
+    var chart = d3.parcoords()(this)
+      .data(data3.slice(7*i,7*i+30))
+      .alpha(0.6)
+      .color(color)
+      .margin({
+        top: 0,
+        left: 0,
+        bottom: 24,
+        right: 0
+      })
+      .render();
+
+    // color labels
+    var text = chart.svg.append("text")
+      .attr("x", 162)
+      .attr("y", 64)
+      .style({
+        "text-anchor": "end",
+        "font-weight": "bold",
+        "font-size": "11px",
+        "fill": "#ddd"
+      })
+      .text(colors(i))
+
+    // hover effect
+    d3.select(this).on({
+      "mouseover": function() { text.style("fill", "#222"); },
+      "mouseout": function() { text.style("fill", "#ddd"); }
+    })
+  });
+</script>
+<h3>Statistical Coloring</h3>
+
+<p>One useful way to use coloring is to compute a statistic for each row, and color by that value. This plot is colored by <a href="http://en.wikipedia.org/wiki/Standard_score">Z-score</a> along the *weight* dimension.</p>
+
+
+<p>Click a different axis label to color by Z-score for that dimension.</p>
+
+<div id="example-zscore" class="parcoords"></div>
+
+<!--
+<ul id="zscore-colors">
+  <li><input type="text" id="zscore-color0" value="green"/> - Positive Z-score</li>
+  <li><input type="text" id="zscore-color1" value="grey"/> - Near-zero Z-score</li>
+  <li><input type="text" id="zscore-color2" value="blue"/> - Negative Z-score</li>
+</ul>
+-->
+
+<pre><a href="#" class="show-code" data-code="zscore">Show code</a></pre>
+<script id="zscore">// this section uses underscore.js and underscore.math
+var pcz;
+
+// color scale for zscores
+var zcolorscale = d3.scale.linear()
+  .domain([-2,-0.5,0.5,2])
+  .range(["brown", "#999", "#999", "steelblue"])
+  .interpolate(d3.interpolateLab);
+
+// load csv file and create the chart
+d3.csv('examples/data/cars.csv', function(data) {
+  pcz = d3.parcoords()("#example-zscore")
+    .data(data)
+    .hideAxis(["name"])
+    .composite("darken")
+    .render()
+    .alpha(0.35)
+    .brushMode("1D-axes")  // enable brushing
+    .interactive()  // command line mode
+
+  change_color("weight (lb)");
+
+  // click label to activate coloring
+  pcz.svg.selectAll(".dimension")
+    .on("click", change_color)
+    .selectAll(".label")
+    .style("font-size", "14px");
+});
+
+// update color
+function change_color(dimension) {
+  pcz.svg.selectAll(".dimension")
+    .style("font-weight", "normal")
+    .filter(function(d) { return d == dimension; })
+    .style("font-weight", "bold")
+
+  pcz.color(zcolor(pcz.data(),dimension)).render()
+}
+
+// return color function based on plot and dimension
+function zcolor(col, dimension) {
+  var z = zscore(_(col).pluck(dimension).map(parseFloat).filter(function(value) { return !Number.isNaN(value) }))
+  return function(d) { return zcolorscale(z(d[dimension])) }
+};
+
+// color by zscore
+function zscore(col) {
+  var n = col.length,
+      mean = _(col).mean(),
+      sigma = _(col).stdDeviation();
+  return function(d) {
+    return (d-mean)/sigma;
+  };
+};
+
+</script>
+
+<p>Try using <a href="https://github.com/jasondavies/science.js/tree/master/src/stats">science.js</a>, <a href="http://harthur.github.com/clusterfck/">clusterfck</a>, or implement your own <a href="http://en.wikipedia.org/wiki/List_of_statistics_articles">statistics</a>. You may find <a href="http://underscorejs.org/">Underscore.js</a> and <a href="https://github.com/syntagmatic/underscore.math/blob/master/underscore.math.js">Underscore.math</a> useful to calculate statistics from scratch.</p>
+
+<h3>Compositing and Opacity</h3>
+<p>Control <a href="https://developer.mozilla.org/en-US/docs/Canvas_tutorial/Compositing">compositing</a> and opacity with <b>composite()</b> and <b>alpha()</b>, respectively. Compositing controls how pixels are combined to form the final image.
+</p>
+<p>
+Four useful settings are:
+</p>
+<ul>
+  <li><strong>source-over</strong> (default), new lines drawn over rendered lines</li>
+  <li><strong>lighter</strong>, dense intersections glow</li>
+  <li><strong>darker</strong>, dense intersections darken</li>
+  <li><strong>destination-over</strong>, new lines drawn underneath rendered lines</li>
+</ul>
+<p>Use this slider to change alpha/opacity. The current value is <strong id="alpha-opacity">0.3</strong><br/>
+<input type="range" min="0" max="1" value="0.3" step="0.01" id="compositing-opacity"/>
+</p>
+<div id="example-compositing-0" class="parcoords parcoords-compositing float" style="width:360px;height:120px"></div>
+<div id="example-compositing-1" class="parcoords parcoords-compositing float" style="width:360px;height:120px"></div>
+<div id="example-compositing-2" class="parcoords parcoords-compositing float" style="width:360px;height:120px"></div>
+<div id="example-compositing-3" class="parcoords parcoords-compositing float" style="width:360px;height:120px"></div>
+<div style="clear:both"></div>
+<p class="centered">
+</p>
+<pre><a href="#" class="show-code" data-code="compositing">Show code</a></pre>
+<script id="compositing">var composite_modes = [
+  "source-over",
+  "lighter",
+  "destination-over",
+  "darken"
+];
+
+var color = d3.scale.linear()
+  .domain([-1, 1])
+  .range(["cadetblue", "#049"])
+  .interpolate(d3.interpolateLab);
+
+// keep the charts in an array
+var pc_compositing = [];
+
+d3.selectAll(".parcoords-compositing")
+  .each(function(d,i) {
+    var mode = composite_modes[i];
+    pc_compositing[i] = d3.parcoords()(this)
+      .data(data3)
+      .alpha(0.3)
+      .composite(mode)
+      .color(function(d) {
+        return color(Math.sin(d["sin(x)"]*10));
+      })
+      .margin({
+        top: 20,
+        left: -10,
+        bottom: 0,
+        right: -10
+      })
+      .render()
+      .axisDots(0.2);
+
+    pc_compositing[i].ctx.highlight.fillText(mode, 130, 10);
+  });
+
+// opacity slider
+d3.select("#compositing-opacity").on("change", function() {
+  d3.select("#alpha-opacity").text(Math.round(this.value*100)/100);
+  for (mode in pc_compositing) {
+    pc_compositing[mode].alpha(this.value).render();
+  };
+});
+</script>
+
+<h3>Progressive Rendering</h3>
+
+<p>With thousands of data points, the chart will get less responsive when brushing. The interface may stutter or freeze, frustrating the user. To solve this, enable progressive rendering by setting the render <a href="https://github.com/syntagmatic/parallel-coordinates#parcoords_mode">mode</a> to <em>"queue"</em>.</p>
+<p>Change the speed of rendering by setting the <a href="https://github.com/syntagmatic/parallel-coordinates#parcoords_rate">rate</a>. You can read more about this technique on the <a href="http://bl.ocks.org/d/3341641/">Render Queue</a> page.</p>
+
+<div id="example-progressive" class="parcoords" style="width:1300px;margin-left:-250px;height:270px;"></div>
+<pre><a href="#" class="show-code" data-code="progressive">Show code</a></pre>
+
+<script id="progressive">// load csv file and create the chart
+d3.csv('examples/data/nutrients.csv', function(data) {
+  var colorgen = d3.scale.ordinal()
+    .range(["#a6cee3","#1f78b4","#b2df8a","#33a02c",
+            "#fb9a99","#e31a1c","#fdbf6f","#ff7f00",
+            "#cab2d6","#6a3d9a","#ffff99","#b15928"]);
+
+  var color = function(d) { return colors(d.group); };
+
+  var parcoords = d3.parcoords()("#example-progressive")
+    .data(data)
+    .hideAxis(["name"])
+    .color(color)
+    .alpha(0.25)
+    .composite("darken")
+    .margin({ top: 24, left: 150, bottom: 12, right: 0 })
+    .mode("queue")
+    .render()
+    .brushMode("1D-axes");  // enable brushing
+
+  parcoords.svg.selectAll("text")
+    .style("font", "10px sans-serif");
+});
+</script>
+
+<h3>Bundling</h3>
+Bundling violates the point-line duality but can be used to visualize clusters using geometry only, leaving the color channel free
+for other uses (e.g. statistical coloring, see below). Bundling can be achieved using different algorithms. Details on the algorithm
+used here can be found in <a href="http://arxiv.org/abs/1109.6073">this paper.</a>
+<p>Use this slider to change the curve smoothness. The current value is <strong id="smooth">0.0</strong><br/>
+<input type="range" min="0" max="0.25" value="0.0" step="0.01" id="smoothness"/>
+<p>Use this slider to change the bundling strength. The current value is <strong id="strength">0</strong><br/>
+<input type="range" min="0" max="1" value="0" step="0.05" id="bundling"/>
+<div id="bundleDimension">Bundle using clusters determined by: </div>
+<div id="example0" class="parcoords"></div>
+<pre><a href="#" class="show-code" data-code="bundling-code">Show code</a></pre>
+
+<script id="bundling-code">
+//interact with this variable from a javascript console
+var pc0;
+
+d3.csv('examples/data/cars.csv', function(data) {
+pc0 = d3.parcoords()("#example0")
+  .data(data)
+	.bundlingStrength(0) // set bundling strength
+	.smoothness(0)
+	.bundleDimension("cylinders")
+	.showControlPoints(false)
+	.hideAxis(["name"])
+	.render()
+	.brushMode("1D-axes")
+	.reorderable()
+	.interactive();
+
+	// smoothness
+	d3.select("#smoothness").on("change", function() {
+		d3.select("#smooth").text(this.value);
+		pc0.smoothness(this.value).render();
+	});
+
+	// bundling strength slider
+	d3.select("#bundling").on("change", function() {
+		d3.select("#strength").text(this.value);
+		pc0.bundlingStrength(this.value).render();
+	});
+
+	var select = d3.select("#bundleDimension").append("select").on("change", changeBundle);
+
+	var options = select.selectAll('option')
+		.data(d3.keys(pc0.dimensions()));
+
+	options
+		.enter()
+		.append("option")
+		.attr("value", function(d) {return d;})
+		.text(function(d) {return d;});
+
+	function changeBundle() {
+		pc0.bundleDimension(this.value);
+	}
+
+});
+</script>
+
+<h3>More on the way...</h3>
+
+<p>This library is in active development, so keep an eye out for new features and documentation. Major changes will be announced on the <a href="https://groups.google.com/forum/?fromgroups#!forum/d3-js">d3.js mailing list</a>, or you can <a href="https://github.com/syntagmatic/parallel-coordinates">watch the GitHub repository</a> to track every change.</p>
+
+<p>
+For past versions of parallel coordinates that demonstrate various features and techniques, see this <a href="http://bl.ocks.org/syntagmatic">list of bl.ocks</a>.
+</p>
+
+<h3>Credits</h3>
+
+<p>Created by Kai Chang with many <a href="https://github.com/syntagmatic/parallel-coordinates#credits">collaborators</a></p>
+
+<h3>In the Wild</h3>
+
+<ul>
+  <li><a href="http://nitisco.fr/top500/">Supercomputers</a></li>
+  <li><a href="https://sensortower.com/visualizing-the-ios-app-store">Visualizing the iOS App Store</a></li>
+  <li><a href="http://rcharts.io/parcoords/">rCharts</a></li>
+  <li><a href="http://charts.graphicbaseball.com/">Baseball Batting/Pitching</a></li>
+  <li><a href="http://bl.ocks.org/tmcw/raw/11385055/">Running Boston Marathon</a></li>
+  <li><a href="http://lmnts.lmnarchitects.com/interaction/interacting-with-climate-data/">Interacting with Climate Data</a></li>
+  <li><a href="https://realimpactanalytics.github.io/d4g-hackathon-malaria-viz/">Malaria Data Exploration</a></li>
+</ul>
+
+<h3>Talk</h3>
+<p>I gave this talk on parallel coordinates at <a href="http://openvisconf.com/">OpenVisConf</a><br/>
+<a href="http://exposedata.com/talk/multidim/#0">Slides</a></p>
+<iframe width="560" height="315" src="//www.youtube.com/embed/ypc7Ul9LkxA" frameborder="0" allowfullscreen></iframe>
+
+<h3>Version 0.x.x Changes</h3>
+
+<p>
+  7.0: <a href="https://github.com/syntagmatic/parallel-coordinates/pull/110">Improved shadow functionality</a><br/>
+  6.0: <a href="https://github.com/syntagmatic/parallel-coordinates/issues/88">Display dimensions with cardinality of one</a><br/>
+  5.0: <a href="https://github.com/syntagmatic/parallel-coordinates/issues/57">2d brushing</a>, <a href="https://github.com/syntagmatic/parallel-coordinates/commit/5140781eccc1fd36c921435d0ec25df67508984d">OR brushing</a><br/>
+  4.0:
+    <a href="https://github.com/syntagmatic/parallel-coordinates/issues/58">Repo reorganization</a><br/>
+  3.2:
+    <a href="https://github.com/syntagmatic/parallel-coordinates/pull/53">Bug</a>
+    <a href="https://github.com/syntagmatic/parallel-coordinates/pull/54">fixes</a>,
+    <a href="https://github.com/syntagmatic/parallel-coordinates/pull/55">brushevents </a> and
+    <a href="https://github.com/syntagmatic/parallel-coordinates/pull/56">extents</a>
+    <br/>
+  3.1: <a href="https://github.com/syntagmatic/parallel-coordinates/pull/46">Brush and resize bugfixes</a><br/>
+  3.0: <a href="https://github.com/syntagmatic/parallel-coordinates/pull/33">Non-selectable CSS</a>, <a href="https://github.com/syntagmatic/parallel-coordinates/pull/42">bundling, axis inversion and axis hiding</a><br/>
+  2.2: <a href="https://github.com/syntagmatic/parallel-coordinates/issues/20">Added Date dimension type</a><br/>
+  2.1: <a href="https://github.com/syntagmatic/parallel-coordinates/issues/16">Overriding dimension titles</a><br/>
+  2.0: <a href="https://github.com/syntagmatic/parallel-coordinates/pull/24">Code organization and Makefile</a><br/>
+  1.7: Preliminary ordinal dimension support<br/>
+  1.6: Added dimension <a href="https://github.com/syntagmatic/parallel-coordinates#parcoords_types">types</a><br/>
+  1.5: Progressive rendering<br/>
+  1.4: More examples<br/>
+  1.3: Shadows<br/>
+  1.2: Interactive mode for console use<br/>
+  1.1: ReorderAxes is now updateAxes, transition adding/removing/reordering dimensions<br/>
+  1.0: Initial relase
+</p>
+
+<script>
+// Code viewer
+d3.selectAll(".show-code").on("click", function(d) {
+  var code = d3.select("#" + d3.select(this).attr("data-code")).text();
+  d3.select(this.parentNode)
+    .text(code)
+  event.preventDefault();
+})
+</script>
