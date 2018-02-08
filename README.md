@@ -1,4 +1,4 @@
-## Parallel Coordinates Multi-Objective visualization Tool
+## Parallel Coordinates Multi-Objective Visualization Tool
 This is a relatively stable version of the EMA workbench currently under
 development at the University of Colorado Boulder. For more information, see the project site: https://josephkasprzyk.wordpress.com/research-projects/
 
