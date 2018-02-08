@@ -1,0 +1,21 @@
+Product: para-mova
+Type: Package
+Title: Interactive visualization tool for multi-objective optimization problems.
+Version: 1.0
+Date: 2018-01-20
+Authors: Josh Jacobson and William Raseman
+Maintainer: Josh Jacobson <josh.jacobson@colorado.edu>
+Description:
+License: BSD-3-Clause
+Copyright: 2018 University of Colorado Boulder.
+Languages:
+    JavaScript
+    CSS
+    HTML
+Require: (provide links)
+    d3,
+    d3.parcoords,
+    slickgrid,
+    jquery,
+    underscore
+    
