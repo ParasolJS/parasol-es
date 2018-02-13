@@ -8,7 +8,7 @@
 
   <!-- Core -->
   <link rel="stylesheet" type="text/css" href="styles/style_custom.css">
-  <link rel="stylesheet" type="text/css" href="src/d3.parcoords_ucb.css">
+  <link rel="stylesheet" type="text/css" href="styles/d3.parcoords_ucb.css">
 
   <script type="text/javascript" src="src/d3.min.js"></script>
   <script type="text/javascript" src="src/d3.csv.js"></script>
@@ -19,7 +19,7 @@
   <script type="text/javascript" src="src/colorbrewer_schemes.js"></script>
 
   <!-- SlickGrid -->
-  <link rel="stylesheet" href="src/slickgrid/slick.grid_custom.css" type="text/css" media="screen" charset="utf-8">
+  <link rel="stylesheet" href="src/slickgrid/slick.grid_default.css" type="text/css" media="screen" charset="utf-8">
   <link rel="stylesheet" href="src/slickgrid/jquery-ui-1.8.16.custom.css" type="text/css" />
   <link rel="stylesheet" href="src/slickgrid/plugins/slick.columnpicker.css" type="text/css"/>
 
@@ -55,25 +55,25 @@
   <!-- Interactive Buttons -->
   <div class="widgets">
     <input type="file" id="uploader">
-    <a href="ParallelCoordinates#" id="keep_selected" class="button green filter_control">Keep</a>
-    <a href="ParallelCoordinates#" id="remove_selected" class="button red filter_control">Remove</a>
-    <a href="ParallelCoordinates.html#" id="export_selected" class="button green filter_control">Export</a>
+    <button id="keep_selected">Keep</button>
+    <button id="remove_selected">Remove</button>
+    <button id="export_data">Export</button>
 
 
     <button id="brush_reset">Reset Brushes</button>
     <button id="clear_selected">Clear Selections</button>
 
-    <a href="ParallelCoordinates.html#" id="axes_limits" class="button green filter_control">Set Axes Limits</a>
-    <a href="ParallelCoordinates.html#" id="cluster" class="button green filter_control">Clustering</a>
+    <button id="axes_limits">Set Axes Limits</button>
+    <button id="cluster">Clustering</button>
   </div>
 
   <h3>Objective Space</h3>
   <button id="svg01">Save Image</button>
-  <div id="plot01" class="parcoords" style="height:200px;"></div>
+  <div id="plot01" class="parcoords" style="height:200px; width=100%;"></div>
 
   <h3>Decision Space</h3>
   <button id="svg02">Save Image</button>
-  <div id="plot02" class="parcoords" style="height:200px;"></div>
+  <div id="plot02" class="parcoords" style="height:200px; width=100%;"></div>
 
   <div id="grid"></div>
 
@@ -133,10 +133,6 @@
       var brushed_pc1 = [];
       var brushed_pc2 = [];
 
-      // keep track of brushed axes
-      var brushes_pc1 = [];
-      var brushes_pc2 = [];
-
       // not necessary eventually
       var isBrushed_pc1 = false;
       var isBrushed_pc2 = false;
@@ -150,24 +146,16 @@
         .reorderable()
         .brushMode("1D-axes")
         .on("brushend", function(brushed) {
-          if (_.difference(_.keys(pc1.brushExtents()), _.keys(brushes_pc1)).length > 0) {
-            // first brush on axis, handle as normal
-            brushed_pc1 = brushed;
-          } else {
-            // already a brush on this axis
-            // add multi-brush data back into array
-            brushed_pc1 = _.union(brushed_pc1, brushed);
-          }
 
-          if (_.keys(brushes_pc2).length > 0) {
+          if (isBrushed_pc2) {
             // pc2 has brushes, keep only the intersection of arrays
-            brushed_pc2 = _.intersection(brushed_pc1, brushed_pc2);
+            brushed_pc2 = _.intersection(brushed_pc2, brushed);
           } else {
-            brushed_pc2 = brushed_pc1;
+            brushed_pc2 = brushed;
           }
 
           brushed_pc1 = brushed_pc2;
-          brushes_pc1 = pc1.brushExtents();
+          isBrushed_pc1 = true;
 
           pc2.brushed(brushed_pc2);
           pc2.render();
@@ -187,32 +175,24 @@
         .reorderable()
         .brushMode("1D-axes")
         .on("brushend", function(brushed) {
-          if (isBrushed_pc2) {
-            // add multi-brush data back into array
-            brushed_pc2 = _.union(brushed_pc2, brushed);
-          } else {
-            brushed_pc2 = brushed;
-          }
 
           if (isBrushed_pc1) {
-            // keep only the intersection of brushes
-            brushed_pc1 = _.intersection(brushed_pc1, brushed_pc2);
-            console.log("went intersect")
+            // pc1 has brushes, keep only the intersection of arrays
+            brushed_pc1 = _.intersection(brushed_pc1, brushed);
           } else {
             brushed_pc1 = brushed;
           }
 
-          isBrushed_pc2 = true;
           brushed_pc2 = brushed_pc1;
-          brushes_pc2 = pc2.brushExtents();
+          isBrushed_pc2 = true;
 
-          pc1.brushed(brushed_pc1);
-          pc1.render();
-
-          pc2.brushed(brushed_pc2);
+          pc2.brushed(brushed_pc1);
           pc2.render();
 
-          gridUpdate(brushed_pc2);
+          pc1.brushed(brushed_pc2);
+          pc1.render();
+
+          gridUpdate(brushed_pc1);
         });
 
 
@@ -331,6 +311,7 @@
       // reset brushes
       d3.select('#brush_reset').on('click', function() {
         // reset global vars
+        console.log("went here");
         brushed_pc1 = [];
         brushed_pc2 = [];
         isBrushed_pc1 = false;

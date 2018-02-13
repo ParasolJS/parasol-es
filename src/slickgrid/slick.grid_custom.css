@@ -52,11 +52,11 @@ classes should alter those!
 }
 
 .slick-sort-indicator-desc {
-	background: url(http://exposedata.com/lib/slickgrid/images/sort-desc.gif);
+  background: url(images/sort-desc.gif);
 }
 
 .slick-sort-indicator-asc {
-	background: url(http://exposedata.com/lib/slickgrid/images/sort-asc.gif);
+  background: url(images/sort-asc.gif);
 }
 
 .slick-resizable-handle {
@@ -85,8 +85,13 @@ classes should alter those!
 }
 
 .slick-row:hover {
-	/*background: #ddd;*/
-	background: #99cdd8
+	background: #ddd;
+}
+
+.slick-cell-checkboxsel {
+      background: #f0f0f0;
+      border-right-color: silver;
+      border-right-style: solid;
 }
 
 .slick-cell, .slick-headerrow-column {
