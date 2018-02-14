@@ -23,7 +23,25 @@
        * @static
        * @constructor
        */
-      "GlobalEditorLock": new EditorLock()
+      "GlobalEditorLock": new EditorLock(),
+
+      "keyCode": {
+        BACKSPACE: 8,
+        DELETE: 46,
+        DOWN: 40,
+        END: 35,
+        ENTER: 13,
+        ESCAPE: 27,
+        HOME: 36,
+        INSERT: 45,
+        LEFT: 37,
+        PAGE_DOWN: 34,
+        PAGE_UP: 33,
+        RIGHT: 39,
+        TAB: 9,
+        UP: 38
+      },
+      "preClickClassName" : "slick-edit-preclick"
     }
   });
 
@@ -271,7 +289,13 @@
    */
   function Group() {
     this.__group = true;
-    this.__updated = false;
+
+    /**
+     * Grouping level, starting with 0.
+     * @property level
+     * @type {Number}
+     */
+    this.level = 0;
 
     /***
      * Number of rows in the group.
@@ -302,11 +326,40 @@
     this.collapsed = false;
 
     /***
+     * Whether a group selection checkbox is checked.
+     * @property selectChecked
+     * @type {Boolean}
+     */
+    this.selectChecked = false;
+
+    /***
      * GroupTotals, if any.
      * @property totals
      * @type {GroupTotals}
      */
     this.totals = null;
+
+    /**
+     * Rows that are part of the group.
+     * @property rows
+     * @type {Array}
+     */
+    this.rows = [];
+
+    /**
+     * Sub-groups that are part of the group.
+     * @property groups
+     * @type {Array}
+     */
+    this.groups = null;
+
+    /**
+     * A unique key used to identify the group.  This key can be used in calls to DataView
+     * collapseGroup() or expandGroup().
+     * @property groupingKey
+     * @type {Object}
+     */
+    this.groupingKey = null;
   }
 
   Group.prototype = new NonDataItem();
@@ -320,7 +373,8 @@
   Group.prototype.equals = function (group) {
     return this.value === group.value &&
         this.count === group.count &&
-        this.collapsed === group.collapsed;
+        this.collapsed === group.collapsed &&
+        this.title === group.title;
   };
 
   /***
@@ -341,6 +395,14 @@
      * @type {Group}
      */
     this.group = null;
+
+    /***
+     * Whether the totals have been fully initialized / calculated.
+     * Will be set to false for lazy-calculated group totals.
+     * @param initialized
+     * @type {Boolean}
+     */
+    this.initialized = false;
   }
 
   GroupTotals.prototype = new NonDataItem();
@@ -369,7 +431,7 @@
 
     /***
      * Sets the specified edit controller as the active edit controller (acquire edit lock).
-     * If another edit controller is already active, and exception will be thrown.
+     * If another edit controller is already active, and exception will be throw new Error(.
      * @method activate
      * @param editController {EditController} edit controller acquiring the lock
      */
@@ -378,26 +440,26 @@
         return;
       }
       if (activeEditController !== null) {
-        throw "SlickGrid.EditorLock.activate: an editController is still active, can't activate another editController";
+        throw new Error("SlickGrid.EditorLock.activate: an editController is still active, can't activate another editController");
       }
       if (!editController.commitCurrentEdit) {
-        throw "SlickGrid.EditorLock.activate: editController must implement .commitCurrentEdit()";
+        throw new Error("SlickGrid.EditorLock.activate: editController must implement .commitCurrentEdit()");
       }
       if (!editController.cancelCurrentEdit) {
-        throw "SlickGrid.EditorLock.activate: editController must implement .cancelCurrentEdit()";
+        throw new Error("SlickGrid.EditorLock.activate: editController must implement .cancelCurrentEdit()");
       }
       activeEditController = editController;
     };
 
     /***
      * Unsets the specified edit controller as the active edit controller (release edit lock).
-     * If the specified edit controller is not the active one, an exception will be thrown.
+     * If the specified edit controller is not the active one, an exception will be throw new Error(.
      * @method deactivate
      * @param editController {EditController} edit controller releasing the lock
      */
     this.deactivate = function (editController) {
       if (activeEditController !== editController) {
-        throw "SlickGrid.EditorLock.deactivate: specified editController is not the currently active one";
+        throw new Error("SlickGrid.EditorLock.deactivate: specified editController is not the currently active one");
       }
       activeEditController = null;
     };

@@ -16,7 +16,8 @@
   <script type="text/javascript" src="src/d3.svg.multibrush.js"></script>
   <script type="text/javascript" src="src/underscore.js"></script>
   <script type="text/javascript" src="src/divgrid.js"></script>
-  <script type="text/javascript" src="src/colorbrewer_schemes.js"></script>
+  <script type="text/javascript" src="src/ml.min.js"></script>
+  <script type="text/javascript" src="src/colorbrewer.js"></script>
 
   <!-- SlickGrid -->
   <link rel="stylesheet" href="src/slickgrid/slick.grid_default.css" type="text/css" media="screen" charset="utf-8">
@@ -126,8 +127,8 @@
       // TODO: allow user to set number of obj vars
       var variables = d3.keys(data[0]).slice(0,-1); //remove id col
       var id_col = d3.keys(data[0]).pop()
-      var objective_vars = _.union(variables.slice(0,3), [id_col]);
-      var decision_vars = _.union(variables.slice(3), [id_col]);
+      var objective_vars = _.union(variables.slice(0,5), [id_col]);
+      var decision_vars = _.union(variables.slice(5), [id_col]);
 
       // keep track of brushed data
       var brushed_pc1 = [];
@@ -277,7 +278,14 @@
       grid.onSelectedRowsChanged.subscribe(function (e, args) {
         // reset and update selected rows
         var selected_row_ids = grid.getSelectedRows();
-        var d = _union(pc1.brushed(), pc2.brushed()) || data;
+        var brush_union = _.union(pc1.brushed(), pc2.brushed());
+        var d;
+        if (brush_union.length) {
+          d = brush_union;
+        } else {
+          d = data;
+        }
+        console.log(d);
 
         pc1.deselect();
         pc2.deselect();
