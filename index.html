@@ -81,31 +81,40 @@
   <!-- Begin Script -->
   <script type="text/javascript">
 
+  // choose catagorical color scheme
+  var color_scheme = d3.scale.ordinal()
+    .domain(['3', '4', '5', '6', '7', '8']) // map each color with catagorical
+    .range(colorbrewer.Dark2[6]) // choose color scheme and pick N colors
+
+  var colors = function(d) {
+    return color_scheme(d['kmeans']);
+  };
+
+  // clustering library
+  var kmeans = ML.Clust.kmeans;
+  console.log(kmeans);
+
   // define parallel coordinates variables
   var pc1 = d3.parcoords()("#plot01")
     .alpha(0.4)
+    .color(colors)
     .mode("queue")
-    .height(200)
-    .margin({
-      top: 16,
-      left: 16,
-      right: 16,
-      bottom: 16
-    });
+    .height(200);
 
   var pc2 = d3.parcoords()("#plot02")
     .alpha(0.4)
+    .color(colors)
     .mode("queue")
-    .height(200)
-    .margin({
-      top: 16,
-      left: 16,
-      right: 16,
-      bottom: 16
-    });
+    .height(200);
 
 
     function parallelCoordinates(data) {
+
+      // preform default clustering
+      var k = kmeans(data, 3);
+      console.log(k.clusters);
+      data.forEach(function(d,i) { d.kmeans = k.clusters[i]; });
+
       // slickgrid needs each data element to have an id
       data.forEach(function(d,i) { d.id = d.id || i; });
 
@@ -126,9 +135,14 @@
 
       // TODO: allow user to set number of obj vars
       var variables = d3.keys(data[0]).slice(0,-1); //remove id col
-      var id_col = d3.keys(data[0]).pop()
-      var objective_vars = _.union(variables.slice(0,5), [id_col]);
-      var decision_vars = _.union(variables.slice(5), [id_col]);
+      var id_col = "id"
+      var k_col = "kmeans";
+
+      // NOTE: do we want to show kmeans column so that user can
+      // brush on it even though we already apply color?
+      var objective_vars = _.union(variables.slice(0,3), [k_col], [id_col]);
+      var decision_vars = _.difference(variables.slice(3), [k_col]);
+      decision_vars = _.union(decision_vars, [id_col])
 
       // keep track of brushed data
       var brushed_pc1 = [];
