@@ -81,10 +81,13 @@
   <!-- Begin Script -->
   <script type="text/javascript">
 
+  // set default number of clusters
+  var k = 3;
+
   // choose catagorical color scheme
   var color_scheme = d3.scale.ordinal()
     .domain(['3', '4', '5', '6', '7', '8']) // map each color with catagorical
-    .range(colorbrewer.Dark2[6]) // choose color scheme and pick N colors
+    .range(colorbrewer.Dark2[k]) // choose color scheme and pick N colors
 
   var colors = function(d) {
     return color_scheme(d['kmeans']);
@@ -110,10 +113,13 @@
 
     function parallelCoordinates(data) {
 
+      // coerce data to array of arrays for clustering
+      var clust_form = [];
+      data.forEach(function(d,i) { clust_form[i] = _.values(d) });
+
       // preform default clustering
-      var k = kmeans(data, 3);
-      console.log(k.clusters);
-      data.forEach(function(d,i) { d.kmeans = k.clusters[i]; });
+      var km = kmeans(clust_form, k);
+      data.forEach(function(d,i) { d.kmeans = km.clusters[i]; });
 
       // slickgrid needs each data element to have an id
       data.forEach(function(d,i) { d.id = d.id || i; });
@@ -138,11 +144,11 @@
       var id_col = "id"
       var k_col = "kmeans";
 
-      // NOTE: do we want to show kmeans column so that user can
-      // brush on it even though we already apply color?
+      // NOTE: hide clusters by default but allow user to display via button
       var objective_vars = _.union(variables.slice(0,3), [k_col], [id_col]);
-      var decision_vars = _.difference(variables.slice(3), [k_col]);
-      decision_vars = _.union(decision_vars, [id_col])
+      var decision_vars = _.union(variables.slice(3), [id_col])
+      //var decision_vars = _.difference(variables.slice(3), [k_col]);
+      //decision_vars = _.union(decision_vars, [id_col])
 
       // keep track of brushed data
       var brushed_pc1 = [];
