@@ -150,15 +150,16 @@ var side_effects = d3.dispatch.apply(this,d3.keys(__))
   .on("hideAxis", function(d) {
     pc.dimensions(pc.applyDimensionDefaults());
     pc.dimensions(without(__.dimensions, d.value));
-  })
-  .on("flipAxes", function(d) {
-    if (d.value && d.value.length) {
-        d.value.forEach(function(axis) {
-            flipAxisAndUpdatePCP(axis);
-        });
-        pc.updateAxes(0);
-    }
   });
+  // axis flip does not make sense in context of optimization
+  // .on("flipAxes", function(d) {
+  //   if (d.value && d.value.length) {
+  //       d.value.forEach(function(axis) {
+  //           flipAxisAndUpdatePCP(axis);
+  //       });
+  //       pc.updateAxes(0);
+  //   }
+  // });
 
 // expose the state of the chart
 pc.state = __;
@@ -843,7 +844,7 @@ pc.createAxes = function() {
         "class": "label"
       })
       .text(dimensionLabels)
-      .on("dblclick", flipAxisAndUpdatePCP)
+      //.on("dblclick", flipAxisAndUpdatePCP)
       .on("wheel", rotateLabels);
 
   if (__.nullValueSeparator=="top") {
