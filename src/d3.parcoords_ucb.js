@@ -10,7 +10,7 @@ NOTE: This version of d3.parcoords contains some minor edits:
       - Requires Underscore.js for set operations
       - Addition of a "selections" canvas layer which allows user to permanently highlight a row of data in slickgrid
 
-All other functionality is the work of Kai Chang, the designer of d3.parcoords.js
+All other functionality is the work of Kai Chang, designer of d3.parcoords.js
 Source: https://github.com/syntagmatic/parallel-coordinates
 ---------------------------------------------------------------------*/
 

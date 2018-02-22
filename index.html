@@ -14,6 +14,7 @@
   <script type="text/javascript" src="src/d3.csv.js"></script>
   <script type="text/javascript" src="src/d3.parcoords_ucb.js"></script>
   <script type="text/javascript" src="src/d3.svg.multibrush.js"></script>
+  <script type="text/javascript" src="src/jquery-1.7.min.js"></script>
   <script type="text/javascript" src="src/underscore.js"></script>
   <script type="text/javascript" src="src/divgrid.js"></script>
   <script type="text/javascript" src="src/ml.min.js"></script>
@@ -24,7 +25,6 @@
   <link rel="stylesheet" href="src/slickgrid/jquery-ui-1.8.16.custom.css" type="text/css" />
   <link rel="stylesheet" href="src/slickgrid/plugins/slick.columnpicker.css" type="text/css"/>
 
-  <script type="text/javascript" src="src/slickgrid/jquery-1.7.min.js"></script>
   <script type="text/javascript" src="src/slickgrid/jquery.event.drag-2.0.min.js"></script>
   <script type="text/javascript" src="src/slickgrid/slick.core.js"></script>
   <script type="text/javascript" src="src/slickgrid/slick.grid.js"></script>
@@ -58,7 +58,7 @@
     <input type="file" id="uploader">
     <button id="keep_selected">Keep</button>
     <button id="remove_selected">Remove</button>
-    <button id="export_data">Export</button>
+    <button id="export_selected">Export</button>
 
 
     <button id="brush_reset">Reset Brushes</button>
@@ -67,19 +67,21 @@
     <button id="axes_limits">Set Axes Limits</button>
     <input type="select" id="cluster">Clustering</button>
   </div>
-
-  <h3>Objective Space</h3>
-  <button id="svg01">Save Image</button>
-  <div id="plot01" class="parcoords" style="height:200px; width=100%;"></div>
-
-  <h3>Decision Space</h3>
-  <button id="svg02">Save Image</button>
-  <div id="plot02" class="parcoords" style="height:200px; width=100%;"></div>
-
+  <div id="plots"></div>
   <div id="grid"></div>
 
   <!-- Begin Script -->
   <script type="text/javascript">
+
+    var plot = `<h3>Objective Space</h3>
+    <button id="svg01">Save Image</button>
+    <div id="plot01" class="parcoords" style="height:200px; width=100%;"></div>
+
+    <h3>Decision Space</h3>
+    <button id="svg02">Save Image</button>
+    <div id="plot02" class="parcoords" style="height:200px; width=100%;"></div>
+    `
+    $("div#plots").html(plot);
 
     // clustering library
     var kmeans = ML.Clust.kmeans;
@@ -304,6 +306,7 @@
         pc2.unhighlight();
       });
 
+      // select row in chart
       grid.onSelectedRowsChanged.subscribe(function (e, args) {
         // reset and update selected rows
         var selected_row_ids = grid.getSelectedRows();
@@ -314,7 +317,6 @@
         } else {
           d = data;
         }
-
         pc1.deselect();
         pc2.deselect();
         selected_row_ids.forEach(function(i) {
@@ -361,6 +363,49 @@
       // TEST: hide / show variable
       // hide_var(["cluster"]);
 
+      // keep selected
+      d3.select('#keep_selected').on('click', function() {
+        // delete all data not slected and do complete refresh
+        // only need to look at one plot since selections are universal
+        if (pc1.selected().length >= k) {
+          data = pc1.selected();
+          // clear canvas layers
+          $("div#plot01").html("");
+          $("div#plot02").html("");
+          $("div#plot").html(plot);
+          // for complete reset, clusters will be recomputed
+          visualize(data, n_objs = n_objs, k = k);
+        } else {
+          throw new Error("Not enough data selected to perform clustering.");
+        }
+      });
+
+      // remove selected
+      d3.select('#remove_selected').on('click', function() {
+        console.log("before:", data.length);
+        // delete all selected data and do complete refresh
+        if (pc1.selected().length) {
+          data = _.difference(data, pc1.selected());
+          if (data.length >= k) {
+            // clear canvas layers
+            $("div#plot01").html("");
+            $("div#plot02").html("");
+            $("div#plot").html(plot);
+            // for complete reset, clusters will be recomputed
+            visualize(data, n_objs = n_objs, k = k);
+          } else {
+            throw new Error("Not enough data remaining to perform clustering.");
+          }
+        }
+        console.log("after:", data.length);
+      });
+
+      // // export selected
+      // d3.select('#export_selected').on('click', function() {
+      //   // export selected data to new csv and download
+      //   grid.setSelectedRows([]);
+      // });
+
     };
 
 
@@ -390,7 +435,6 @@
       var file = this.files[0];
       reader.readAsText(file);
     };
-
   </script>
 
 </div>
