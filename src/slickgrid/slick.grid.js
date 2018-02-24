@@ -84,7 +84,7 @@ if (typeof Slick === "undefined") {
       dataItemColumnValueExtractor: null,
       fullWidthRows: false,
       multiColumnSort: false,
-      defaultFormatter: defaultFormatter,
+      defaultFormatter: customFormatter,
       forceSyncScrolling: false
     };
 
@@ -1316,6 +1316,26 @@ if (typeof Slick === "undefined") {
         return value.toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
       }
     }
+
+    // create custom formatter to round data in cells -- Josh Jacobson
+    function customFormatter(row, cell, value, columnDef, dataContext) {
+      if (value == null) {
+        return "";
+      } else {
+        // escape HTML special chars
+        value = value.toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        // convert to numeric, round to 2nd decimal
+        value = Number(value);
+        value = Math.round(value * Math.pow(10, 2)) / Math.pow(10, 2);
+        // return as string
+        return value.toString()
+      }
+    }
+
+    function precisionRound(number, precision) {
+  var factor = Math.pow(10, precision);
+  return Math.round(number * factor) / factor;
+}
 
     function getFormatter(row, column) {
       var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);

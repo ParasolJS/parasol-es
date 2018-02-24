@@ -58,7 +58,9 @@
     <input type="file" id="uploader">
     <button id="keep_selected">Keep</button>
     <button id="remove_selected">Remove</button>
-    <button id="export_selected">Export</button>
+    <a href='#'
+      onclick='downloadCSV();'
+    >Export</a>
 
 
     <button id="brush_reset">Reset Brushes</button>
@@ -333,7 +335,7 @@
         dataView.beginUpdate();
         dataView.setItems(data);
         // if selected data exists, keep in grid
-        // only need to look at once plot since selections are universal
+        // only need to look at once plot since selections are linked
         if (pc1.selected().length) {
           pc1.selected().forEach(function(i) { dataView.insertItem(0,i); });
         }
@@ -366,9 +368,10 @@
       // keep selected
       d3.select('#keep_selected').on('click', function() {
         // delete all data not slected and do complete refresh
-        // only need to look at one plot since selections are universal
-        if (pc1.selected().length >= k) {
-          data = pc1.selected();
+        // only need to look at one plot since selections are linked
+        var keep = pc1.selected() || pc1.brushed();
+        console.log(keep);
+        if (keep.length >= k ) {
           // clear canvas layers
           $("div#plot01").html("");
           $("div#plot02").html("");
@@ -393,9 +396,9 @@
             $("div#plot").html(plot);
             // for complete reset, clusters will be recomputed
             visualize(data, n_objs = n_objs, k = k);
-          } else {
-            throw new Error("Not enough data remaining to perform clustering.");
           }
+        } else {
+          throw new Error("Not enough data remaining to perform clustering.");
         }
         console.log("after:", data.length);
       });
@@ -403,10 +406,120 @@
       // // export selected
       // d3.select('#export_selected').on('click', function() {
       //   // export selected data to new csv and download
-      //   grid.setSelectedRows([]);
+      //   var data_exp, filename, link;
+      //   data_exp = pc1.selected();
+      //
+      //   if (data_exp == null || !data_exp.length) {
+      //       throw new Error("No data selected.");
+      //       return;
+      //   }
+      //
+      //   var keys = d3.keys(data_exp[0]);
+      //   var csv = _(keys).map(function(d) { return '"' + addslashes(d) + '"'; }).join(",");
+      //
+      //   _(data).each(function(row) {
+      //     csv += "\n";
+      //     csv += _(keys).map(function(k) {
+      //       var val = row[k];
+      //       if (_.isString(val)) {
+      //         return '"' + addslashes(val) + '"';
+      //       }
+      //       if (_.isNumber(val)) {
+      //         return val;
+      //       }
+      //       if (_.isNull(val)) {
+      //         return "";
+      //       }
+      //     }).join(",");
+      //   });
+      //
+      //   if (!csv.match(/^data:text\/csv/i)) {
+      //       csv = 'data:text/csv;charset=utf-8,' + csv;
+      //   }
+      //   data_exp = encodeURI(csv);
+      //   filename = 'pareto.csv'
+      //
+      //   link = document.createElement('button');
+      //   link.setAttribute('href', data_exp);
+      //   link.setAttribute('download', filename);
+      //   link.click();
       // });
 
     };
+
+    // export selected
+    function downloadCSV(data) {
+      // export selected data to new csv and download
+      var filename, link;
+      data_exp = pc1.selected();
+
+      if (data_exp == null || !data_exp.length) {
+          throw new Error("No data selected.");
+          return;
+      }
+
+      var keys = d3.keys(data_exp[0]);
+      var csv = _(keys).map(function(d) { return '"' + addslashes(d) + '"'; }).join(",");
+
+      _(data).each(function(row) {
+        csv += "\n";
+        csv += _(keys).map(function(k) {
+          var val = row[k];
+          if (_.isString(val)) {
+            return '"' + addslashes(val) + '"';
+          }
+          if (_.isNumber(val)) {
+            return val;
+          }
+          if (_.isNull(val)) {
+            return "";
+          }
+        }).join(",");
+      });
+
+      if (!csv.match(/^data:text\/csv/i)) {
+          csv = 'data:text/csv;charset=utf-8,' + csv;
+      }
+      data_exp = encodeURI(csv);
+      filename = 'pareto.csv'
+
+      link = document.createElement('button');
+      link.setAttribute('href', data_exp);
+      link.setAttribute('download', filename);
+      link.click();
+    };
+
+    // cite Reed Group, David Gold
+    function addslashes( str ) {
+      return (str+'')
+        .replace(/\"/g, "\"\"")        // escape double quotes
+        .replace(/\0/g, "\\0");        // replace nulls with 0
+    };
+
+    // $('#export_selected').click(function() {
+    //   var data = dimensions.get('filtered');
+    //   var keys = _.keys(data[0]);
+    //   var csv = _(keys).map(function(d) { return '"' + addslashes(d) + '"'; }).join(",");
+    //   _(data).each(function(row) {
+    //     csv += "\n";
+    //     csv += _(keys).map(function(k) {
+    //       var val = row[k];
+    //       if (_.isString(val)) {
+    //         return '"' + addslashes(val) + '"';
+    //       }
+    //       if (_.isNumber(val)) {
+    //         return val;
+    //       }
+    //       if (_.isNull(val)) {
+    //         return "";
+    //       }
+    //     }).join(",");
+    //   });
+    //   var uriContent = "data:application/octet-stream," + encodeURIComponent(csv);
+    //   var myWindow = window.open(uriContent, "CSV");
+    //   myWindow.focus();
+    //   return false;
+    // });
 
 
     // CSV Uploader
