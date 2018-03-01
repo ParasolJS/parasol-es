@@ -58,11 +58,6 @@
     <input type="file" id="uploader">
     <button id="keep_selected">Keep</button>
     <button id="remove_selected">Remove</button>
-
-    <!-- <button href='#'
-      onclick='downloadCSV(data);'
-    >Export</button> -->
-
     <button href='#'id='export_selected'>Export</button>
 
 
@@ -70,7 +65,9 @@
     <button id="clear_selected">Clear Selections</button>
 
     <button id="axes_limits">Set Axes Limits</button>
-    <input type="select" id="cluster">Clustering</button>
+    <!-- <input type="select" id="cluster">Clustering</input> -->
+    <button id="cluster">Clustering</button>
+    <button id="explore">Explore Selection</button>
   </div>
   <div id="plots"></div>
   <div id="grid"></div>
@@ -416,6 +413,9 @@
             throw new Error("No data selected.");
             return;
         }
+
+        //remove id column
+        data_exp.forEach(function(d) { delete d.id; });
 
         // format data as csv
         var columns = d3.keys(data_exp[0]);

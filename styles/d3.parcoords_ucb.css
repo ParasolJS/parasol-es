@@ -7,7 +7,7 @@
 }
 .parcoords text.label {
   cursor: default;
-  /* NOTE: 
+  /* NOTE:
   text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff; (?) */
 }
 .parcoords rect.background:hover {
@@ -34,5 +34,6 @@
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  background-color: white;
+  /* background-color: white; */
+  background-color: #fcfcfc;
 }
