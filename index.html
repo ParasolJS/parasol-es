@@ -127,23 +127,32 @@
       var objective_vars = _.union(variables.slice(0, n_objs), [k_col], [id_col]);
       // var decision_vars = _.union(variables.slice(n_objs), [id_col])
       var decision_vars = _.difference(variables.slice(n_objs), [k_col]);
-      decision_vars = _.union(decision_vars, [id_col])
+      decision_vars = _.union(decision_vars, [id_col]);
 
+      // keep track of hidden vars
+      pc1_hidden = [];
+      pc2_hidden = [];
+
+      // don't want to write function inside function... see other implementation below
       function hide_var(axis) {
         console.log("went here");
         // TODO: enforce name cast as array
         if ( ! _.difference(axis, objective_vars).length) {
           // in objectives so we want to add it to decisions which are hidden
           // keep list of post-hidden
-          // decision_vars = _.union(decision_vars, axis);
+          pc1_hidden.push(axis[0]);
+          decision_vars = _.union(decision_vars, axis);
+          console.log(decision_vars);
           //pc1.dimensions(pc1.applyDimensionDefaults());
-          pc1.dimensions(d3.parcoords_ucb.without(pc1.dimensions, axis.value));
+          pc1.hideAxis(decision_vars);
+          console.log(pc1_hidden);
           console.log("objective");
         } else if ( ! _.difference(axis, decision_vars).length) {
           // in decisions so we want to add it to objectives which are hidden
           //objective_vars = _.union(objective_vars, [axis]);
           //pc2.dimensions(pc1.applyDimensionDefaults());
-          pc2.dimensions(d3.parcoords_ucb.without(pc1.dimensions, axis.value));
+          //pc2.dimensions(d3.parcoords_ucb.without(pc2.dimensions, axis.value));
+          console.log(pc2.hidden());
           console.log("decision");
         } else {
           // not in dataset
@@ -152,7 +161,7 @@
       };
 
       // function show_var(axis, data) {
-      //
+      // NOTE: can use applyDimensionDefaults to reset, then hide list of those still hidden
       // }
 
       // keep track of brushed data
@@ -165,15 +174,15 @@
 
       // objective space
       var pc1 = d3.parcoords()("#plot01")
-      .data(data)
-      .hideAxis(decision_vars)
-      .color(palette)
-      .height(200)
-      .alpha(0.4)
-      .mode("queue")
-      .render()
-      .shadows()
-      .reorderable()
+        .data(data)
+        .hideAxis(decision_vars)
+        .color(palette)
+        .height(200)
+        .alpha(0.4)
+        .mode("queue")
+        .render()
+        .shadows()
+        .reorderable()
         .brushMode("1D-axes")
         .on("brushend", function(brushed) {
 
@@ -360,6 +369,36 @@
         pc2.brushReset();
 
         gridUpdate(data);
+      });
+
+      // set axes limits / hide / show axis
+      d3.select('#axes_limits').on('click', function() {
+
+        var input = ["cluster"];
+
+        if ( ! _.difference(input, objective_vars).length) {
+          // in objectives so we want to add it to decisions which are hidden
+          // keep list of post-hidden
+          pc1_hidden.push(input[0]);
+          decision_vars = _.union(decision_vars, input);
+          console.log(decision_vars);
+          //pc1.dimensions(pc1.applyDimensionDefaults());
+
+          // not sure why this doesn't work like normal hideAxis...
+          pc1.hideAxis(decision_vars).render();
+          console.log(pc1_hidden);
+          console.log("objective");
+          //pc1.render();
+        } else if ( ! _.difference(input, decision_vars).length) {
+          // in decisions so we want to add it to objectives which are hidden
+          //pc2.hidden().push(input);
+          //objective_vars = _.union(objective_vars, [axis]);
+          //pc2.dimensions(pc1.applyDimensionDefaults());
+          //pc2.dimensions(d3.parcoords_ucb.without(pc2.dimensions, axis.value));
+          console.log(pc2.hidden());
+          console.log("decision");
+        }
+
       });
 
       // TEST: hide / show variable
