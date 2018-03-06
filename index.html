@@ -64,9 +64,11 @@
     <button id="brush_reset">Reset Brushes</button>
     <button id="clear_selected">Clear Selections</button>
 
+    <button id="show_axis">Show Clusters</button>
+    <button id="hide_axis">Hide Clusters</button>
     <button id="axes_limits">Set Axes Limits</button>
     <!-- <input type="select" id="cluster">Clustering</input> -->
-    <button id="cluster">Clustering</button>
+    <!-- <button id="cluster">Clustering</button> -->
     <button id="explore">Explore Selection</button>
   </div>
   <div id="plots"></div>
@@ -129,40 +131,13 @@
       var decision_vars = _.difference(variables.slice(n_objs), [k_col]);
       decision_vars = _.union(decision_vars, [id_col]);
 
+      console.log(d3.keys(data[0]));
+      console.log(objective_vars);
+      console.log(decision_vars);
+
       // keep track of hidden vars
       pc1_hidden = [];
       pc2_hidden = [];
-
-      // don't want to write function inside function... see other implementation below
-      function hide_var(axis) {
-        console.log("went here");
-        // TODO: enforce name cast as array
-        if ( ! _.difference(axis, objective_vars).length) {
-          // in objectives so we want to add it to decisions which are hidden
-          // keep list of post-hidden
-          pc1_hidden.push(axis[0]);
-          decision_vars = _.union(decision_vars, axis);
-          console.log(decision_vars);
-          //pc1.dimensions(pc1.applyDimensionDefaults());
-          pc1.hideAxis(decision_vars);
-          console.log(pc1_hidden);
-          console.log("objective");
-        } else if ( ! _.difference(axis, decision_vars).length) {
-          // in decisions so we want to add it to objectives which are hidden
-          //objective_vars = _.union(objective_vars, [axis]);
-          //pc2.dimensions(pc1.applyDimensionDefaults());
-          //pc2.dimensions(d3.parcoords_ucb.without(pc2.dimensions, axis.value));
-          console.log(pc2.hidden());
-          console.log("decision");
-        } else {
-          // not in dataset
-          throw new Error("Variable not found.");
-        }
-      };
-
-      // function show_var(axis, data) {
-      // NOTE: can use applyDimensionDefaults to reset, then hide list of those still hidden
-      // }
 
       // keep track of brushed data
       var brushed_pc1 = [];
@@ -170,7 +145,10 @@
       var isBrushed_pc1 = false;
       var isBrushed_pc2 = false;
 
+
+      // ---------------------
       // define parallel coordinates variables
+      // ---------------------
 
       // objective space
       var pc1 = d3.parcoords()("#plot01")
@@ -239,7 +217,10 @@
         });
 
 
-      // slick grid setup
+      // ---------------------
+      // slickgrid setup
+      // ---------------------
+
       var column_keys = d3.keys(data[0]).slice(0,-1); //remove id col
       var columns = column_keys.map(function(key,i) {
         return {
@@ -339,7 +320,6 @@
       // fill grid with data
       gridUpdate(data);
 
-
       function gridUpdate(data) {
         dataView.beginUpdate();
         dataView.setItems(data);
@@ -350,6 +330,11 @@
         }
         dataView.endUpdate();
       };
+
+
+      // ---------------------
+      // button functionality
+      // ---------------------
 
       // clear selections
       d3.select('#clear_selected').on('click', function() {
@@ -371,38 +356,84 @@
         gridUpdate(data);
       });
 
-      // set axes limits / hide / show axis
-      d3.select('#axes_limits').on('click', function() {
-
+      // hide axis
+      d3.select('#hide_axis').on('click', function() {
+        var found = false;
         var input = ["cluster"];
 
-        if ( ! _.difference(input, objective_vars).length) {
-          // in objectives so we want to add it to decisions which are hidden
-          // keep list of post-hidden
-          pc1_hidden.push(input[0]);
+        // NOTE: if we want to edit both plots at once, do it this way. if we only want to edit one at a time, do it as below
+        if ( ! _.difference(input, variables).length ) {
+          found = true;
+          // in objectives so add it to decisions which are hidden
+          // pc1_hidden.push(input[0]); // keep list of hidden
+          // pc2_hidden.push(input[0]); // keep list of hidden
+
           decision_vars = _.union(decision_vars, input);
-          console.log(decision_vars);
-          //pc1.dimensions(pc1.applyDimensionDefaults());
+          objective_vars = _.union(objective_vars, input);
 
-          // not sure why this doesn't work like normal hideAxis...
-          pc1.hideAxis(decision_vars).render();
-          console.log(pc1_hidden);
-          console.log("objective");
-          //pc1.render();
-        } else if ( ! _.difference(input, decision_vars).length) {
-          // in decisions so we want to add it to objectives which are hidden
-          //pc2.hidden().push(input);
-          //objective_vars = _.union(objective_vars, [axis]);
-          //pc2.dimensions(pc1.applyDimensionDefaults());
-          //pc2.dimensions(d3.parcoords_ucb.without(pc2.dimensions, axis.value));
-          console.log(pc2.hidden());
-          console.log("decision");
+          pc1.hideAxis(decision_vars);
+          pc1.render().updateAxes(500); // animationTime (ms)
+
+          pc2.hideAxis(objective_vars);
+          pc2.render().updateAxes(500); // animationTime (ms)
         }
-
+        // if ( ! _.difference(input, decision_vars).length ) {
+        //   found = true;
+        //   console.log(_.difference(input, decision_vars));
+        //   // in decisions so add it to objectives which are hidden
+        //   pc2_hidden.push(input[0]); // keep list of hidden
+        //   objective_vars = _.union(objective_vars, input);
+        //   console.log(objective_vars);
+        //   console.log(pc2_hidden);
+        //   pc2.hideAxis(objective_vars);
+        //   pc2.render().updateAxes(500); // animationTime (ms)
+        // }
+        if (found == false) {
+          // not in dataset
+          throw new Error("Variable not found.");
+        }
+        found = false;
       });
 
-      // TEST: hide / show variable
-      // hide_var(["cluster"]);
+      // show axis
+      d3.select('#show_axis').on('click', function() {
+        var found = false;
+        var input = ["cluster"];
+
+        // NOTE: we use a two separate if statments since it is possible that a variable like 'cluster' could be in both plots
+        if ( ! _.difference(input, decision_vars).length ) {
+          found = true;
+          // in hidden objectives so remove from decisions which are hidden
+          //pc1_hidden = _.difference(pc1_hidden, input); // remove from list
+          decision_vars = _.difference(decision_vars, input);
+          console.log(decision_vars);
+          //console.log(pc1_hidden);
+          pc1.hideAxis(decision_vars);
+          pc1.render().updateAxes(500); // animationTime (ms)
+        }
+        else if ( ! _.difference(input, objective_vars).length ) {
+          found = true;
+          // in hidden decisions so remove from objectives which are hidden
+          objective_vars = _.difference(objective_vars, input);
+          console.log(objective_vars);
+          pc2.hideAxis(objective_vars);
+          pc2.render().updateAxes(500); // animationTime (ms)
+        }
+        if (found == false) {
+          // not in dataset
+          throw new Error("Variable not hidden.");
+        }
+        found = false;
+      });
+
+      // set axis limits
+      d3.select('#axes_limits').on('click', function() {
+
+        // functions of interest
+        // getRange
+        // applyAxisConfig, and sub functions
+      });
+
 
       // keep selected
       d3.select('#keep_selected').on('click', function() {
