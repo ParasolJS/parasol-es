@@ -90,6 +90,10 @@
     // clustering library
     var kmeans = ML.Clust.kmeans;
 
+    // keep track of hidden vars between function calls
+    var pc1_hidden = [];
+    var pc2_hidden = [];
+
     function visualize(data, n_objs, k = 3) {
 
       // check that n_objs < length data - 1
@@ -125,19 +129,15 @@
       var id_col = "id"
       var k_col = "cluster";
 
-      // NOTE: hide clusters by default but allow user to display via button
-      var objective_vars = _.union(variables.slice(0, n_objs), [k_col], [id_col]);
-      // var decision_vars = _.union(variables.slice(n_objs), [id_col])
-      var decision_vars = _.difference(variables.slice(n_objs), [k_col]);
-      decision_vars = _.union(decision_vars, [id_col]);
+      // NOTE: show clusters by default in decision space
+      var objective_vars = _.union(variables.slice(0, n_objs), [id_col]);
+      var decision_vars = _.union(variables.slice(n_objs), [id_col]);
+      // var decision_vars = _.difference(variables.slice(n_objs), [k_col]);
+      // decision_vars = _.union(decision_vars, [id_col]);
 
-      console.log(d3.keys(data[0]));
-      console.log(objective_vars);
-      console.log(decision_vars);
-
-      // keep track of hidden vars
-      pc1_hidden = [];
-      pc2_hidden = [];
+      // include any already vars
+      objective_vars = _.union(objective_vars, pc2_hidden);
+      decision_vars = _.union(decision_vars, pc1_hidden);
 
       // keep track of brushed data
       var brushed_pc1 = [];
@@ -362,37 +362,46 @@
         var input = ["cluster"];
 
         // NOTE: if we want to edit both plots at once, do it this way. if we only want to edit one at a time, do it as below
-        if ( ! _.difference(input, variables).length ) {
+        if ( ! _.difference(input, objective_vars).length ) {
           found = true;
+          console.log(_.difference(input, objective_vars));
           // in objectives so add it to decisions which are hidden
-          // pc1_hidden.push(input[0]); // keep list of hidden
-          // pc2_hidden.push(input[0]); // keep list of hidden
-
+          pc1_hidden.push(input[0]); // keep list of hidden
           decision_vars = _.union(decision_vars, input);
-          objective_vars = _.union(objective_vars, input);
-
+          console.log(decision_vars);
+          console.log(pc1_hidden);
           pc1.hideAxis(decision_vars);
           pc1.render().updateAxes(500); // animationTime (ms)
-
+        }
+        else if ( ! _.difference(input, decision_vars).length ) {
+          found = true;
+          console.log(_.difference(input, decision_vars));
+          // in decisions so add it to objectives which are hidden
+          pc2_hidden.push(input[0]); // keep list of hidden
+          objective_vars = _.union(objective_vars, input);
+          console.log(objective_vars);
+          console.log(pc2_hidden);
           pc2.hideAxis(objective_vars);
           pc2.render().updateAxes(500); // animationTime (ms)
         }
-        // if ( ! _.difference(input, decision_vars).length ) {
-        //   found = true;
-        //   console.log(_.difference(input, decision_vars));
-        //   // in decisions so add it to objectives which are hidden
-        //   pc2_hidden.push(input[0]); // keep list of hidden
-        //   objective_vars = _.union(objective_vars, input);
-        //   console.log(objective_vars);
-        //   console.log(pc2_hidden);
-        //   pc2.hideAxis(objective_vars);
-        //   pc2.render().updateAxes(500); // animationTime (ms)
-        // }
         if (found == false) {
           // not in dataset
           throw new Error("Variable not found.");
         }
-        found = false;
+        else {
+          // make appropriate updates
+          if(brushed_pc1.length > 0) {
+            pc1.brushed(brushed_pc1);
+            pc2.brushed(brushed_pc2);
+          }
+
+          // deselect all elements in grid (fires event)
+          grid.setSelectedRows([]);
+          console.log("selected:", pc1.selected());
+
+          pc1.render();
+          pc2.render();
+        }
       });
 
       // show axis
@@ -401,21 +410,23 @@
         var input = ["cluster"];
 
         // NOTE: we use a two separate if statments since it is possible that a variable like 'cluster' could be in both plots
-        if ( ! _.difference(input, decision_vars).length ) {
+        if ( ! _.difference(input, pc1_hidden).length ) {
           found = true;
           // in hidden objectives so remove from decisions which are hidden
-          //pc1_hidden = _.difference(pc1_hidden, input); // remove from list
+          pc1_hidden = _.difference(pc1_hidden, input); // remove from list
           decision_vars = _.difference(decision_vars, input);
           console.log(decision_vars);
-          //console.log(pc1_hidden);
+          console.log(pc1_hidden);
           pc1.hideAxis(decision_vars);
           pc1.render().updateAxes(500); // animationTime (ms)
         }
-        else if ( ! _.difference(input, objective_vars).length ) {
+        else if ( ! _.difference(input, pc2_hidden).length ) {
           found = true;
           // in hidden decisions so remove from objectives which are hidden
+          pc2_hidden = _.difference(pc2_hidden)
           objective_vars = _.difference(objective_vars, input);
           console.log(objective_vars);
+          console.log(pc2_hidden);
           pc2.hideAxis(objective_vars);
           pc2.render().updateAxes(500); // animationTime (ms)
         }
@@ -423,7 +434,20 @@
           // not in dataset
           throw new Error("Variable not hidden.");
         }
-        found = false;
+        else {
+          // make appropriate updates
+          if(brushed_pc1.length > 0) {
+            pc1.brushed(brushed_pc1);
+            pc2.brushed(brushed_pc2);
+          }
+
+          // deselect all elements in grid (fires event)
+          grid.setSelectedRows([]);
+          console.log("selected:", pc1.selected());
+
+          pc1.render();
+          pc2.render();
+        }
       });
 
       // set axis limits
@@ -439,9 +463,9 @@
       d3.select('#keep_selected').on('click', function() {
         // delete all data not slected and do complete refresh
         // only need to look at one plot since selections are linked
-        var keep = pc1.selected() || pc1.brushed();
-        console.log(keep);
-        if (keep.length >= k ) {
+        console.log("before:", data.length);
+        data = _.union(pc1.selected(), pc1.brushed());
+        if (data.length >= k ) {
           // clear canvas layers
           $("div#plot01").html("");
           $("div#plot02").html("");
@@ -451,14 +475,17 @@
         } else {
           throw new Error("Not enough data selected to perform clustering.");
         }
+        console.log("after:", data.length);
       });
 
       // remove selected
       d3.select('#remove_selected').on('click', function() {
         console.log("before:", data.length);
-        // delete all selected data and do complete refresh
-        if (pc1.selected().length) {
-          data = _.difference(data, pc1.selected());
+        // delete all brushed data (unless selected) and do complete refresh
+        if (pc1.brushed().length) {
+          // NOTE: selected/brushed data equivalent between plots at this stage
+          var brushed_not_selected = _.difference(pc1.brushed(),    pc1.selected());
+          data = _.difference(data, brushed_not_selected);
           if (data.length >= k) {
             // clear canvas layers
             $("div#plot01").html("");
@@ -467,17 +494,23 @@
             // for complete reset, clusters will be recomputed
             visualize(data, n_objs = n_objs, k = k);
           }
-        } else {
-          throw new Error("Not enough data remaining to perform clustering.");
+          else {
+            throw new Error("Not enough data remaining to perform clustering.");
+          }
+        }
+        else {
+          throw new Error("No data chosen to remove.");
         }
         console.log("after:", data.length);
       });
 
       // export selected
       d3.select('#export_selected').on('click', function() {
-        // export selected data to new csv and download
         // TODO: decide on what to export
-        var data_exp = pc1.selected();
+        // export selected data to new csv and download
+        //var data_exp = pc1.selected();
+        // export all remaining data to new csv and download
+        var data_exp = data;
 
         if (data_exp == null || !data_exp.length) {
             throw new Error("No data selected.");
