@@ -1,5 +1,5 @@
-Product: para-mova
-Type: Package
+Product: ParaSol.js
+Type: Javascript Library
 Title: Interactive visualization tool for multi-objective optimization problems.
 Version: 1.0
 Date: 2018-01-20
