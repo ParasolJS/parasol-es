@@ -77,6 +77,8 @@
   <!-- Begin Script -->
   <script type="text/javascript">
 
+    // capture both plots in variable so both can be completely redone using
+    // keep and remove functionality
     var plot = `<h3>Objective Space</h3>
     <button id="svg01">Save Image</button>
     <div id="plot01" class="parcoords" style="height:200px; width=100%;"></div>
@@ -125,17 +127,22 @@
         return color_scheme(d['cluster']);
       };
 
-      var variables = d3.keys(data[0]).slice(0,-1); //remove id col
+      // setup objective and decision space
+      // remove id (and temporarily cluster) columns
+      var variables = d3.keys(data[0]).slice(0,-2);
+
       var id_col = "id"
       var k_col = "cluster";
 
       // NOTE: show clusters by default in decision space
-      var objective_vars = _.union(variables.slice(0, n_objs), [id_col]);
-      var decision_vars = _.union(variables.slice(n_objs), [id_col]);
+      var decision_vars = _.union(variables.slice(0, variables.length - n_objs));
+      var objective_vars = _.difference(variables, decision_vars);
+      decision_vars = _.union(decision_vars, [k_col], [id_col]);
+      objective_vars = _.union(objective_vars, [id_col]);
       // var decision_vars = _.difference(variables.slice(n_objs), [k_col]);
       // decision_vars = _.union(decision_vars, [id_col]);
 
-      // include any already vars
+      // include any already hidden vars (for recursive aspect of keep/remove)
       objective_vars = _.union(objective_vars, pc2_hidden);
       decision_vars = _.union(decision_vars, pc1_hidden);
 
@@ -361,7 +368,6 @@
         var found = false;
         var input = ["cluster"];
 
-        // NOTE: if we want to edit both plots at once, do it this way. if we only want to edit one at a time, do it as below
         if ( ! _.difference(input, objective_vars).length ) {
           found = true;
           console.log(_.difference(input, objective_vars));
@@ -394,7 +400,14 @@
             pc1.brushed(brushed_pc1);
             pc2.brushed(brushed_pc2);
           }
-
+          // if(pc1.selected().length > 0) {
+          //   pc1.deselect();
+          //   pc2.deselect();
+          //   selected_row_ids.forEach(function(i) {
+          //      pc1.select([d[i]]);
+          //      pc2.select([d[i]]);
+          //    });
+          // }
           // deselect all elements in grid (fires event)
           grid.setSelectedRows([]);
           console.log("selected:", pc1.selected());
@@ -409,7 +422,7 @@
         var found = false;
         var input = ["cluster"];
 
-        // NOTE: we use a two separate if statments since it is possible that a variable like 'cluster' could be in both plots
+        // NOTE: we use a two separate if-statments since it is possible that a variable like 'cluster' could be in both plots
         if ( ! _.difference(input, pc1_hidden).length ) {
           found = true;
           // in hidden objectives so remove from decisions which are hidden
@@ -440,7 +453,14 @@
             pc1.brushed(brushed_pc1);
             pc2.brushed(brushed_pc2);
           }
-
+          // if(pc1.selected().length > 0) {
+          //   pc1.deselect();
+          //   pc2.deselect();
+          //   selected_row_ids.forEach(function(i) {
+          //      pc1.select([d[i]]);
+          //      pc2.select([d[i]]);
+          //    });
+          // }
           // deselect all elements in grid (fires event)
           grid.setSelectedRows([]);
           console.log("selected:", pc1.selected());
@@ -504,7 +524,7 @@
         console.log("after:", data.length);
       });
 
-      // export selected
+      // export selected data
       d3.select('#export_selected').on('click', function() {
         // TODO: decide on what to export
         // export selected data to new csv and download
@@ -540,6 +560,30 @@
 
       });
 
+      // export images
+      d3.select('#svg01').on('click', function() {
+        var callback = function (canvas) {
+            // Download the image
+            var download = document.createElement("a");
+            download.href = canvas.toDataURL("image/png");
+            download.download = "objective-space.png";
+            document.body.appendChild(download); // Required for FF
+            download.click();
+        };
+        pc1.mergeParcoords(callback);
+      });
+      d3.select('#svg02').on('click', function() {
+        var callback = function (canvas) {
+            // Download the image
+            var download = document.createElement("a");
+            download.href = canvas.toDataURL("image/png");
+            download.download = "decision-space.png";
+            document.body.appendChild(download); // Required for FF
+            download.click();
+        };
+        pc2.mergeParcoords(callback);
+      });
+
     };
 
 
@@ -557,7 +601,7 @@
       });
 
       // // visualize data with default to 3 clusters
-      visualize(data, n_objs = 3, k = 3);
+      visualize(data, n_objs = 4, k = 3);
 
       // remove uploader button, since re-initializing doesn't work
       uploader.parentNode.removeChild(uploader);
