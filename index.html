@@ -18,6 +18,7 @@
   <script type="text/javascript" src="src/underscore.js"></script>
   <script type="text/javascript" src="src/divgrid.js"></script>
   <script type="text/javascript" src="src/ml.min.js"></script>
+  <script type="text/javascript" src="src/FileSaver.js"></script>
   <script type="text/javascript" src="src/colorbrewer.js"></script>
 
   <!-- SlickGrid -->
@@ -69,7 +70,7 @@
     <button id="axes_limits">Set Axes Limits</button>
     <!-- <input type="select" id="cluster">Clustering</input> -->
     <!-- <button id="cluster">Clustering</button> -->
-    <button id="explore">Explore Selection</button>
+    <button id="explore">Explore Selections</button>
   </div>
   <div id="plots"></div>
   <div id="grid"></div>
@@ -79,9 +80,19 @@
 
     // capture both plots in variable so both can be completely redone using
     // keep and remove functionality
+    // var plot = `<h3>Objective Space</h3>
+    // <button id="svg01">Save Image</button>
+    // <div id="plot01" class="parcoords" style="height:200px; width=100%;"></div>
+    //
+    // <h3>Decision Space</h3>
+    // <button id="svg02">Save Image</button>
+    // <div id="plot02" class="parcoords" style="height:200px; width=100%;"></div>
+    // `
+    // $("div#plots").html(plot);
     var plot = `<h3>Objective Space</h3>
     <button id="svg01">Save Image</button>
-    <div id="plot01" class="parcoords" style="height:200px; width=100%;"></div>
+    <div id="plot01" class="parcoords" style="height:200px; display:inline-block"></div>
+    <div id="arrow" style="height:200px;display:inline-block; width: 10%"> </div>
 
     <h3>Decision Space</h3>
     <button id="svg02">Save Image</button>
@@ -114,7 +125,7 @@
       var km = kmeans(clust_form, k);
       data.forEach(function(d,i) { d.cluster = km.clusters[i]; });
 
-      // slickgrid needs each data element to have an id
+      // assign each data element an ID for slickgrid and other analysis
       data.forEach(function(d,i) { d.id = d.id || i; });
 
       // choose default catagorical color scheme
@@ -133,8 +144,9 @@
 
       var id_col = "id"
       var k_col = "cluster";
+      // NOTE: place clusters in decision space, but hide by default
+      pc2_hidden.push(k_col)
 
-      // NOTE: show clusters by default in decision space
       var decision_vars = _.union(variables.slice(0, variables.length - n_objs));
       var objective_vars = _.difference(variables, decision_vars);
       decision_vars = _.union(decision_vars, [k_col], [id_col]);
@@ -228,7 +240,10 @@
       // slickgrid setup
       // ---------------------
 
-      var column_keys = d3.keys(data[0]).slice(0,-1); //remove id col
+      //remove id col from left and place on right
+      var column_keys = d3.keys(data[0]).slice(0,-1);
+      column_keys.unshift(d3.keys(data[0]).pop());
+
       var columns = column_keys.map(function(key,i) {
         return {
           id: key,
@@ -250,6 +265,7 @@
       var checkboxSelector = new Slick.CheckboxSelectColumn({
         cssClass: "slick-cell-checkboxsel"
       });
+      // add checkboxes to left grid
       columns.unshift(checkboxSelector.getColumnDefinition());
 
       var dataView = new Slick.Data.DataView();
@@ -437,7 +453,7 @@
         else if ( ! _.difference(input, pc2_hidden).length ) {
           found = true;
           // in hidden decisions so remove from objectives which are hidden
-          pc2_hidden = _.difference(pc2_hidden)
+          pc2_hidden = _.difference(pc2_hidden, input); // remove from list
           objective_vars = _.difference(objective_vars, input);
           console.log(objective_vars);
           console.log(pc2_hidden);
@@ -528,9 +544,10 @@
 
       // export selected data
       d3.select('#export_selected').on('click', function() {
-        // TODO: decide on what to export
+        // NOTE: create GUI so user can choose between brushed, selected, both
+
         // export selected data to new csv and download
-        //var data_exp = pc1.selected();
+
         // export all remaining data to new csv and download
         var data_exp = data;
 
@@ -548,17 +565,18 @@
 
         // create url for download
         var file = new Blob([csv], {type: 'text/csv'});
-        var url = URL.createObjectURL(file);
-        console.log(url);
-
-        // create hidden DOM element
-        var filename = 'pareto_solutions.csv'
-        var link = document.createElement('a');
-        console.log(link);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        document.body.appendChild(link); // Required for FF
-        link.click();
+        // var url = URL.createObjectURL(file);
+        // console.log(url);
+        //
+        // // create hidden DOM element
+        // var filename = 'pareto_solutions.csv'
+        // var link = document.createElement('a');
+        // console.log(link);
+        // link.setAttribute('href', url);
+        // link.setAttribute('download', filename);
+        // document.body.appendChild(link); // Required for FF
+        // link.click();
+        saveAs(file, "pareto_solutions.csv");
 
       });
 
@@ -586,10 +604,24 @@
         pc2.mergeParcoords(callback);
       });
 
+      // explore selected solutions
+      d3.select('#explore').on('click', function() {
+        // collect selected solution IDs in array
+        var selected_solutions = [];
+        pc1.selected().forEach(function(d){
+          selected_solutions.push(d.id)
+        });
+        console.log(selected_solutions);
+      });
+
+
+    // end of visualize() function
     };
 
 
+    // ---------------------
     // CSV Uploader
+    // ---------------------
     var uploader = document.getElementById("uploader");
     var reader = new FileReader();
 
