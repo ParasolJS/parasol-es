@@ -80,25 +80,25 @@
 
     // capture both plots in variable so both can be completely redone using
     // keep and remove functionality
-    // var plot = `<h3>Objective Space</h3>
-    // <button id="svg01">Save Image</button>
-    // <div id="plot01" class="parcoords" style="height:200px; width=100%;"></div>
-    //
-    // <h3>Decision Space</h3>
-    // <button id="svg02">Save Image</button>
-    // <div id="plot02" class="parcoords" style="height:200px; width=100%;"></div>
-    // `
-    // $("div#plots").html(plot);
     var plot = `<h3>Objective Space</h3>
     <button id="svg01">Save Image</button>
-    <div id="plot01" class="parcoords" style="height:200px; display:inline-block"></div>
-    <div id="arrow" style="height:200px;display:inline-block; width: 10%"> </div>
+    <div id="plot01" class="parcoords" style="height:200px; width=100%;"></div>
 
     <h3>Decision Space</h3>
     <button id="svg02">Save Image</button>
     <div id="plot02" class="parcoords" style="height:200px; width=100%;"></div>
     `
     $("div#plots").html(plot);
+    // var plot = `<h3>Objective Space</h3>
+    // <button id="svg01">Save Image</button>
+    // <div id="plot01" class="parcoords" style="height:200px; display:inline-block"></div>
+    // <div id="arrow" style="height:200px;display:inline-block; width: 10%"> </div>
+    //
+    // <h3>Decision Space</h3>
+    // <button id="svg02">Save Image</button>
+    // <div id="plot02" class="parcoords" style="height:200px; width=100%;"></div>
+    // `
+    // $("div#plots").html(plot);
 
     // clustering library
     var kmeans = ML.Clust.kmeans;
@@ -634,8 +634,8 @@
         delete car.year;
       });
 
-      // // visualize data with default to 3 clusters
-      visualize(data, n_objs = 4, k = 3);
+      // visualize data with default to 3 clusters
+      visualize(data, n_objs = 3, k = 4);
 
       // remove uploader button, since re-initializing doesn't work
       uploader.parentNode.removeChild(uploader);
