@@ -42,6 +42,10 @@ Currently, only .csv file uploads are supported. In the future, this may extend 
 The current csv uploader functions as a button and is the first thing the user sees when opening the app. They must click the button and select a csv file from their directory before the plots and grid can be produced. Once a file is selected, the app enters the `visualize` function which drives the interactive capabilities, and the uploader is removed.
 
 ```javascript
+// create button
+<input type="file" id="uploader">
+```
+```javascript
 var uploader = document.getElementById("uploader");
 var reader = new FileReader();
 
@@ -144,14 +148,26 @@ visualize(data, num_objectives)
 ### Linked brushing <a name="brushing"></a>
 Coming soon.
 
+##### Current implementation details
+##### Proposed library api
+
 #### Reset brushes <a name="brush-reset"></a>
 Coming soon.
+
+##### Current implementation details
+##### Proposed library api
 
 ### Marking <a name="markings"></a>
 Coming soon.
 
+##### Current implementation details
+##### Proposed library api
+
 #### Clear markings <a name="clear-marking"></a>
 Coming soon.
+
+##### Current implementation details
+##### Proposed library api
 
 ### Reorderable axes <a name="reorder-axes"></a>
 The reorderable axes functionality is not a novel feature of this project. It is completely implemented in Kai Chang's _parallel-coordinates_ library. Even still, it is included as a feature due to its significance for _parasol_. Whether implemented as a web-application or library, it is critical that the user have the ability to interact with axes of the produced plots in order to overcome the bias of the static relationships between variables. The implementation is simple, one need only extend the plotting variables as follows:
@@ -167,17 +183,82 @@ var pc1 = d3.parcoords()("#plot01")
 ### Hide and Show axis <a name="hide-show"></a>
 Coming soon.
 
+##### Current implementation details
+##### Proposed library api
+
 ### Set axes limits <a name="axes-limits"></a>
 Coming soon.
 
+##### Proposed library api
+
 ### Keep and Remove selection <a name="keep-remove"></a>
-Coming soon.
+One of the primary methods for quickly identifying relevant solutions is the ability to narrow down the set of visualized data by removing unnecessary data or keeping only a small subset of relevant data.
+
+**Note:** There are three possible fields of data the user may seek to keep (or remove): brushed data, marked data, or the union of both. The current
+
+##### Current implementation details
+This feature pair is currently implemented with buttons which we create at the begining of the script in the widgets div.
+```javascript
+<button id="keep_selected">Keep</button>
+<button id="remove_selected">Remove</button>
+```
+
+##### Proposed library api
 
 ### Export selection as csv <a name="export"></a>
-Coming soon.
+Once the user has identified a set of relevant solutions, they will likely require the access to the solution data for further analysis. Currently, the user can download the data as a csv file, and in future development other formats may be possilbe.
+
+**Note:** There are three possilbe fields of data the user may seek to extract: brushed, marked, or all remaining data. The current default is to export all data since this option is the most intuitive for a one-click button. In a library implementation, it will be straightforward to provide a choice.
+
+
+##### Current implementation details
+The export feature is currently implemented as a button. We must create that at the beginning of the script, inside the widgets div.
+
+```javascript
+// create button
+<button href='#'id='export_selected'>Export</button>
+```
+
+Once clicked, we begin by noting the data field to export and checking that the chosen field in not empty. We strip the irrelevant row id information and use the _d3_ library to format the data as a csv. We create a blob (JavaScript data type) from this csv data and use the `saveAs` function in the _FileSaver_ library to build and initiate the download.
+```javascript
+d3.select('#export_selected').on('click', function() {
+
+  // export all remaining data to new csv and download
+  var data_exp = data;
+
+  if (data_exp == null || !data_exp.length) {
+      throw new Error("No data selected.");
+      return;
+  }
+
+  //remove id column
+  data_exp.forEach(function(d) { delete d.id; });
+
+  // format data as csv
+  var columns = d3.keys(data_exp[0]);
+  var csv = d3.csvFormat(data_exp, columns);
+
+  // create url for download
+  var file = new Blob([csv], {type: 'text/csv'});
+  saveAs(file, "pareto_solutions.csv");
+
+});
+```
+##### Proposed library api
+The export feature should be a standalone function. The user will specify the following:
+- group: {"brushed", "marked", "all"} the data field to be exported
+- filename: file name with file type extension
+
+The default implementation is provided below.
+
+```javascript
+parasol.export(data, group="all", filename="pareto_solutions.csv")
+```
 
 ### Explore selection <a name="explore"></a>
 Coming soon.
+
+##### Proposed library api
 
 ## Discussion <a name="discussion"></a>
 Coming soon.
