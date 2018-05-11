@@ -194,7 +194,7 @@ Coming soon.
 ### Keep and Remove selection <a name="keep-remove"></a>
 One of the primary methods for quickly identifying relevant solutions is the ability to narrow down the set of visualized data by removing unnecessary data or keeping only a small subset of relevant data.
 
-**Note:** There are three possible fields of data the user may seek to keep (or remove): brushed data, marked data, or the union of both. The current
+**Note:** There are three possible fields of data the user may seek to keep (or remove): brushed data, marked data, or the union of both. For the `keep` feature, the current default is to keep only the union of the brushed and marked data. For the `remove` feature, the current default is to remove all brushed data that is not marked.
 
 ##### Current implementation details
 This feature pair is currently implemented with buttons which we create at the begining of the script in the widgets div.
@@ -202,8 +202,76 @@ This feature pair is currently implemented with buttons which we create at the b
 <button id="keep_selected">Keep</button>
 <button id="remove_selected">Remove</button>
 ```
+The critical detail for these features is that the entire plotting div is stored in a single variable so that it can be referenced with the _jQuery_ library when we need to reinitialize the plots with reduced data.
+
+```javascript
+// capture both plots in variable so both can be completely
+// redone using keep and remove functionality
+var plot = `<h3>Objective Space</h3>
+<button id="svg01">Save Image</button>
+<div id="plot01" class="parcoords" style="height:200px; width=100%;"></div>
+
+<h3>Decision Space</h3>
+<button id="svg02">Save Image</button>
+<div id="plot02" class="parcoords" style="height:200px; width=100%;"></div>
+`
+// initialize plot
+$("div#plots").html(plot);
+```
+Once clicked, both features build a new data variable based on the chosen region, and check that it is not empty. The plot variable is then referenced and cleared using _jQuery_ and then reassigned by a call to the main `visualize` function with the new data variable as an argument. Clearing the plot canvas is necessary so that plots do not overlap upon reassignment.
+
+**Note:** Clusters are recomputed in the process of plotting the reduced data.
+
+The current implementation of `keep` is as follows:
+```javascript
+d3.select('#keep_selected').on('click', function() {
+  // delete all data not slected and do complete refresh
+  // NOTE: selected/brushed data equivalent between plots at this stage
+  data = _.union(pc1.selected(), pc1.brushed());
+  if (data.length >= k ) {
+    // clear canvas layers
+    $("div#plot01").html("");
+    $("div#plot02").html("");
+    $("div#plot").html(plot);
+    // for complete reset, clusters will be recomputed
+    visualize(data, n_objs = n_objs, k = k);
+  } else {
+    throw new Error("Not enough data selected to perform clustering.");
+  }
+});
+```
+Similarly, `remove` is handled as follows:
+```javascript
+d3.select('#remove_selected').on('click', function() {
+  // delete all brushed data (unless selected) and do complete refresh
+  if (pc1.brushed().length) {
+    // NOTE: selected/brushed data equivalent between plots at this stage
+    var brushed_not_selected = _.difference(pc1.brushed(), pc1.selected());
+    data = _.difference(data, brushed_not_selected);
+    if (data.length >= k) {
+      // clear canvas layers
+      $("div#plot01").html("");
+      $("div#plot02").html("");
+      $("div#plot").html(plot);
+      // for complete reset, clusters will be recomputed
+      visualize(data, n_objs = n_objs, k = k);
+    }
+    else {
+      throw new Error("Not enough data remaining to perform clustering.");
+    }
+  }
+  else {
+    throw new Error("No data chosen to remove.");
+  }
+});
+```
 
 ##### Proposed library api
+Because this pair of features requires the user to have made selections, it is inherently interactive. It is then intuitive that even in a library implementation, these features would be set up as a GUI in which the user checks boxes to either keep or remove brushed and/or marked data. Still, the library function to include this GUI should be as straightforward as possible. We propose the following:
+```javascript
+parasol.reduce()
+```
+This function will append a button GUI to the interface built by the user.
 
 ### Export selection as csv <a name="export"></a>
 Once the user has identified a set of relevant solutions, they will likely require the access to the solution data for further analysis. Currently, the user can download the data as a csv file, and in future development other formats may be possilbe.
