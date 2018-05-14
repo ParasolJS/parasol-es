@@ -130,7 +130,7 @@ Default: Clusters hidden on import.
 ![no_cluser](images/no_cluster.png)
 
 After cluster axis selected in [Hide and Show axes](#hide-show).
-![no_cluser](images/cluster.png)
+![cluser](images/cluster.png)
 
 ##### Proposed library API
 Clustering functionality should be an extension of the main `visualize` function. The user will specify the following:
@@ -158,16 +158,190 @@ Coming soon.
 ##### Proposed library api
 
 ### Marking <a name="markings"></a>
-Coming soon.
+Marking is a key feature in many visualization tools. It allows the user to view individual solution data and permanently highlight solutions of interest. See the image below for an example.
+
+![no_cluser](images/markings.png)
 
 ##### Current implementation details
+Marking is currently implemented under the terminology "selections." This is because, similar to brushed data, markings are handled in their own canvas layer. In the stock version of the _parallel-coordinates_ library, there already exits a _marks_ layer which may have been included with plans for this feature in mind. However, to avoid potential conflict, we have temporarily chosen to call this layer _selections_ as shown below. We will soon attempt to use the _marks_ layer alone however.
+
+```javascript
+var pc = function(selection) {
+  selection = pc.selection = d3.select(selection);
+
+  __.width = selection[0][0].clientWidth;
+  __.height = selection[0][0].clientHeight;
+
+  // canvas data layers
+  ["marks", "foreground", "brushed", "highlight", "selections"]
+  .forEach(function(layer) {
+    canvas[layer] = selection
+      .append("canvas")
+      .attr("class", layer)[0][0];
+    ctx[layer] = canvas[layer].getContext("2d");
+  });
+
+  // svg tick and brush layers
+  pc.svg = selection
+    .append("svg")
+      .attr("width", __.width)
+      .attr("height", __.height)
+      .style("font", "14px sans-serif")
+      .style("position", "absolute")
+
+    .append("svg:g")
+      .attr("transform", "translate(" + __.margin.left +
+      "," + __.margin.top + ")");
+
+  return pc;
+};
+```
+The other key edit to the _parallel-coordinates_ library involves styling the _selections_ layer. In the CSS stylesheet, we add a _dimmed_ state to the canvas layer options as follows (file: d3.parcoords_ucb.css):
+```javascript
+/* custom "dimmed" class for selections layer */
+.parcoords canvas.dimmed {
+  opacity: 0.85;
+}
+```
+This is applied to the foreground and brushed layers when selections exist to increase contrast between layers, making the selections more prominent. This design aspect is handled in the custom `select` and `deselect` functions we've added to the _parallel-coordinates_ library (file: d3.parcoords_ucb.js):
+```javascript
+// select an array of data
+pc.select = function(data) {
+  if (arguments.length === 0) {
+    return __.selected;
+  }
+
+  // add row to already selected data
+  __.selected = _.union( __.selected, data);
+  data.forEach(path_selections);
+  d3.selectAll([canvas.foreground, canvas.brushed]).classed("dimmed", true);
+  return this;
+};
+
+// clear selections layer
+pc.deselect = function() {
+  __.selected = [];
+  pc.clear("selections");
+  d3.selectAll([canvas.foreground, canvas.brushed]).classed("dimmed", false);
+  return this;
+};
+```
+
+Wrapping this feature into _parasol_ involves a few more additions to the _parallel-coordinates_ library. These are listed below (file: parcoords_ucb.js):
+- add the array element _selected_ to the `d3.parcoords` function
+- add default styles to selections layer:
+```javascript
+ctx.selections.lineWidth = 3;
+ctx.selections.shadowColor = "#ffffff";
+ctx.selections.shadowBlur = 10;
+ctx.selections.scale(devicePixelRatio, devicePixelRatio);
+```
+- create renderSelections function
+```javascript
+pc.renderSelections = function() {
+  if (!d3.keys(__.dimensions).length) pc.detectDimensions();
+
+  events.render.call(this);
+  return this;
+};
+```
+  - default
+  ```javascript
+  pc.renderSelections.default = function() {
+    pc.clear('selections');
+
+    if (__.selected.length) {
+      __.selected.forEach(path_selections);
+    }
+  };
+  ```
+  - selectedQueue
+
+    ```javascript
+    var selectedQueue = d3.renderQueue(path_selections)
+      .rate(50)
+      .clear(function() {
+        pc.clear('selections');
+      })
+
+    pc.renderSelections.queue = function() {
+      if (__.selected.length) {
+        selectedQueue(__.selected);
+      } else {
+        selectedQueue([]);
+        // This is needed to clear the currently selected items
+      }
+    };
+    ```
+- path function
+```javascript
+function path_selections(d, i) {
+  ctx.selections.strokeStyle = d3.functor(__.color)(d, i);
+	return color_path(d, ctx.selections);
+};
+```
+
+**Note:** The exact construction details of this functionality parallel the _highlighting_ feature, with the exception of the rendering component which parallels _brushing_. That is, for line-for-line implementation detail, simply search the terms "highlight" and "renderBrushed" in the parcoords_ucb.js file, and the additions for _selections_ can be found and traced in this way.
+
+Now that we have added _selections_ capability to the _parallel-coordinates_ library, we can include this feature in _parasol_. A selection is made when the user clicks the checkbox for a row in the data grid. This calls the `pc.select' function which increases line thickness and contrast. In the future, we plan to give the user the freedom to assign a new color to the selection as well. We include this checkbox functionality as follows:
+```javascript
+var checkboxSelector = new Slick.CheckboxSelectColumn({
+  cssClass: "slick-cell-checkboxsel"
+});
+// add checkboxes to left grid
+columns.unshift(checkboxSelector.getColumnDefinition());
+
+var dataView = new Slick.Data.DataView();
+var grid = new Slick.Grid("#grid", dataView, columns, options);
+grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
+grid.registerPlugin(checkboxSelector);
+
+
+// keep checkboxes matched with row on filter/brush
+dataView.syncGridSelection(grid, preserveHidden=false);
+```
+When a selection is added or removed, the following code registers the change and updates the grid and plots as necessary. Note that we assess whether brushed data exists as an extra measure of security, ensuring that nothing outside of the brush extents will be selected.
+```javascript
+grid.onSelectedRowsChanged.subscribe(function (e, args) {
+  // reset and update selected rows
+  var selected_row_ids = grid.getSelectedRows();
+  var brush_union = _.union(pc1.brushed(), pc2.brushed());
+  var d;
+  if (brush_union.length) {
+    d = brush_union;
+  } else {
+    d = data;
+  }
+  pc1.deselect();
+  pc2.deselect();
+  selected_row_ids.forEach(function(i) {
+     pc1.select([d[i]]);
+     pc2.select([d[i]]);
+   });
+});
+
+// fill grid with data
+gridUpdate(data);
+```
+
 ##### Proposed library api
+Marking functionality is an integral aspect of _parasol_ and will be included by default. Because it is inherently interactive, it will not be a function. Instead, when a user calls the main `visualize` function they will automatically be able to preform interactive marking. An exception may need to be made in order to allow the user to specify the marking color however.
 
 #### Clear markings <a name="clear-marking"></a>
-Coming soon.
+While markings can be cleared on an individual basis, we find that it is also convenient to have a method for clearing all markings instantly. This very straightforward since all we need to do is deselect all rows. This is implemented with a button click as follows:
+```javascript
+<button id="clear_selected">Clear Selections</button>
 
-##### Current implementation details
-##### Proposed library api
+d3.select('#clear_selected').on('click', function() {
+  // deselect all elements in grid (fires event)
+  grid.setSelectedRows([]);
+});
+```
+
+In a library implementation, this should be as simple as
+```javascript
+parasol.clearMarkings()
+```
 
 ### Reorderable axes <a name="reorder-axes"></a>
 The reorderable axes functionality is not a novel feature of this project. It is completely implemented in Kai Chang's _parallel-coordinates_ library. Even still, it is included as a feature due to its significance for _parasol_. Whether implemented as a web-application or library, it is critical that the user have the ability to interact with axes of the produced plots in order to overcome the bias of the static relationships between variables. The implementation is simple, one need only extend the plotting variables as follows:
