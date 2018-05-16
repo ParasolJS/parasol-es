@@ -6,7 +6,7 @@ Civil, Environmental and Architectural Engineering Dept.
 University of Colorado Boulder
 **[josephkasprzyk.wordpress.com](https://josephkasprzyk.wordpress.com/group)**
 
-Last updated: May 8, 2018
+Last updated: May 16, 2018
 
 # Table of contents
 - [Introduction](#introduction)
@@ -23,10 +23,8 @@ Last updated: May 8, 2018
     - [Keep and Remove selection](#keep-remove)
     - [Export selection as csv](#export)
     - [Explore selection](#explore)
-- [Discussion](#discussion)
 
 ## Introduction <a name="introduction"></a>
-
 _parasol_ is a new tool providing interactive visualization and statistical analysis methods for multiobjective optimization problems. _parasol_ is built on D3.js, a JavaScript library for data-driven documents, and the associated parallel coordinates library, d3.parcoords.js. This document describes the current state of _parasol_ as a web-application and provides a comprehensive outline of the mechanics of each feature, including an overview of all associated code and intended functionality.
 
 As a web-application, _parasol_ serves as an approachable and streamlined tool for decision makers to explore many-objective optimizations. However, as a Javascript library, _parasol_ could provide the same functionality in a more versatile manner. Therefore, in addition to describing the functionality of _parasol_, the relevance of each feature to a library implementation and potential course for transition are additionally addressed throughout.
@@ -141,26 +139,161 @@ Clustering functionality should be an extension of the main `visualize` function
 Defaults are listed below.
 
 ```javascript
-visualize(data, num_objectives)
+visualize(data)
   .cluster(k = 3, type="k-means", group="both")
 ```
 
 ### Linked brushing <a name="brushing"></a>
-Coming soon.
+Brushing is the primary tool for exploring solution subsets and refining the set of relevant data. The user simply drags the cursor over an axis range they are interested in, and all data outside the brush extents fade into the background &mdash though they remain slightly visible to maintain a frame of reference. This feature has been implemented in many visualization tools, and especially well in the _parallel-coordinates_ library. The novel contribution made by _parasol_ is that brushes can be linked between a pair of parallel coordinate plots. That is, if the data columns are split between two plots, as is often done in multiobjective optimization when representing decision and objective spaces, applying a brush to one plot will also update the other plot with the corresponding data. See the image below for reference. If a grid is present, it will also be updated to display only data within all brush extents.
+
+Here a brush is applied to the economy axis in the decision space and the objective space is updated accordingly.
+![brushes](images/brushes.png)
 
 ##### Current implementation details
+Setting up the linked plots is currently achieved in a library-app hybrid method. In the call to the main `vizualize` function, the app developer specifies the last n columns that represent objective variables with _n_objs_:
+```javascript
+visualize(data, n_objs = 3, k = 4);
+```
+Within the `visualize` function, we set up the objective and decision spaces as shown below. Note that "hidden" variables refer to functionality described in the [Hide and show axes](#hide-show) section.
+```javascript
+// capture variable names
+var variables = d3.keys(data[0]).slice(0,-2);
+
+var id_col = "id"
+var k_col = "cluster";
+// NOTE: place clusters in decision space, but hide by default
+pc2_hidden.push(k_col)
+
+var decision_vars = _.union(variables.slice(0, variables.length - n_objs));
+var objective_vars = _.difference(variables, decision_vars);
+decision_vars = _.union(decision_vars, [k_col], [id_col]);
+objective_vars = _.union(objective_vars, [id_col]);
+
+// include any already hidden vars (for recursive aspect of keep/remove)
+objective_vars = _.union(objective_vars, pc2_hidden);
+decision_vars = _.union(decision_vars, pc1_hidden);
+```
+We then set up functionally-global variables to keep track of data between brushes:
+```javascript
+// keep track of brushed data
+var brushed_pc1 = [];
+var brushed_pc2 = [];
+var isBrushed_pc1 = false;
+var isBrushed_pc2 = false;
+```
+The linked brushing functionality is then completely implemented in the process of building the plotting variables. With the exception of plot number, the code is the same for both variables, though we include both for clarity.
+```javascript
+// objective space
+var pc1 = d3.parcoords()("#plot01")
+  .data(data)
+  .hideAxis(decision_vars)
+  .color(palette)
+  .height(200)
+  .alpha(0.4)
+  .mode("queue")
+  .render()
+  .shadows()
+  .reorderable()
+  .brushMode("1D-axes")
+  .on("brushend", function(brushed) {
+
+    if (isBrushed_pc2) {
+      // pc2 has brushes, keep only the intersection of arrays
+      brushed_pc2 = _.intersection(brushed_pc2, brushed);
+    } else {
+      brushed_pc2 = brushed;
+    }
+
+    brushed_pc1 = brushed_pc2;
+    isBrushed_pc1 = true;
+
+    pc2.brushed(brushed_pc2);
+    pc2.render();
+
+    pc1.brushed(brushed_pc1);
+    pc1.render();
+
+    gridUpdate(brushed_pc2);
+  });
+
+// decision space
+var pc2 = d3.parcoords()("#plot02")
+  .data(data)
+  .hideAxis(objective_vars)
+  .color(palette)
+  .height(200)
+  .alpha(0.4)
+  .mode("queue")
+  .render()
+  .shadows()
+  .reorderable()
+  .brushMode("1D-axes")
+  .on("brushend", function(brushed) {
+
+    if (isBrushed_pc1) {
+      // pc1 has brushes, keep only the intersection of arrays
+      brushed_pc1 = _.intersection(brushed_pc1, brushed);
+    } else {
+      brushed_pc1 = brushed;
+    }
+
+    brushed_pc2 = brushed_pc1;
+    isBrushed_pc2 = true;
+
+    pc2.brushed(brushed_pc1);
+    pc2.render();
+
+    pc1.brushed(brushed_pc2);
+    pc1.render();
+
+    gridUpdate(brushed_pc1);
+  });
+```
+Above we define a new function that is called after user has defined brush extents by dragging their cursor along an axis. The argument of this function is then all data that lies within these extents alone. This data is matched with the functionally-global variables and each plotting variable is update with the new data accordingly. Because the funtion is essentially the same for both plotting variables, it lends itself to a straightforward library implementation.
+
+Currently, only one brush is allowed per axis. In the future, we hope to allow for the use of multiple brush extents using _d3.multibrush_, though this adds a lot more complexity to a linked plot implementation.
+
 ##### Proposed library api
+Linked brushing functionality should be an extension of the main `visualize` function. The user will specify the following:
+- num_objectives: last n columns that represent objective variables
+- brushMode: {"1D-axes", "1D-axes-multi"} one brush per axis or multiple
+
+Defaults are listed below.
+```javascript
+visualize(data)
+  .linked(num_objectives, brushMode="1D-axes")
+```
 
 #### Reset brushes <a name="brush-reset"></a>
-Coming soon.
+While brushes can be cleared on an individual basis by just clicking the respective axis outside of the extents, we find that it is also convenient to have a method for clearing them all simultaneously. This very straightforward since there is already a function `brushReset()` in the _parallel-coordinates_ library. In addition to calling this function on both plot variables, we need only clear the functionally-global variables and restore the grid. This is implemented with a button click as follows:
+```javascript
+// create button
+<button id="brush_reset">Reset Brushes</button>
 
-##### Current implementation details
-##### Proposed library api
+// reset brushes
+d3.select('#brush_reset').on('click', function() {
+  // reset global vars
+  brushed_pc1 = [];
+  brushed_pc2 = [];
+  isBrushed_pc1 = false;
+  isBrushed_pc2 = false;
+
+  pc1.brushReset();
+  pc2.brushReset();
+
+  gridUpdate(data);
+});
+```
+
+In a library implementation, we would carry the over the intuitive terminology from the _parallel-coordinates_ library:
+```javascript
+parasol.brushReset()
+```
 
 ### Marking <a name="markings"></a>
 Marking is a key feature in many visualization tools. It allows the user to view individual solution data and permanently highlight solutions of interest. See the image below for an example.
 
-![no_cluser](images/markings.png)
+![markings](images/markings.png)
 
 ##### Current implementation details
 Marking is currently implemented under the terminology "selections." This is because, similar to brushed data, markings are handled in their own canvas layer. In the stock version of the _parallel-coordinates_ library, there already exits a _marks_ layer which may have been included with plans for this feature in mind. However, to avoid potential conflict, we have temporarily chosen to call this layer _selections_ as shown below. We will soon attempt to use the _marks_ layer alone however.
@@ -197,7 +330,7 @@ var pc = function(selection) {
 };
 ```
 The other key edit to the _parallel-coordinates_ library involves styling the _selections_ layer. In the CSS stylesheet, we add a _dimmed_ state to the canvas layer options as follows (file: d3.parcoords_ucb.css):
-```javascript
+```css
 /* custom "dimmed" class for selections layer */
 .parcoords canvas.dimmed {
   opacity: 0.85;
@@ -296,7 +429,6 @@ var grid = new Slick.Grid("#grid", dataView, columns, options);
 grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
 grid.registerPlugin(checkboxSelector);
 
-
 // keep checkboxes matched with row on filter/brush
 dataView.syncGridSelection(grid, preserveHidden=false);
 ```
@@ -354,16 +486,120 @@ var pc1 = d3.parcoords()("#plot01")
   .reorderable()
 ```
 
-### Hide and Show axis <a name="hide-show"></a>
-Coming soon.
+### Hide and Show axes <a name="hide-show"></a>
+Parallel coordinate plots can be a bit intimidating at first glance, especially when they feature many different variable axis. Upfront, the user can quickly simplify the visualization by hiding axes that are not of interest. Once the user has had a chance to narrow the set of relevant solutions, they can show any of these hidden axes to further assess the results.
+
+**Note:** Currently, the hiding or showing of an axis completely resets all brushes and marked data. Progress has been made on maintaining these features, but there are still too many bugs to incorporate this full functionality at present.
 
 ##### Current implementation details
+The hide and show axes functionality is currently implemented through buttons which act on the "input" variable defined by the web-app developer. Currently, this input variable is set to "cluster" as seen in the button functionality below. This is a proof of concept, but one can see how this hybrid implementation could easily be translated to a library function where the input variable is defined when the user checks a box in the GUI corresponding to the axis to act on.
+
+The buttons are constructed in the usual manner:
+```javascript
+<button id="show_axis">Show Clusters</button>
+<button id="hide_axis">Hide Clusters</button>
+```
+We also establish a pair of global variables to keep track of hidden axes between recursive calls to the main `visualize` function, as is done in the [Keep and Remove selection](#keep-remove) feature:
+```javascript
+var pc1_hidden = [];
+var pc2_hidden = [];
+```
+These global variables are referenced at the start of the `visualize` function when setting up the decision and objective spaces:
+```javascript
+// include any already hidden vars (for recursive aspect of keep/remove)
+objective_vars = _.union(objective_vars, pc2_hidden);
+decision_vars = _.union(decision_vars, pc1_hidden);
+```
+
+When the hide (show) axis buttons is clicked, we check to see which plot the input variable belongs to and place (remove) it in the array of names for the partnering plot since these are hidden. If the variable is not found in either plot, we issue a warning to that effect. Otherwise, we reset the brushes and marked data by manually clicking the respective buttons for those features and re-render both plots to complete the update process.
+```javascript
+// hide axis
+d3.select('#hide_axis').on('click', function() {
+  var found = false;
+  var input = ["cluster"];
+
+  if ( ! _.difference(input, objective_vars).length ) {
+    found = true;
+    // in objectives so add it to decisions which are hidden
+    pc1_hidden.push(input[0]); // keep list of hidden
+    decision_vars = _.union(decision_vars, input);
+    pc1.hideAxis(decision_vars);
+    pc1.render().updateAxes(500); // animationTime (ms)
+  }
+  else if ( ! _.difference(input, decision_vars).length ) {
+    found = true;
+    // in decisions so add it to objectives which are hidden
+    pc2_hidden.push(input[0]); // keep list of hidden
+    objective_vars = _.union(objective_vars, input);
+    pc2.hideAxis(objective_vars);
+    pc2.render().updateAxes(500); // animationTime (ms)
+  }
+  if (found == false) {
+    // not in dataset
+    throw new Error("Variable not found.");
+  }
+  else {
+    // for now: RESET brushes and selections
+    // deselect all elements in grid (fires event)
+    document.getElementById('brush_reset').click();
+    document.getElementById('clear_selected').click();
+
+    pc1.render();
+    pc2.render();
+  }
+});
+
+// show axis
+d3.select('#show_axis').on('click', function() {
+  var found = false;
+  var input = ["cluster"];
+
+  if ( ! _.difference(input, pc1_hidden).length ) {
+    found = true;
+    // in hidden objectives so remove from decisions which are hidden
+    pc1_hidden = _.difference(pc1_hidden, input); // remove from list
+    decision_vars = _.difference(decision_vars, input);
+    pc1.hideAxis(decision_vars);
+    pc1.render().updateAxes(500); // animationTime (ms)
+  }
+  else if ( ! _.difference(input, pc2_hidden).length ) {
+    found = true;
+    // in hidden decisions so remove from objectives which are hidden
+    pc2_hidden = _.difference(pc2_hidden, input); // remove from list
+    objective_vars = _.difference(objective_vars, input);
+    pc2.hideAxis(objective_vars);
+    pc2.render().updateAxes(500); // animationTime (ms)
+  }
+  if (found == false) {
+    // not in dataset
+    throw new Error("Variable not hidden.");
+  }
+  else {
+    // for now: RESET brushes and selections
+    document.getElementById('brush_reset').click();
+    document.getElementById('clear_selected').click();
+
+    pc1.render();
+    pc2.render();
+  }
+});
+```
+
 ##### Proposed library api
+This feature is most intuitively implemented as a GUI with checkboxes next to each of the axes variable names. Once clicked, the corresponding axis will be hidden. A second click clears the box and shows the axis. Next to the hide and show checkbox will be another checkbox to flip the axis so that it aligns with the _direction of preference_ arrow built into the linked plot display. This will be easily incorporated into the GUI using the `flipAxes` function in the _parallel-coordinates_ library.
+
+The library function to include this GUI should be as straightforward as possible. We propose the following:
+```javascript
+parasol.dimensions()
+```
+This function will append a button GUI to the interface built by the user.
+
 
 ### Set axes limits <a name="axes-limits"></a>
-Coming soon.
+To overcome the bias of drastic spread for relatively small axes ranges, we find that it is important to allow the user to edit the axes limits as necessay. That is, when the range of a single axis is relatively small, solution lines will be spread across the full extent of that axis, emphasizing small differences in solutions. However, if the user deems that these differences are not as significant as their spread may imply, they should be able to increase the axis limits so that the solutions are better grouped together. Decreasing the limits &mdash bounded by the maximum and minimum values of the data &mdash would have the inverse effect.
 
 ##### Proposed library api
+Once the functionality has been developed, this feature can easily be included with the GUI for [Hide and show axes](#hide-show). Alongside each variable's checkbox, numeric input boxes will be provided for minimum and maximum axis limits to be specified. In the upper-right corner of the GUI, a button will be provided to restore default limits.
 
 ### Keep and Remove selection <a name="keep-remove"></a>
 One of the primary methods for quickly identifying relevant solutions is the ability to narrow down the set of visualized data by removing unnecessary data or keeping only a small subset of relevant data.
@@ -488,19 +724,28 @@ d3.select('#export_selected').on('click', function() {
 ```
 ##### Proposed library api
 The export feature should be a standalone function. The user will specify the following:
-- group: {"brushed", "marked", "all"} the data field to be exported
+- selection: {"brushed", "marked", "all"} the data field to be exported
 - filename: file name with file type extension
 
 The default implementation is provided below.
 
 ```javascript
-parasol.export(data, group="all", filename="pareto_solutions.csv")
+parasol.export(data, selection="all", filename="pareto_solutions.csv")
 ```
 
 ### Explore selection <a name="explore"></a>
-Coming soon.
+Once the user has arrived at a set of narrowed solutions, they may seek to gain further insight into specific relationships within that data. To that end, we seek to extend the interactive functionality of the library with quick access to other basic visualizations. For example, the user may wish to use a scatterplot to better understand the relationship between two specific variables, a histogram to analyze solution density for a single variable, or even a heatmap for multiple variables.
 
 ##### Proposed library api
+The explore feature should be a standalone function. The user will specify the following:
+- vars: variables to be visualized
+- visualization: {"scatter", "hist", "heatmap", etc.} type of visualization
+- selection: {"brushed", "marked", "both"} the data field to be explored
 
-## Discussion <a name="discussion"></a>
-Coming soon.
+The default implementation is provided below.
+```javascript
+parasol.explore(data, vars, visualization, selection="both")
+```
+
+
+<p align="center">Last Updated: May 16, 2018</p>

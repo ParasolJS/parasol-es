@@ -218,6 +218,7 @@
 
           if (isBrushed_pc1) {
             // pc1 has brushes, keep only the intersection of arrays
+            // NOTE: (bug) this is what breaks the empty refresh
             brushed_pc1 = _.intersection(brushed_pc1, brushed);
           } else {
             brushed_pc1 = brushed;
