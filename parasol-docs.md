@@ -1,9 +1,9 @@
 # From interactive visualization web-application to JavaScript library: a roadmap for parasol.js
 
-Produced by:
-Kasprzyk Research Group
-Civil, Environmental and Architectural Engineering Dept.
-University of Colorado Boulder
+Produced by:\
+Kasprzyk Research Group\
+Civil, Environmental and Architectural Engineering Dept.\
+University of Colorado Boulder\
 **[josephkasprzyk.wordpress.com](https://josephkasprzyk.wordpress.com/group)**
 
 Last updated: May 16, 2018
@@ -67,7 +67,7 @@ function handleFiles() {
 ```
 
 ##### Proposed library API
-This feature is relevant for a two main purposes. It is convenient for those who would like to test their code on multiple files without having to edit the file path, and to those using _parasol_ to develop a web application similar to what we have done here.
+This feature is relevant for two main purposes. It is convenient for those who would like to test their code on multiple files without having to edit the file path, and to those using _parasol_ to develop a web application similar to what we have done here.
 
 In the library, this should be a function that takes no argument, and simply appends the uploader button to the webpage.
 
@@ -76,7 +76,7 @@ parasol.import()
 ```
 
 ### K-means clustering <a name="clustering"></a>
-K-means clustering partitions the imported data into into k clusters in which each datapoint belongs to the cluster with the nearest mean. In this way, clustering groups the solutions by a measure of statistical similarity. These clusters are denoted by corresponding categorical colors depending on the number of clusters specified. The default value is set to 3 clusters, with a maximum value of 6 clusters. This cap is due in part to the loss of relevance with too many clusters, and to the limited number of catagorical colors in the "Dark2" color pallete. Of course, the latter can be easily remedied should we choose to increase the maximum number of clusters.
+K-means clustering partitions the imported data into k clusters in which each datapoint belongs to the cluster with the nearest mean. In this way, clustering groups the solutions by a measure of statistical similarity. These clusters are denoted by corresponding categorical colors depending on the number of clusters specified. The default value is set to 3 clusters, with a maximum value of 6 clusters. This cap is due in part to the loss of relevance with too many clusters, and to the limited number of catagorical colors in the "Dark2" color pallete. Of course, the latter can be easily remedied should we choose to increase the maximum number of clusters.
 
 ##### Current implementation details
 Clustering is implemented using the _ML_ library.
@@ -122,7 +122,7 @@ var pc1 = d3.parcoords()("#plot01")
   .color(palette)
 ```
 
-In addition to representing clusters by color, users may also choose to view clusters on an axis for interactive [brushing](#brushing). Because clusters id's are associated with each row of data, an axis is automatically created for them when plotting. By default, the cluster axis is currently hidden to avoid repetetive display of data. However, using the [Hide and Show axes](#hide-show) feature, they can easily be revealed. See the images below for reference.
+In addition to representing clusters by color, users may also choose to view clusters on an axis for interactive [brushing](#brushing). Because clusters id's are associated with each row of data, an axis is automatically created for them when plotting. By default, the cluster axis is currently hidden to avoid repetitive display of data. However, using the [Hide and Show axes](#hide-show) feature, they can easily be revealed. See the images below for reference.
 
 Default: Clusters hidden on import.
 ![no_cluser](images/no_cluster.png)
@@ -144,7 +144,7 @@ visualize(data)
 ```
 
 ### Linked brushing <a name="brushing"></a>
-Brushing is the primary tool for exploring solution subsets and refining the set of relevant data. The user simply drags the cursor over an axis range they are interested in, and all data outside the brush extents fade into the background &mdash though they remain slightly visible to maintain a frame of reference. This feature has been implemented in many visualization tools, and especially well in the _parallel-coordinates_ library. The novel contribution made by _parasol_ is that brushes can be linked between a pair of parallel coordinate plots. That is, if the data columns are split between two plots, as is often done in multiobjective optimization when representing decision and objective spaces, applying a brush to one plot will also update the other plot with the corresponding data. See the image below for reference. If a grid is present, it will also be updated to display only data within all brush extents.
+Brushing is the primary tool for exploring solution subsets and refining the set of relevant data. The user simply drags the cursor over an axis range they are interested in, and all data outside the brush extents fade into the background --- though they remain slightly visible to maintain a frame of reference. This feature has been implemented in many visualization tools, and especially well in the _parallel-coordinates_ library. The novel contribution made by _parasol_ is that brushes can be linked between a pair of parallel coordinate plots. That is, if the data columns are split between two plots, as is often done in multiobjective optimization when representing decision and objective spaces, applying a brush to one plot will also update the other plot with the corresponding data. See the image below for reference. If a grid is present, it will also be updated to display only data within all brush extents.
 
 Here a brush is applied to the economy axis in the decision space and the objective space is updated accordingly.
 ![brushes](images/brushes.png)
@@ -265,7 +265,7 @@ visualize(data)
 ```
 
 #### Reset brushes <a name="brush-reset"></a>
-While brushes can be cleared on an individual basis by just clicking the respective axis outside of the extents, we find that it is also convenient to have a method for clearing them all simultaneously. This very straightforward since there is already a function `brushReset()` in the _parallel-coordinates_ library. In addition to calling this function on both plot variables, we need only clear the functionally-global variables and restore the grid. This is implemented with a button click as follows:
+While brushes can be cleared on an individual basis by just clicking the respective axis outside of the extents, we find that it is also convenient to have a method for clearing them all simultaneously. This is straightforward since there is already a function `brushReset()` in the _parallel-coordinates_ library. In addition to calling this function on both plot variables, we need only clear the functionally-global variables and restore the grid. This is implemented with a button click as follows:
 ```javascript
 // create button
 <button id="brush_reset">Reset Brushes</button>
@@ -296,7 +296,7 @@ Marking is a key feature in many visualization tools. It allows the user to view
 ![markings](images/markings.png)
 
 ##### Current implementation details
-Marking is currently implemented under the terminology "selections." This is because, similar to brushed data, markings are handled in their own canvas layer. In the stock version of the _parallel-coordinates_ library, there already exits a _marks_ layer which may have been included with plans for this feature in mind. However, to avoid potential conflict, we have temporarily chosen to call this layer _selections_ as shown below. We will soon attempt to use the _marks_ layer alone however.
+Marking is currently implemented under the terminology "selections." This is because, similar to brushed data, markings are handled in their own canvas layer. In the stock version of the _parallel-coordinates_ library, there already exits a _marks_ layer which may have been included with plans for this feature in mind. However, to avoid potential conflict, we have temporarily chosen to call this layer _selections_ as shown below. We will soon attempt to use the _marks_ layer alone however (file: d3.parcoords_ucb.js).
 
 ```javascript
 var pc = function(selection) {
@@ -414,9 +414,9 @@ function path_selections(d, i) {
 };
 ```
 
-**Note:** The exact construction details of this functionality parallel the _highlighting_ feature, with the exception of the rendering component which parallels _brushing_. That is, for line-for-line implementation detail, simply search the terms "highlight" and "renderBrushed" in the parcoords_ucb.js file, and the additions for _selections_ can be found and traced in this way.
+**Note:** The exact construction details of this functionality parallel the _highlighting_ feature, with the exception of the rendering component which parallels _brushing_. That is, for line-for-line implementation detail, simply search the terms "highlight" and "renderBrushed" in the parcoords_ucb.js file, and the additions for _selections_ can be found and traced in this way. In the future, we may seek to collaborate with Kai Chang, the developer of the _parallel-coordinates_ library, to merge the above changes with the standard library.
 
-Now that we have added _selections_ capability to the _parallel-coordinates_ library, we can include this feature in _parasol_. A selection is made when the user clicks the checkbox for a row in the data grid. This calls the `pc.select' function which increases line thickness and contrast. In the future, we plan to give the user the freedom to assign a new color to the selection as well. We include this checkbox functionality as follows:
+Now that we have added _selections_ capability to the _parallel-coordinates_ library, we can include this feature in _parasol_. A selection is made when the user clicks the checkbox for a row in the data grid. This calls the `pc.select` function which increases line thickness and contrast. In the future, we plan to give the user the freedom to assign a new color to the selection as well. We include this checkbox functionality as follows:
 ```javascript
 var checkboxSelector = new Slick.CheckboxSelectColumn({
   cssClass: "slick-cell-checkboxsel"
@@ -460,7 +460,7 @@ gridUpdate(data);
 Marking functionality is an integral aspect of _parasol_ and will be included by default. Because it is inherently interactive, it will not be a function. Instead, when a user calls the main `visualize` function they will automatically be able to preform interactive marking. An exception may need to be made in order to allow the user to specify the marking color however.
 
 #### Clear markings <a name="clear-marking"></a>
-While markings can be cleared on an individual basis, we find that it is also convenient to have a method for clearing all markings instantly. This very straightforward since all we need to do is deselect all rows. This is implemented with a button click as follows:
+While markings can be cleared on an individual basis, we find that it is also convenient to have a method for clearing all markings instantly. This is very straightforward since all we need to do is deselect all rows. This is implemented with a button click as follows:
 ```javascript
 <button id="clear_selected">Clear Selections</button>
 
@@ -596,7 +596,7 @@ This function will append a button GUI to the interface built by the user.
 
 
 ### Set axes limits <a name="axes-limits"></a>
-To overcome the bias of drastic spread for relatively small axes ranges, we find that it is important to allow the user to edit the axes limits as necessay. That is, when the range of a single axis is relatively small, solution lines will be spread across the full extent of that axis, emphasizing small differences in solutions. However, if the user deems that these differences are not as significant as their spread may imply, they should be able to increase the axis limits so that the solutions are better grouped together. Decreasing the limits &mdash bounded by the maximum and minimum values of the data &mdash would have the inverse effect.
+To overcome the bias of drastic spread for relatively small axes ranges, we find that it is important to allow the user to edit the axes limits as necessary. That is, when the range of a single axis is relatively small, solution lines will be spread across the full extent of that axis, emphasizing small differences in solutions. However, if the user deems that these differences are not as significant as their spread may imply, they should be able to increase the axis limits so that the solutions are better grouped together. Decreasing the limits --- bounded by the maximum and minimum values of the data --- would have the inverse effect.
 
 ##### Proposed library api
 Once the functionality has been developed, this feature can easily be included with the GUI for [Hide and show axes](#hide-show). Alongside each variable's checkbox, numeric input boxes will be provided for minimum and maximum axis limits to be specified. In the upper-right corner of the GUI, a button will be provided to restore default limits.
