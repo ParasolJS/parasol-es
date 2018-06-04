@@ -1,5 +1,5 @@
 ## Parallel Coordinates Multi-Objective Visualization Tool
-This is a relatively stable version of ParaSol.js currently under
+This is a relatively stable version of parasol.js currently under
 development at the University of Colorado Boulder. For more information, see the project site: https://josephkasprzyk.wordpress.com/research-projects/
 
 
