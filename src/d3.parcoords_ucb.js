@@ -1209,7 +1209,7 @@ pc.brushMode = function(mode) {
 		// test if within range
 		var within = {
 			"date": function(d,p,dimension) {
-	if (typeof __.dimensions[p].yscale.rangePoints === "function") { // if it is ordinal
+	       if (typeof __.dimensions[p].yscale.rangePoints === "function") { // if it is ordinal
           return extents[dimension][0] <= __.dimensions[p].yscale(d[p]) && __.dimensions[p].yscale(d[p]) <= extents[dimension][1]
         } else {
           return extents[dimension][0] <= d[p] && d[p] <= extents[dimension][1]

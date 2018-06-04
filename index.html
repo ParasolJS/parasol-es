@@ -89,6 +89,8 @@
     <div id="plot02" class="parcoords" style="height:200px; width=100%;"></div>
     `
     $("div#plots").html(plot);
+
+    // attempting to add arrow
     // var plot = `<h3>Objective Space</h3>
     // <button id="svg01">Save Image</button>
     // <div id="plot01" class="parcoords" style="height:200px; display:inline-block"></div>
@@ -161,6 +163,8 @@
       // keep track of brushed data
       var brushed_pc1 = [];
       var brushed_pc2 = [];
+
+      // required to overcome issue of empty brushes when using brushed_pcx.length as logical
       var isBrushed_pc1 = false;
       var isBrushed_pc2 = false;
 
@@ -183,10 +187,41 @@
         .brushMode("1D-axes")
         .on("brushend", function(brushed) {
 
+          console.log(pc1.brushed());
+
+          // better approach here may be to identify all brush extents, then take the intersection of everything within them
+          extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
+          console.log("extents", extents);
+
+          //console.log(pc1.selected());
+          //console.log(pc1.dimensions());
+
+          var brushed_temp = [];
+          d3.keys(pc1.dimensions()).forEach(function(dim) {
+            if(typeof(extents[dim]) != 'undefined') {
+              //console.log(extents[dim]);
+              //
+              //extents[dim][0] <= d[p] && d[p] <= extents[dim][1]
+            }
+    			});
+
+
+          console.log("brushed:", brushed);
+          console.log("pc1 pre:", brushed_pc1.length);
+          console.log("pc2 pre:", brushed_pc2.length);
+
           if (isBrushed_pc2) {
-            // pc2 has brushes, keep only the intersection of arrays
-            brushed_pc2 = _.intersection(brushed_pc2, brushed);
+            // two cases, pc2 partially brushed or completely brushed
+            if (brushed_pc2.length != 0) {
+              // partially brushed, keep intersection
+              brushed_pc2 = _.intersection(brushed_pc2, brushed);
+            } else {
+              // completely brushed
+              // find a way to get the intersection of just brushed and everything actually in pc2
+              console.log("pc2.brushed()", pc2.brushed());
+            }
           } else {
+            // no brushes yet
             brushed_pc2 = brushed;
           }
 
@@ -200,6 +235,10 @@
           pc1.render();
 
           gridUpdate(brushed_pc2);
+
+          console.log("brushed:", brushed.length);
+          console.log("pc1 post:", brushed_pc1.length);
+          console.log("pc2 post:", brushed_pc2.length);
         });
 
       // decision space
@@ -216,6 +255,13 @@
         .brushMode("1D-axes")
         .on("brushend", function(brushed) {
 
+          extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
+          console.log("extents", extents);
+
+          console.log("brushed:", brushed);
+          console.log("pc1 pre:", brushed_pc1.length);
+          console.log("pc2 pre:", brushed_pc2.length);
+
           if (isBrushed_pc1) {
             // pc1 has brushes, keep only the intersection of arrays
             // NOTE: (bug) this is what breaks the empty refresh
@@ -227,13 +273,17 @@
           brushed_pc2 = brushed_pc1;
           isBrushed_pc2 = true;
 
-          pc2.brushed(brushed_pc1);
+          pc2.brushed(brushed_pc2);
           pc2.render();
 
-          pc1.brushed(brushed_pc2);
+          pc1.brushed(brushed_pc1);
           pc1.render();
 
           gridUpdate(brushed_pc1);
+
+          console.log("brushed:", brushed.length);
+          console.log("pc1 post:", brushed_pc1.length);
+          console.log("pc2 post:", brushed_pc2.length);
         });
 
 
