@@ -63,7 +63,7 @@
 
 
     <button id="brush_reset">Reset Brushes</button>
-    <button id="clear_selected">Clear Selections</button>
+    <button id="clear_marked">Clear Marked</button>
 
     <button id="show_axis">Show Clusters</button>
     <button id="hide_axis">Hide Clusters</button>
@@ -193,7 +193,7 @@
           extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
           console.log("extents", extents);
 
-          //console.log(pc1.selected());
+          //console.log(pc1.marked());
           //console.log(pc1.dimensions());
 
           var brushed_temp = [];
@@ -372,7 +372,7 @@
         pc2.unhighlight();
       });
 
-      // select row in chart
+      // mark row in chart
       grid.onSelectedRowsChanged.subscribe(function (e, args) {
         // reset and update selected rows
         var selected_row_ids = grid.getSelectedRows();
@@ -383,11 +383,11 @@
         } else {
           d = data;
         }
-        pc1.deselect();
-        pc2.deselect();
+        pc1.unmark();
+        pc2.unmark();
         selected_row_ids.forEach(function(i) {
-           pc1.select([d[i]]);
-           pc2.select([d[i]]);
+           pc1.mark([d[i]]);
+           pc2.mark([d[i]]);
          });
       });
 
@@ -397,10 +397,10 @@
       function gridUpdate(data) {
         dataView.beginUpdate();
         dataView.setItems(data);
-        // if selected data exists, keep in grid
-        // only need to look at once plot since selections are linked
-        if (pc1.selected().length) {
-          pc1.selected().forEach(function(i) { dataView.insertItem(0,i); });
+        // if marked data exists, keep in grid
+        // only need to look at once plot since marks are linked
+        if (pc1.marked().length) {
+          pc1.marked().forEach(function(i) { dataView.insertItem(0,i); });
         }
         dataView.endUpdate();
       };
@@ -410,9 +410,9 @@
       // button functionality
       // ---------------------
 
-      // clear selections
-      d3.select('#clear_selected').on('click', function() {
-        // deselect all elements in grid (fires event)
+      // clear marked
+      d3.select('#clear_marked').on('click', function() {
+        // unmark all elements in grid (fires event)
         grid.setSelectedRows([]);
       });
 
@@ -462,24 +462,24 @@
           throw new Error("Variable not found.");
         }
         else {
-          // for now: RESET brushes and selections
+          // for now: RESET brushes and marks
           // if(brushed_pc1.length > 0) {
           //   pc1.brushed(brushed_pc1);
           //   pc2.brushed(brushed_pc2);
           // }
-          // if(pc1.selected().length > 0) {
-          //   pc1.deselect();
-          //   pc2.deselect();
+          // if(pc1.marked().length > 0) {
+          //   pc1.unmark();
+          //   pc2.unmark();
           //   selected_row_ids.forEach(function(i) {
-          //      pc1.select([d[i]]);
-          //      pc2.select([d[i]]);
+          //      pc1.mark([d[i]]);
+          //      pc2.mark([d[i]]);
           //    });
           // }
-          // deselect all elements in grid (fires event)
+          // unmark all elements in grid (fires event)
           document.getElementById('brush_reset').click();
-          document.getElementById('clear_selected').click();
+          document.getElementById('clear_marked').click();
           // console.log("brushed:", brushed_pc1, brushed_pc2);
-          // console.log("selected:", pc1.selected());
+          // console.log("marked:", pc1.marked());
 
           pc1.render();
           pc2.render();
@@ -516,23 +516,23 @@
           throw new Error("Variable not hidden.");
         }
         else {
-          // for now: RESET brushes and selections
+          // for now: RESET brushes and marks
           // if(brushed_pc1.length > 0) {
           //   pc1.brushed(brushed_pc1);
           //   pc2.brushed(brushed_pc2);
           // }
-          // if(pc1.selected().length > 0) {
-          //   pc1.deselect();
-          //   pc2.deselect();
+          // if(pc1.marked().length > 0) {
+          //   pc1.unmark();
+          //   pc2.unmark();
           //   selected_row_ids.forEach(function(i) {
-          //      pc1.select([d[i]]);
-          //      pc2.select([d[i]]);
+          //      pc1.mark([d[i]]);
+          //      pc2.mark([d[i]]);
           //    });
           // }
           document.getElementById('brush_reset').click();
-          document.getElementById('clear_selected').click();
+          document.getElementById('clear_marked').click();
           // console.log("brushed:", brushed_pc1, brushed_pc2);
-          // console.log("selected:", pc1.selected());
+          // console.log("marked:", pc1.marked());
 
           pc1.render();
           pc2.render();
@@ -553,7 +553,7 @@
         // delete all data not slected and do complete refresh
         // only need to look at one plot since selections are linked
         console.log("before:", data.length);
-        data = _.union(pc1.selected(), pc1.brushed());
+        data = _.union(pc1.marked(), pc1.brushed());
         if (data.length >= k ) {
           // clear canvas layers
           $("div#plot01").html("");
@@ -570,10 +570,10 @@
       // remove selected
       d3.select('#remove_selected').on('click', function() {
         console.log("before:", data.length);
-        // delete all brushed data (unless selected) and do complete refresh
+        // delete all brushed data (unless marked) and do complete refresh
         if (pc1.brushed().length) {
-          // NOTE: selected/brushed data equivalent between plots at this stage
-          var brushed_not_selected = _.difference(pc1.brushed(),    pc1.selected());
+          // NOTE: marked/brushed data equivalent between plots at this stage
+          var brushed_not_selected = _.difference(pc1.brushed(),    pc1.marked());
           data = _.difference(data, brushed_not_selected);
           if (data.length >= k) {
             // clear canvas layers
@@ -659,7 +659,7 @@
       d3.select('#explore').on('click', function() {
         // collect selected solution IDs in array
         var selected_solutions = [];
-        pc1.selected().forEach(function(d){
+        pc1.marked().forEach(function(d){
           selected_solutions.push(d.id)
         });
         console.log(selected_solutions);

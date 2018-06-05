@@ -8,7 +8,7 @@ Contributers:
 
 NOTE: This version of d3.parcoords contains some minor edits:
       - Requires Underscore.js for set operations
-      - Addition of a "selections" canvas layer which allows user to permanently highlight a row of data in slickgrid
+      - Original "marks" canvas layer has been converted to "dots" allowing new "marked" layer to be used with slickgrid to permanently highlight a row of data
 
 All other functionality is the work of Kai Chang, designer of d3.parcoords.js
 Source: https://github.com/syntagmatic/parallel-coordinates
@@ -18,7 +18,7 @@ d3.parcoords = function(config) {
   var __ = {
     data: [],
     highlighted: [],
-    selected: [],
+    marked: [],
     dimensions: {},
     dimensionTitleRotation: 0,
     brushed: false,
@@ -65,7 +65,7 @@ var pc = function(selection) {
   __.height = selection[0][0].clientHeight;
 
   // canvas data layers
-  ["marks", "foreground", "brushed", "highlight", "selections"].forEach(function(layer) {
+  ["dots", "foreground", "brushed", "highlight", "marked"].forEach(function(layer) {
     canvas[layer] = selection
       .append("canvas")
       .attr("class", layer)[0][0];
@@ -122,7 +122,7 @@ var side_effects = d3.dispatch.apply(this,d3.keys(__))
   .on("margin", function(d) { pc.resize(); })
   .on("rate", function(d) {
     brushedQueue.rate(d.value);
-    selectedQueue.rate(d.value);
+    markedQueue.rate(d.value);
     foregroundQueue.rate(d.value);
   })
   .on("dimensions", function(d) {
@@ -308,10 +308,10 @@ pc.autoscale = function() {
   ctx.brushed.scale(devicePixelRatio, devicePixelRatio);
   ctx.highlight.lineWidth = 3;
   ctx.highlight.scale(devicePixelRatio, devicePixelRatio);
-  ctx.selections.lineWidth = 3;
-  ctx.selections.shadowColor = "#ffffff";
-  ctx.selections.shadowBlur = 10;
-  ctx.selections.scale(devicePixelRatio, devicePixelRatio);
+  ctx.marked.lineWidth = 3;
+  ctx.marked.shadowColor = "#ffffff";
+  ctx.marked.shadowBlur = 10;
+  ctx.marked.scale(devicePixelRatio, devicePixelRatio);
 
   return this;
 };
@@ -446,10 +446,10 @@ pc.renderBrushed = function() {
   return this;
 };
 
-pc.renderSelections = function() {
+pc.renderMarked = function() {
   if (!d3.keys(__.dimensions).length) pc.detectDimensions();
 
-  //pc.renderSelections[__.mode]();
+  //pc.renderMarked[__.mode]();
 
   events.render.call(this);
   return this;
@@ -474,7 +474,7 @@ pc.render.default = function() {
   pc.clear('highlight');
 
   pc.renderBrushed.default();
-  pc.renderSelections.default();
+  pc.renderMarked.default();
 
   __.data.forEach(path_foreground);
 };
@@ -488,7 +488,7 @@ var foregroundQueue = d3.renderQueue(path_foreground)
 
 pc.render.queue = function() {
   pc.renderBrushed.queue();
-  pc.renderSelections.queue();
+  pc.renderMarked.queue();
 
   foregroundQueue(__.data);
 };
@@ -501,11 +501,11 @@ pc.renderBrushed.default = function() {
   }
 };
 
-pc.renderSelections.default = function() {
-  pc.clear('selections');
+pc.renderMarked.default = function() {
+  pc.clear('marked');
 
-  if (__.selected.length) {
-    __.selected.forEach(path_selections);
+  if (__.marked.length) {
+    __.marked.forEach(path_marked);
   }
 };
 
@@ -523,17 +523,17 @@ pc.renderBrushed.queue = function() {
   }
 };
 
-var selectedQueue = d3.renderQueue(path_selections)
+var markedQueue = d3.renderQueue(path_marked)
   .rate(50)
   .clear(function() {
-    pc.clear('selections');
+    pc.clear('marked');
   });
 
-pc.renderSelections.queue = function() {
-  if (__.selected.length) {
-    selectedQueue(__.selected);
+pc.renderMarked.queue = function() {
+  if (__.marked.length) {
+    markedQueue(__.marked);
   } else {
-    selectedQueue([]); // This is needed to clear the currently selected items
+    markedQueue([]); // This is needed to clear the currently marked items
   }
 };
 
@@ -649,7 +649,7 @@ function compute_control_points(centroids) {
 // draw dots with radius r on the axis line where data intersects
 pc.axisDots = function(r) {
 	var r = r || 0.1;
-	var ctx = pc.ctx.marks;
+	var ctx = pc.ctx.dots;
 	var startAngle = 0;
 	var endAngle = 2 * Math.PI;
 	ctx.globalAlpha = d3.min([ 1 / Math.pow(__.data.length, 1 / 2), 1 ]);
@@ -747,9 +747,9 @@ function path_highlight(d, i) {
 	return color_path(d, ctx.highlight);
 };
 
-function path_selections(d, i) {
-  ctx.selections.strokeStyle = d3.functor(__.color)(d, i);
-	return color_path(d, ctx.selections);
+function path_marked(d, i) {
+  ctx.marked.strokeStyle = d3.functor(__.color)(d, i);
+	return color_path(d, ctx.marked);
 };
 
 pc.clear = function(layer) {
@@ -1020,7 +1020,7 @@ pc.reorderable = function() {
         delete dragging[d];
         d3.select(this).transition().attr("transform", "translate(" + xscale(d) + ")");
         pc.render();
-        pc.renderSelections.default();
+        pc.renderMarked.default();
       }));
   flags.reorderable = true;
   return this;
@@ -1045,8 +1045,8 @@ pc.reorder = function(rowdata) {
     var highlighted = __.highlighted.slice(0);
     pc.unhighlight();
 
-    var selected = __.selected.slice(0);
-    pc.deselect();
+    var marked = __.marked.slice(0);
+    pc.unmark();
 
     g.transition()
       .duration(1500)
@@ -1059,8 +1059,8 @@ pc.reorder = function(rowdata) {
     if (highlighted.length !== 0) {
       pc.highlight(highlighted);
     }
-    if (selected.length !== 0) {
-      pc.select(selected);
+    if (marked.length !== 0) {
+      pc.mark(marked);
     }
   }
 }
@@ -2469,23 +2469,23 @@ pc.unhighlight = function() {
   return this;
 };
 
-// select an array of data
-pc.select = function(data) {
+// mark an array of data
+pc.mark = function(data) {
   if (arguments.length === 0) {
-    return __.selected;
+    return __.marked;
   }
 
-  // add row to already selected data
-  __.selected = _.union( __.selected, data);
-  data.forEach(path_selections);
+  // add row to already marked data
+  __.marked = _.union( __.marked, data);
+  data.forEach(path_marked);
   d3.selectAll([canvas.foreground, canvas.brushed]).classed("dimmed", true);
   return this;
 };
 
-// clear selections layer
-pc.deselect = function() {
-  __.selected = [];
-  pc.clear("selections");
+// clear marked layer
+pc.unmark = function() {
+  __.marked = [];
+  pc.clear("marked");
   d3.selectAll([canvas.foreground, canvas.brushed]).classed("dimmed", false);
   return this;
 };
