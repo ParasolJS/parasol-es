@@ -1227,11 +1227,13 @@ pc.brushMode = function(mode) {
       }
     };
 
-    return __.data
+    //return __.data
+    var test = __.data
       .filter(function(d) {
         switch(brush.predicate) {
         case "AND":
           return actives.every(function(p, dimension) {
+            //console.log("test: ", within[__.dimensions[p].type](d,p,dimension));
             return within[__.dimensions[p].type](d,p,dimension);
           });
         case "OR":
@@ -1242,11 +1244,15 @@ pc.brushMode = function(mode) {
           throw new Error("Unknown brush predicate " + __.brushPredicate);
         }
       });
+      console.log("test: ", test);
+      return test;
   };
 
   function brushExtents(extents) {
+    console.log("enter");
     if(typeof(extents) === 'undefined')
 		{
+      console.log("here");
 			var extents = {};
 			d3.keys(__.dimensions).forEach(function(d) {
 				var brush = brushes[d];
@@ -1267,6 +1273,7 @@ pc.brushMode = function(mode) {
 					brushSelections[d] = d3.select(this);
 
 			});
+      console.log("brush selections: ", brushSelections);
 
 			// loop over each dimension and update appropriately (if it was passed in through extents)
 			d3.keys(__.dimensions).forEach(function(d) {

@@ -187,23 +187,30 @@
         .brushMode("1D-axes")
         .on("brushend", function(brushed) {
 
-          console.log(pc1.brushed());
+          //console.log(pc1.brushed());
 
           // better approach here may be to identify all brush extents, then take the intersection of everything within them
           extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
-          console.log("extents", extents);
+          console.log("extents ", extents);
+          //console.log("selected ", brush.currentMode.selected());
+
+          //first get all the brush selections
+    			// var brushSelections = {};
+    			// g.selectAll('.brush')
+    			// 	.each(function(d) {
+    			// 		brushSelections[d] = d3.select(this);
 
           //console.log(pc1.marked());
           //console.log(pc1.dimensions());
 
-          var brushed_temp = [];
-          d3.keys(pc1.dimensions()).forEach(function(dim) {
-            if(typeof(extents[dim]) != 'undefined') {
-              //console.log(extents[dim]);
-              //
-              //extents[dim][0] <= d[p] && d[p] <= extents[dim][1]
-            }
-    			});
+          // var brushed_temp = [];
+          // d3.keys(pc1.dimensions()).forEach(function(dim) {
+          //   if(typeof(extents[dim]) != 'undefined') {
+          //     //console.log(extents[dim]);
+          //     //
+          //     //extents[dim][0] <= d[p] && d[p] <= extents[dim][1]
+          //   }
+    			// });
 
 
           console.log("brushed:", brushed);
@@ -218,7 +225,7 @@
             } else {
               // completely brushed
               // find a way to get the intersection of just brushed and everything actually in pc2
-              console.log("pc2.brushed()", pc2.brushed());
+              //console.log("pc2.brushed()", pc2.brushed());
             }
           } else {
             // no brushes yet
@@ -258,9 +265,9 @@
           extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
           console.log("extents", extents);
 
-          console.log("brushed:", brushed);
-          console.log("pc1 pre:", brushed_pc1.length);
-          console.log("pc2 pre:", brushed_pc2.length);
+          // console.log("brushed:", brushed);
+          // console.log("pc1 pre:", brushed_pc1.length);
+          // console.log("pc2 pre:", brushed_pc2.length);
 
           if (isBrushed_pc1) {
             // pc1 has brushes, keep only the intersection of arrays
@@ -281,9 +288,9 @@
 
           gridUpdate(brushed_pc1);
 
-          console.log("brushed:", brushed.length);
-          console.log("pc1 post:", brushed_pc1.length);
-          console.log("pc2 post:", brushed_pc2.length);
+          // console.log("brushed:", brushed.length);
+          // console.log("pc1 post:", brushed_pc1.length);
+          // console.log("pc2 post:", brushed_pc2.length);
         });
 
 
@@ -342,9 +349,19 @@
       var sortcol = column_keys[0];
       var sortdir = 1;
 
+      // function comparer(a, b) {
+      //   var x = a[sortcol], y = b[sortcol];
+      //   return (x == y ? 0 : (x > y ? 1 : -1));
+      // }
+
+      function convert_to_float(x) {
+          var converted = parseFloat(x);
+          return isNaN(converted) ? x : converted
+      }
+
       function comparer(a, b) {
-        var x = a[sortcol], y = b[sortcol];
-        return (x == y ? 0 : (x > y ? 1 : -1));
+          var x = convert_to_float(a[sortcol]), y = convert_to_float(b[sortcol]);
+          return (x == y ? 0 : (x > y ? 1 : -1));
       }
 
       // click header to sort grid column
