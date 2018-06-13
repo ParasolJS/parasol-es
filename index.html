@@ -19,7 +19,9 @@
   <script type="text/javascript" src="lib/divgrid.js"></script>
   <script type="text/javascript" src="lib/ml.min.js"></script>
   <script type="text/javascript" src="lib/FileSaver.js"></script>
-  <script type="text/javascript" src="lib/colorbrewer.js"></script>
+  <!-- <script type="text/javascript" src="lib/colorbrewer.js"></script> -->
+
+  <!-- <script type="text/javascript" src="lib/selected.js"></script> -->
 
   <!-- SlickGrid -->
   <link rel="stylesheet" href="lib/slickgrid/slick.grid_default.css" type="text/css" media="screen" charset="utf-8">
@@ -187,11 +189,14 @@
         .brushMode("1D-axes")
         .on("brushend", function(brushed) {
 
+          //console.log(selected(pc1));
           //console.log(pc1.selected());
+          //console.log(pc1.selected)
+          console.log(selected(pc1));
 
           // better approach here may be to identify all brush extents, then take the intersection of everything within them
           extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
-          console.log("extents ", extents);
+          //console.log("extents ", extents);
           //console.log("selected ", brush.currentMode.selected());
 
           //console.log("selected:", _.intersection(pc1.state["brushed"], pc2.state["brushed"]));
@@ -246,9 +251,9 @@
 
           gridUpdate(brushed_pc2);
 
-          console.log("brushed:", brushed.length);
-          console.log("pc1 post:", brushed_pc1.length);
-          console.log("pc2 post:", brushed_pc2.length);
+          // console.log("brushed:", brushed.length);
+          // console.log("pc1 post:", brushed_pc1.length);
+          // console.log("pc2 post:", brushed_pc2.length);
         });
 
       // decision space
@@ -266,7 +271,7 @@
         .on("brushend", function(brushed) {
 
           extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
-          console.log("extents", extents);
+          //console.log("extents", extents);
 
           //console.log("selected:", _.intersection(pc1.state["brushed"], pc2.state["brushed"]));
           //console.log("selected:", pc2.state);
@@ -295,9 +300,9 @@
           gridUpdate(brushed_pc1);
 
 
-          console.log("brushed:", brushed.length);
-          console.log("pc1 post:", brushed_pc1.length);
-          console.log("pc2 post:", brushed_pc2.length);
+          // console.log("brushed:", brushed.length);
+          // console.log("pc1 post:", brushed_pc1.length);
+          // console.log("pc2 post:", brushed_pc2.length);
         });
 
 
@@ -448,8 +453,8 @@
         isBrushed_pc1 = false;
         isBrushed_pc2 = false;
 
-        pc1.brushReset();
-        pc2.brushReset();
+        pc1.brushReset()
+        pc2.brushReset()
 
         gridUpdate(data);
       });
@@ -692,6 +697,59 @@
 
 
     // end of visualize() function
+    };
+
+
+    // data within extents
+    function selected(pc) {
+        var state = pc.state;
+        var brushNodes = state.brushNodes;
+
+        var is_brushed = function is_brushed(p) {
+          return brushSelection(brushNodes[p]) !== null;
+        };
+
+        var actives = Object.keys(pc.dimensions).filter(is_brushed);
+        var extents = actives.map(function (p) {
+          var _brushRange = brushSelection(brushNodes[p]);
+
+          if (typeof pc.dimensions[p].yscale.invert === 'function') {
+            return [pc.dimensions[p].yscale.invert(_brushRange[1]), pc.dimensions[p].yscale.invert(_brushRange[0])];
+          } else {
+            return _brushRange;
+          }
+        });
+
+        if (actives.length === 0) return pc.data;
+
+        // test if within range
+        var within = {
+          date: function date(d, p, dimension) {
+            if (typeof pc.dimensions[p].yscale.bandwidth === 'function') {
+              // if it is ordinal
+              return extents[dimension][0] <= pc.dimensions[p].yscale(d[p]) && pc.dimensions[p].yscale(d[p]) <= extents[dimension][1];
+            } else {
+              return extents[dimension][0] <= d[p] && d[p] <= extents[dimension][1];
+            }
+          },
+          number: function number(d, p, dimension) {
+            if (typeof pc.dimensions[p].yscale.bandwidth === 'function') {
+              // if it is ordinal
+              return extents[dimension][0] <= pc.dimensions[p].yscale(d[p]) && pc.dimensions[p].yscale(d[p]) <= extents[dimension][1];
+            } else {
+              return extents[dimension][0] <= d[p] && d[p] <= extents[dimension][1];
+            }
+          },
+          string: function string(d, p, dimension) {
+            return extents[dimension][0] <= pc.dimensions[p].yscale(d[p]) && pc.dimensions[p].yscale(d[p]) <= extents[dimension][1];
+          }
+        };
+
+        return pc.data.filter(function (d) {
+              return actives.every(function (p, dimension) {
+                return within[pc.dimensions[p].type](d, p, dimension);
+              });
+        });
     };
 
 
