@@ -4,11 +4,11 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-  <title>ParaSol.js Showcase</title>
+  <title>parasol Showcase</title>
 
   <!-- Core -->
   <link rel="stylesheet" type="text/css" href="style_custom.css">
-  <link rel="stylesheet" type="text/css" href="lib/parcoords_ucb.css">
+  <link rel="stylesheet" type="text/css" href="src/parcoords.css">
 
   <script type="text/javascript" src="lib/d3.v5.min.js"></script>
   <script type="text/javascript" src="lib/d3-dsv.min.js"></script>
@@ -133,7 +133,7 @@
       // choose default catagorical color scheme
       // var color_scheme = d3.scale.ordinal()
       //   .range(colorbrewer.Dark2[k])
-      // can we use d3 instead, or is the new version not compatible
+      // with v4 we don't need colorbrewer
       var color_scheme = d3.scaleOrdinal(d3.schemeCategory10);
 
       var palette = function(d) {
@@ -187,7 +187,7 @@
         .brushMode("1D-axes")
         .on("brushend", function(brushed) {
 
-          //console.log(pc1.brushed());
+          //console.log(pc1.selected());
 
           // better approach here may be to identify all brush extents, then take the intersection of everything within them
           extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
