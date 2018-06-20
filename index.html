@@ -111,6 +111,29 @@
     var pc1_hidden = [];
     var pc2_hidden = [];
 
+    // link brushes between pc plots
+    var link = function link(pc1, pc2, data) {
+      return function () {
+        // console.log(pc1.selected());
+        // console.log(pc2.selected());
+        if (!_.union(pc1.selected(), pc2.selected()).length) {
+          // edge case when all brushes are clicked away
+          pc1.brushReset();
+          pc2.brushReset();
+          //gridUpdate(data);
+        } else {
+          // brushes must exist since function is called "on brush"
+          var brushed = _.intersection(pc1.selected(), pc2.selected());
+
+          pc1.brushed(brushed);
+          pc2.brushed(brushed);
+          pc1.render();
+          pc2.render();
+          //gridUpdate(brushed);
+        }
+      };
+    };
+
     function visualize(data, n_objs, k = 3) {
 
       // check that n_objs < length data - 1
@@ -190,84 +213,52 @@
         .render()
         .shadows()
         .reorderable()
-        .brushMode("1D-axes")
-        .on("brushend", function(brushed) {
-
-          console.log("pc1 selected",pc1.selected());
-          //console.log("brushed:",pc1.brushed());
-
-          console.log("pc2 selected",pc2.selected());
-
-          //console.log(selected(pc1));
-          //console.log(pc1.selected());
-          //console.log(pc1.selected)
-          //console.log(selected(pc1));
-          //pc1.updateAxes();
-          //console.log(pc1.brushed());
-
-          // better approach here may be to identify all brush extents, then take the intersection of everything within them
-          //extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
-          // console.log("extents ", extents);
-          // brushExtents() returns numeric values of extents for each axis in original parrallel-coordinates library, but parcoords-es currently returns only the brushed axes names.
-          //console.log("selected ", brush.currentMode.selected());
-
-          // console.log("selected:", _.intersection(pc1.state["brushed"], pc2.state["brushed"]));
-          //console.log("selected:", pc1.state);
-
-          //first get all the brush selections
-    			// var brushSelections = {};
-    			// g.selectAll('.brush')
-    			// 	.each(function(d) {
-    			// 		brushSelections[d] = d3.select(this)
-          //   });
-          // console.log(brushSelections);
-
-          //console.log(pc1.dimensions());
-
-          // var brushed_temp = [];
-          // d3.keys(pc1.dimensions()).forEach(function(dim) {
-          //   if(d3.keys(extents) != 'undefined') {
-          //     console.log(d3.keys(extents));
-          //     //
-          //     //extents[dim][0] <= d[p] && d[p] <= extents[dim][1]
-          //   }
-    			// });
-
-
-          // console.log("brushed:", brushed);
-          // console.log("pc1 pre:", brushed_pc1.length);
-          // console.log("pc2 pre:", brushed_pc2.length);
-
-          if (isBrushed_pc2) {
-            // two cases, pc2 partially brushed or completely brushed
-            if (brushed_pc2.length != 0) {
-              // partially brushed, keep intersection
-              brushed_pc2 = _.intersection(brushed_pc2, brushed);
-            } else {
-              // completely brushed
-              // find a way to get the intersection of just brushed and everything actually in pc2
-              //console.log("pc2.brushed()", pc2.brushed());
-            }
-          } else {
-            // no brushes yet
-            brushed_pc2 = brushed;
-          }
-
-          brushed_pc1 = brushed_pc2;
-          isBrushed_pc1 = true;
-
-          pc2.brushed(brushed_pc2);
-          pc2.render();
-
-          pc1.brushed(brushed_pc1);
-          pc1.render();
-
-          gridUpdate(brushed_pc2);
-
-          // console.log("brushed:", brushed.length);
-          // console.log("pc1 post:", brushed_pc1.length);
-          // console.log("pc2 post:", brushed_pc2.length);
-        });
+        .brushMode("1D-axes");
+        // .on("brushend", function(brushed) {
+        //
+        //   // better approach here may be to identify all brush extents, then take the intersection of everything within them
+        //   //extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
+        //   // console.log("extents ", extents);
+        //   // brushExtents() returns numeric values of extents for each axis in original parrallel-coordinates library, but parcoords-es currently returns only the brushed axes names.
+        //   //console.log("selected ", brush.currentMode.selected());
+        //
+        //
+        //   // var brushed_temp = [];
+        //   // d3.keys(pc1.dimensions()).forEach(function(dim) {
+        //   //   if(d3.keys(extents) != 'undefined') {
+        //   //     console.log(d3.keys(extents));
+        //   //     //
+        //   //     //extents[dim][0] <= d[p] && d[p] <= extents[dim][1]
+        //   //   }
+    		// 	// });
+        //
+        //
+        //   if (isBrushed_pc2) {
+        //     // two cases, pc2 partially brushed or completely brushed
+        //     if (brushed_pc2.length != 0) {
+        //       // partially brushed, keep intersection
+        //       brushed_pc2 = _.intersection(brushed_pc2, brushed);
+        //     } else {
+        //       // completely brushed
+        //       // find a way to get the intersection of just brushed and everything actually in pc2
+        //       //console.log("pc2.brushed()", pc2.brushed());
+        //     }
+        //   } else {
+        //     // no brushes yet
+        //     brushed_pc2 = brushed;
+        //   }
+        //
+        //   brushed_pc1 = brushed_pc2;
+        //   isBrushed_pc1 = true;
+        //
+        //   pc2.brushed(brushed_pc2);
+        //   pc2.render();
+        //
+        //   pc1.brushed(brushed_pc1);
+        //   pc1.render();
+        //
+        //   gridUpdate(brushed_pc2);
+        // });
 
       // decision space
       var pc2 = ParCoords()("#plot02")
@@ -281,48 +272,31 @@
         .render()
         .shadows()
         .reorderable()
-        .brushMode("1D-axes")
-        .on("brushend", function(brushed) {
+        .brushMode("1D-axes");
+        // .on("brushend", function(brushed) {
+        //
+        //   if (isBrushed_pc1) {
+        //     // pc1 has brushes, keep only the intersection of arrays
+        //     // NOTE: (bug) this is what breaks the empty refresh
+        //     brushed_pc1 = _.intersection(brushed_pc1, brushed);
+        //   } else {
+        //     brushed_pc1 = brushed;
+        //   }
+        //
+        //   brushed_pc2 = brushed_pc1;
+        //   isBrushed_pc2 = true;
+        //
+        //   pc2.brushed(brushed_pc2);
+        //   pc2.render();
+        //
+        //   pc1.brushed(brushed_pc1);
+        //   pc1.render();
+        //
+        //   gridUpdate(brushed_pc1);
+        // });
 
-          console.log("pc1 selected",pc1.selected());
-          console.log("pc2 selected",pc2.selected());
-
-          //console.log("selected:",pc2.selected());
-          //console.log("brushed:",pc2.brushed());
-          //extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
-          //console.log("extents", extents);
-
-          //console.log("selected:", _.intersection(pc1.state["brushed"], pc2.state["brushed"]));
-          //console.log("selected:", pc2.state);
-
-          // console.log("brushed:", brushed);
-          // console.log("pc1 pre:", brushed_pc1.length);
-          // console.log("pc2 pre:", brushed_pc2.length);
-
-          if (isBrushed_pc1) {
-            // pc1 has brushes, keep only the intersection of arrays
-            // NOTE: (bug) this is what breaks the empty refresh
-            brushed_pc1 = _.intersection(brushed_pc1, brushed);
-          } else {
-            brushed_pc1 = brushed;
-          }
-
-          brushed_pc2 = brushed_pc1;
-          isBrushed_pc2 = true;
-
-          pc2.brushed(brushed_pc2);
-          pc2.render();
-
-          pc1.brushed(brushed_pc1);
-          pc1.render();
-
-          gridUpdate(brushed_pc1);
-
-
-          // console.log("brushed:", brushed.length);
-          // console.log("pc1 post:", brushed_pc1.length);
-          // console.log("pc2 post:", brushed_pc2.length);
-        });
+        pc1.on("brush", link(pc1, pc2, data));
+        pc2.on("brush", link(pc1, pc2, data));
 
 
       // ---------------------
@@ -609,22 +583,22 @@
         //pc1.data(pc1.data().filter(d => d[input] >= lower && d[input] <= upper));
 
         console.log(pc1.dimensions()[input].yscale.domain());
-        console.log(pc1.axis);
+        // console.log(pc1.axis);
         //pc1.applyAxisConfig(input)
         //pc1.autoscale();
-        pc1.updateAxes();
-        pc1.render();
+        // pc1.updateAxes();
+        // pc1.render();
 
         console.log(pc1.dimensions()[input].yscale.domain());
 
-        var range = pc1.height() - pc1.margin().top - pc1.margin().bottom;
-        var min = d3.min(data, function(d) {
-            return parseInt(d[input]);
-        });
-        var max = d3.max(data, function(d) {
-            return parseInt(d[input]);
-        });
-        var log = d3.scaleLog().domain([min, max]).range([range, 1]);
+        // var range = pc1.height() - pc1.margin().top - pc1.margin().bottom;
+        // var min = d3.min(data, function(d) {
+        //     return parseInt(d[input]);
+        // });
+        // var max = d3.max(data, function(d) {
+        //     return parseInt(d[input]);
+        // });
+        // var log = d3.scaleLog().domain([min, max]).range([range, 1]);
 
         var dimensions = pc1.dimensions();
         console.log(dimensions[input]["yscale"]);
@@ -635,7 +609,7 @@
 
         //console.log(pc1.detectDimensionTypes(data));
 
-        pc1.dimensions(dimensions).render();
+        // pc1.dimensions(dimensions).render();
 
       });
 
@@ -647,40 +621,51 @@
         console.log("before:", data.length);
         //data = _.union(pc1.marked(), pc1.brushed());
         data = pc1.brushed();
-        if (data.length >= k ) {
-          // clear canvas layers
-          // $("div#plot01").html("");
-          // $("div#plot02").html("");
-          // $("div#plot").html(plot);
-          // // for complete reset, clusters will be recomputed
-          // visualize(data, n_objs = n_objs, k = k);
-          pc1.data(data).autoscale().render();
-          pc2.data(data).autoscale().render();
-        } else {
-          throw new Error("Not enough data selected to perform clustering.");
-        }
+        // if (data.length >= k ) {
+        //   clear canvas layers
+        //   $("div#plot01").html("");
+        //   $("div#plot02").html("");
+        //   $("div#plot").html(plot);
+        //   // for complete reset, clusters will be recomputed
+        //   visualize(data, n_objs = n_objs, k = k);
+        // } else {
+        //   throw new Error("Not enough data selected to perform clustering.");
+        // }
+
+        pc1.data(data).render.default();
+        pc2.data(data).render.default();
+        gridUpdate(data);
+        pc1.brushReset();
+        pc2.brushReset();
         console.log("after:", data.length);
       });
 
       // remove selected
       d3.select('#remove_selected').on('click', function() {
         console.log("before:", data.length);
+        data =  _.difference(data, pc1.brushed());
         // delete all brushed data (unless marked) and do complete refresh
-        if (pc1.brushed().length) {
-          // NOTE: marked/brushed data equivalent between plots at this stage
-          var brushed_not_selected = _.difference(pc1.brushed(),    pc1.marked());
-          data = _.difference(data, brushed_not_selected);
-          if (data.length >= k) {
-            // clear canvas layers
-            $("div#plot01").html("");
-            $("div#plot02").html("");
-            $("div#plot").html(plot);
-            // for complete reset, clusters will be recomputed
-            visualize(data, n_objs = n_objs, k = k);
-          }
-          else {
-            throw new Error("Not enough data remaining to perform clustering.");
-          }
+        if (data.length) {
+          // // NOTE: marked/brushed data equivalent between plots at this stage
+          // var brushed_not_selected = _.difference(pc1.brushed(),    pc1.marked());
+          // data = _.difference(data, brushed_not_selected);
+          // if (data.length >= k) {
+          //   // clear canvas layers
+          //   $("div#plot01").html("");
+          //   $("div#plot02").html("");
+          //   $("div#plot").html(plot);
+          //   // for complete reset, clusters will be recomputed
+          //   visualize(data, n_objs = n_objs, k = k);
+          // }
+          // else {
+          //   throw new Error("Not enough data remaining to perform clustering.");
+          // }
+
+          pc1.data(data).render();
+          pc2.data(data).render();
+          gridUpdate(data);
+          pc1.brushReset();
+          pc2.brushReset();
         }
         else {
           throw new Error("No data chosen to remove.");
@@ -762,59 +747,6 @@
 
 
     // end of visualize() function
-    };
-
-
-    // data within extents
-    function selected(pc) {
-        var state = pc.state;
-        var brushNodes = state.brushNodes;
-
-        var is_brushed = function is_brushed(p) {
-          return brushSelection(brushNodes[p]) !== null;
-        };
-
-        var actives = Object.keys(pc.dimensions).filter(is_brushed);
-        var extents = actives.map(function (p) {
-          var _brushRange = brushSelection(brushNodes[p]);
-
-          if (typeof pc.dimensions[p].yscale.invert === 'function') {
-            return [pc.dimensions[p].yscale.invert(_brushRange[1]), pc.dimensions[p].yscale.invert(_brushRange[0])];
-          } else {
-            return _brushRange;
-          }
-        });
-
-        if (actives.length === 0) return pc.data;
-
-        // test if within range
-        var within = {
-          date: function date(d, p, dimension) {
-            if (typeof pc.dimensions[p].yscale.bandwidth === 'function') {
-              // if it is ordinal
-              return extents[dimension][0] <= pc.dimensions[p].yscale(d[p]) && pc.dimensions[p].yscale(d[p]) <= extents[dimension][1];
-            } else {
-              return extents[dimension][0] <= d[p] && d[p] <= extents[dimension][1];
-            }
-          },
-          number: function number(d, p, dimension) {
-            if (typeof pc.dimensions[p].yscale.bandwidth === 'function') {
-              // if it is ordinal
-              return extents[dimension][0] <= pc.dimensions[p].yscale(d[p]) && pc.dimensions[p].yscale(d[p]) <= extents[dimension][1];
-            } else {
-              return extents[dimension][0] <= d[p] && d[p] <= extents[dimension][1];
-            }
-          },
-          string: function string(d, p, dimension) {
-            return extents[dimension][0] <= pc.dimensions[p].yscale(d[p]) && pc.dimensions[p].yscale(d[p]) <= extents[dimension][1];
-          }
-        };
-
-        return pc.data.filter(function (d) {
-              return actives.every(function (p, dimension) {
-                return within[pc.dimensions[p].type](d, p, dimension);
-              });
-        });
     };
 
 
