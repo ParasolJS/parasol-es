@@ -108,8 +108,8 @@
     var kmeans = ML.Clust.kmeans;
 
     // keep track of hidden vars between function calls
-    var pc1_hidden = [];
-    var pc2_hidden = [];
+    // var hidden_pc1 = [];
+    // var hidden_pc2 = [];
 
     // link brushes between pc plots
     var link = function link(pc1, pc2, data) {
@@ -168,6 +168,10 @@
         return color_scheme(d['cluster']);
       };
 
+      // keep track of hidden vars
+      var hidden_pc1 = [];
+      var hidden_pc2 = [];
+
       // setup objective and decision space
       // remove id (and temporarily cluster) columns
       var variables = d3.keys(data[0]).slice(0,-2);
@@ -175,7 +179,7 @@
       var id_col = "id"
       var k_col = "cluster";
       // NOTE: place clusters in decision space, but hide by default
-      pc2_hidden.push(k_col)
+      hidden_pc2.push(k_col)
 
       var decision_vars = _.union(variables.slice(0, variables.length - n_objs));
       var objective_vars = _.difference(variables, decision_vars);
@@ -185,16 +189,16 @@
       // decision_vars = _.union(decision_vars, [id_col]);
 
       // include any already hidden vars (for recursive aspect of keep/remove)
-      objective_vars = _.union(objective_vars, pc2_hidden);
-      decision_vars = _.union(decision_vars, pc1_hidden);
+      // objective_vars = _.union(objective_vars, hidden_pc2);
+      // decision_vars = _.union(decision_vars, hidden_pc1);
 
       // keep track of brushed data
-      var brushed_pc1 = [];
-      var brushed_pc2 = [];
+      // var brushed_pc1 = [];
+      // var brushed_pc2 = [];
 
       // required to overcome issue of empty brushes when using brushed_pcx.length as logical
-      var isBrushed_pc1 = false;
-      var isBrushed_pc2 = false;
+      // var isBrushed_pc1 = false;
+      // var isBrushed_pc2 = false;
 
 
       // ---------------------
@@ -264,7 +268,7 @@
       var pc2 = ParCoords()("#plot02")
       // var pc2 = d3.parcoords()("#plot02")
         .data(data)
-        .hideAxis(objective_vars)
+        .hideAxis(_.union(objective_vars, hidden_pc2))
         .color(palette)
         .height(200)
         .alpha(0.4)
@@ -460,52 +464,52 @@
         if ( ! _.difference(input, objective_vars).length ) {
           found = true;
           console.log(_.difference(input, objective_vars));
-          // in objectives so add it to decisions which are hidden
-          pc1_hidden.push(input[0]); // keep list of hidden
-          decision_vars = _.union(decision_vars, input);
-          console.log(decision_vars);
-          console.log(pc1_hidden);
-          pc1.hideAxis(decision_vars);
+          // in pc1 so add it to hidden_pc1
+          hidden_pc1.push(input[0]);
+          //decision_vars = _.union(decision_vars, input);
+          //console.log(decision_vars);
+          console.log(hidden_pc1);
+          pc1.hideAxis(_.union(decision_vars, hidden_pc1));
           pc1.render().updateAxes(500); // animationTime (ms)
         }
         else if ( ! _.difference(input, decision_vars).length ) {
           found = true;
           console.log(_.difference(input, decision_vars));
-          // in decisions so add it to objectives which are hidden
-          pc2_hidden.push(input[0]); // keep list of hidden
-          objective_vars = _.union(objective_vars, input);
-          console.log(objective_vars);
-          console.log(pc2_hidden);
-          pc2.hideAxis(objective_vars);
+          // in pc2 so add it to hidden_pc2
+          hidden_pc2.push(input[0]);
+          //objective_vars = _.union(objective_vars, input);
+          //console.log(objective_vars);
+          console.log(hidden_pc2);
+          pc2.hideAxis(_.union(objective_vars, hidden_pc2));
           pc2.render().updateAxes(500); // animationTime (ms)
         }
         if (found == false) {
           // not in dataset
           throw new Error("Variable not found.");
         }
-        else {
-          // for now: RESET brushes and marks
-          // if(brushed_pc1.length > 0) {
-          //   pc1.brushed(brushed_pc1);
-          //   pc2.brushed(brushed_pc2);
-          // }
-          // if(pc1.marked().length > 0) {
-          //   pc1.unmark();
-          //   pc2.unmark();
-          //   selected_row_ids.forEach(function(i) {
-          //      pc1.mark([d[i]]);
-          //      pc2.mark([d[i]]);
-          //    });
-          // }
-          // unmark all elements in grid (fires event)
-          document.getElementById('brush_reset').click();
-          document.getElementById('clear_marked').click();
-          // console.log("brushed:", brushed_pc1, brushed_pc2);
-          // console.log("marked:", pc1.marked());
-
-          pc1.render();
-          pc2.render();
-        }
+        // else {
+        //   // for now: RESET brushes and marks
+        //   // if(brushed_pc1.length > 0) {
+        //   //   pc1.brushed(brushed_pc1);
+        //   //   pc2.brushed(brushed_pc2);
+        //   // }
+        //   // if(pc1.marked().length > 0) {
+        //   //   pc1.unmark();
+        //   //   pc2.unmark();
+        //   //   selected_row_ids.forEach(function(i) {
+        //   //      pc1.mark([d[i]]);
+        //   //      pc2.mark([d[i]]);
+        //   //    });
+        //   // }
+        //   // unmark all elements in grid (fires event)
+        //   document.getElementById('brush_reset').click();
+        //   document.getElementById('clear_marked').click();
+        //   // console.log("brushed:", brushed_pc1, brushed_pc2);
+        //   // console.log("marked:", pc1.marked());
+        //
+        //   pc1.render();
+        //   pc2.render();
+        // }
       });
 
       // show axis
@@ -513,52 +517,52 @@
         var found = false;
         var input = ["cluster"];
 
-        if ( ! _.difference(input, pc1_hidden).length ) {
+        if ( ! _.difference(input, hidden_pc1).length ) {
           found = true;
-          // in hidden objectives so remove from decisions which are hidden
-          pc1_hidden = _.difference(pc1_hidden, input); // remove from list
-          decision_vars = _.difference(decision_vars, input);
-          console.log(decision_vars);
-          console.log(pc1_hidden);
-          pc1.hideAxis(decision_vars);
+          // in hidden_pc1 so remove
+          hidden_pc1 = _.difference(hidden_pc1, input); // remove from list
+          //decision_vars = _.difference(decision_vars, input);
+          //console.log(decision_vars);
+          console.log(hidden_pc1);
+          pc1.hideAxis(_.union(decision_vars, hidden_pc1));
           pc1.render().updateAxes(500); // animationTime (ms)
         }
-        else if ( ! _.difference(input, pc2_hidden).length ) {
+        else if ( ! _.difference(input, hidden_pc2).length ) {
           found = true;
-          // in hidden decisions so remove from objectives which are hidden
-          pc2_hidden = _.difference(pc2_hidden, input); // remove from list
-          objective_vars = _.difference(objective_vars, input);
-          console.log(objective_vars);
-          console.log(pc2_hidden);
-          pc2.hideAxis(objective_vars);
+          // in hidden_pc2 so remove
+          hidden_pc2 = _.difference(hidden_pc2, input); // remove from list
+          //objective_vars = _.difference(objective_vars, input);
+          //console.log(objective_vars);
+          console.log(hidden_pc2);
+          pc2.hideAxis(_.union(objective_vars, hidden_pc2));
           pc2.render().updateAxes(500); // animationTime (ms)
         }
         if (found == false) {
           // not in dataset
           throw new Error("Variable not hidden.");
         }
-        else {
-          // for now: RESET brushes and marks
-          // if(brushed_pc1.length > 0) {
-          //   pc1.brushed(brushed_pc1);
-          //   pc2.brushed(brushed_pc2);
-          // }
-          // if(pc1.marked().length > 0) {
-          //   pc1.unmark();
-          //   pc2.unmark();
-          //   selected_row_ids.forEach(function(i) {
-          //      pc1.mark([d[i]]);
-          //      pc2.mark([d[i]]);
-          //    });
-          // }
-          document.getElementById('brush_reset').click();
-          document.getElementById('clear_marked').click();
-          // console.log("brushed:", brushed_pc1, brushed_pc2);
-          // console.log("marked:", pc1.marked());
-
-          pc1.render();
-          pc2.render();
-        }
+        // else {
+        //   // for now: RESET brushes and marks
+        //   // if(brushed_pc1.length > 0) {
+        //   //   pc1.brushed(brushed_pc1);
+        //   //   pc2.brushed(brushed_pc2);
+        //   // }
+        //   // if(pc1.marked().length > 0) {
+        //   //   pc1.unmark();
+        //   //   pc2.unmark();
+        //   //   selected_row_ids.forEach(function(i) {
+        //   //      pc1.mark([d[i]]);
+        //   //      pc2.mark([d[i]]);
+        //   //    });
+        //   // }
+        //   document.getElementById('brush_reset').click();
+        //   document.getElementById('clear_marked').click();
+        //   // console.log("brushed:", brushed_pc1, brushed_pc2);
+        //   // console.log("marked:", pc1.marked());
+        //
+        //   pc1.render();
+        //   pc2.render();
+        // }
       });
 
       // set axis limits
