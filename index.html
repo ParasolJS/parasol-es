@@ -12,14 +12,14 @@
 
   <script type="text/javascript" src="lib/d3.v5.min.js"></script>
   <script type="text/javascript" src="lib/d3-dsv.min.js"></script>
-  <script type="text/javascript" src="lib/parcoords.ucb.js"></script>
+  <script type="text/javascript" src="lib/parcoords.standalone.js"></script>
   <script type="text/javascript" src="lib/d3.svg.multibrush.js"></script>
   <script type="text/javascript" src="lib/jquery-1.7.min.js"></script>
   <script type="text/javascript" src="lib/underscore.js"></script>
   <script type="text/javascript" src="lib/divgrid.js"></script>
   <script type="text/javascript" src="lib/ml.min.js"></script>
   <script type="text/javascript" src="lib/FileSaver.js"></script>
-  <!-- <script type="text/javascript" src="lib/colorbrewer.js"></script> -->
+  <script type="text/javascript" src="lib/colorbrewer.js"></script>
 
   <!-- <script type="text/javascript" src="lib/selected.js"></script> -->
 
@@ -132,6 +132,9 @@
       // assign each data element an ID for slickgrid and other analysis
       data.forEach(function(d,i) { d.id = d.id || i; });
 
+      // assign each data element a weight, calculated as normalized value from all weight inputs...
+      //data.forEach()
+
       // choose default catagorical color scheme
       // var color_scheme = d3.scale.ordinal()
       //   .range(colorbrewer.Dark2[k])
@@ -177,6 +180,7 @@
 
       // objective space
       var pc1 = ParCoords()("#plot01")
+      // var pc1 = d3.parcoords()("#plot01")
         .data(data)
         .hideAxis(decision_vars)
         .color(palette)
@@ -189,32 +193,41 @@
         .brushMode("1D-axes")
         .on("brushend", function(brushed) {
 
+          console.log("pc1 selected",pc1.selected());
+          //console.log("brushed:",pc1.brushed());
+
+          console.log("pc2 selected",pc2.selected());
+
           //console.log(selected(pc1));
           //console.log(pc1.selected());
           //console.log(pc1.selected)
-          console.log(selected(pc1));
+          //console.log(selected(pc1));
+          //pc1.updateAxes();
+          //console.log(pc1.brushed());
 
           // better approach here may be to identify all brush extents, then take the intersection of everything within them
-          extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
-          //console.log("extents ", extents);
+          //extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
+          // console.log("extents ", extents);
+          // brushExtents() returns numeric values of extents for each axis in original parrallel-coordinates library, but parcoords-es currently returns only the brushed axes names.
           //console.log("selected ", brush.currentMode.selected());
 
-          //console.log("selected:", _.intersection(pc1.state["brushed"], pc2.state["brushed"]));
+          // console.log("selected:", _.intersection(pc1.state["brushed"], pc2.state["brushed"]));
           //console.log("selected:", pc1.state);
 
           //first get all the brush selections
     			// var brushSelections = {};
     			// g.selectAll('.brush')
     			// 	.each(function(d) {
-    			// 		brushSelections[d] = d3.select(this);
+    			// 		brushSelections[d] = d3.select(this)
+          //   });
+          // console.log(brushSelections);
 
-          //console.log(pc1.marked());
           //console.log(pc1.dimensions());
 
           // var brushed_temp = [];
           // d3.keys(pc1.dimensions()).forEach(function(dim) {
-          //   if(typeof(extents[dim]) != 'undefined') {
-          //     //console.log(extents[dim]);
+          //   if(d3.keys(extents) != 'undefined') {
+          //     console.log(d3.keys(extents));
           //     //
           //     //extents[dim][0] <= d[p] && d[p] <= extents[dim][1]
           //   }
@@ -258,6 +271,7 @@
 
       // decision space
       var pc2 = ParCoords()("#plot02")
+      // var pc2 = d3.parcoords()("#plot02")
         .data(data)
         .hideAxis(objective_vars)
         .color(palette)
@@ -270,7 +284,12 @@
         .brushMode("1D-axes")
         .on("brushend", function(brushed) {
 
-          extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
+          console.log("pc1 selected",pc1.selected());
+          console.log("pc2 selected",pc2.selected());
+
+          //console.log("selected:",pc2.selected());
+          //console.log("brushed:",pc2.brushed());
+          //extents = _.extend(pc1.brushExtents(), pc2.brushExtents());
           //console.log("extents", extents);
 
           //console.log("selected:", _.intersection(pc1.state["brushed"], pc2.state["brushed"]));
@@ -428,9 +447,9 @@
         dataView.setItems(data);
         // if marked data exists, keep in grid
         // only need to look at once plot since marks are linked
-        if (pc1.marked().length) {
-          pc1.marked().forEach(function(i) { dataView.insertItem(0,i); });
-        }
+        // if (pc1.marked().length) {
+        //   pc1.marked().forEach(function(i) { dataView.insertItem(0,i); });
+        // }
         dataView.endUpdate();
       };
 
@@ -570,11 +589,54 @@
 
       // set axis limits
       d3.select('#axes_limits').on('click', function() {
+        // if dimension is of type number or date, user should be able to select the type of scale on the axis and input new limits (constrained by data min and max). Axis should update accordingly.
 
         // functions of interest
         // getRange
         // applyAxisConfig, and sub functions
         // .dimensions{dimension attribute: "yscale"}
+        // .scale
+
+        var input = "weight (lb)";
+        var upper = 10000;
+        var lower = 0;
+        //console.log(pc1.dimensions()[input]);
+        // range is spatial, domain is data
+
+        console.log(pc1.dimensions()[input].yscale.domain());
+        //pc1.dimensions()[input].yscale.domain([0, 500])
+        pc1.scale(input,[lower, upper]);
+        //pc1.data(pc1.data().filter(d => d[input] >= lower && d[input] <= upper));
+
+        console.log(pc1.dimensions()[input].yscale.domain());
+        console.log(pc1.axis);
+        //pc1.applyAxisConfig(input)
+        //pc1.autoscale();
+        pc1.updateAxes();
+        pc1.render();
+
+        console.log(pc1.dimensions()[input].yscale.domain());
+
+        var range = pc1.height() - pc1.margin().top - pc1.margin().bottom;
+        var min = d3.min(data, function(d) {
+            return parseInt(d[input]);
+        });
+        var max = d3.max(data, function(d) {
+            return parseInt(d[input]);
+        });
+        var log = d3.scaleLog().domain([min, max]).range([range, 1]);
+
+        var dimensions = pc1.dimensions();
+        console.log(dimensions[input]["yscale"]);
+        dimensions[input]["yscale"] = log;
+        console.log(dimensions[input]["yscale"]);
+        dimensions["weight (lb)"]["type"] = "string";
+        console.log(dimensions);
+
+        //console.log(pc1.detectDimensionTypes(data));
+
+        pc1.dimensions(dimensions).render();
+
       });
 
 
@@ -583,14 +645,17 @@
         // delete all data not slected and do complete refresh
         // only need to look at one plot since selections are linked
         console.log("before:", data.length);
-        data = _.union(pc1.marked(), pc1.brushed());
+        //data = _.union(pc1.marked(), pc1.brushed());
+        data = pc1.brushed();
         if (data.length >= k ) {
           // clear canvas layers
-          $("div#plot01").html("");
-          $("div#plot02").html("");
-          $("div#plot").html(plot);
-          // for complete reset, clusters will be recomputed
-          visualize(data, n_objs = n_objs, k = k);
+          // $("div#plot01").html("");
+          // $("div#plot02").html("");
+          // $("div#plot").html(plot);
+          // // for complete reset, clusters will be recomputed
+          // visualize(data, n_objs = n_objs, k = k);
+          pc1.data(data).autoscale().render();
+          pc2.data(data).autoscale().render();
         } else {
           throw new Error("Not enough data selected to perform clustering.");
         }

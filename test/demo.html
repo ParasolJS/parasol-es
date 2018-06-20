@@ -1,0 +1,96 @@
+<!doctype html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+</head>
+<title>Demo</title>
+<link rel="stylesheet" type="text/css" href="../lib/parcoords.css">
+<link rel="stylesheet" type="text/css" href="../src/parcoords.css">
+<script src="../lib/d3.v5.min.js"></script>
+<script src="../lib/parcoords.standalone.js"></script>
+<script src="../lib/underscore.js"></script>
+
+<div id="plot01" class="parcoords" style="height:200px; width=100%;"></div>
+<div id="plot02" class="parcoords" style="height:200px; width=100%;"></div>
+<p>
+    <button id="brushReset">Reset Brushes</button>
+</p>
+
+    <script>
+
+        var pc1 = ParCoords()("#plot01")
+            .alpha(0.4)
+        var pc2 = ParCoords()("#plot02")
+            .alpha(0.4)
+
+        // load csv file and create the chart
+        d3.csv('data/cars.csv').then(function(data) {
+            pc1
+                .data(data)
+                .hideAxis(["name"])
+                .composite("darker")
+                .render()
+                .shadows()
+                .reorderable()
+                .brushMode("1D-axes")  // enable brushing
+                //.on("brushend", link(pc1, pc2));
+                // .on("brushend", function(){
+                //   //console.log(pc1.selected());
+                //   //console.log(pc2.selected());
+                // });
+
+            pc2
+                .data(data)
+                .hideAxis(["name"])
+                .composite("darker")
+                .render()
+                .shadows()
+                .reorderable()
+                .brushMode("1D-axes")  // enable brushing
+                //.on("brushend", link(pc1, pc2));
+                // .on("brushend", function(){
+                //   //console.log(pc1.selected());
+                //   //console.log(pc2.selected());
+                // });
+
+
+            pc1.on("brush", link(pc1, pc2, data));
+            pc2.on("brush", link(pc1, pc2, data));
+        });
+
+
+
+        // link brushes between pc plots
+        var link = function link(pc1, pc2, data) {
+          return function () {
+            // console.log(pc1.selected());
+            // console.log(pc2.selected());
+            if (!_.union(pc1.selected(), pc2.selected()).length) {
+              // edge case when all brushes are clicked away
+              pc1.brushReset();
+              pc2.brushReset();
+              //gridUpdate(data);
+            } else {
+              // brushes must exist since function is called "on brush"
+              var brushed = _.intersection(pc1.selected(), pc2.selected());
+
+              pc1.brushed(brushed);
+              pc2.brushed(brushed);
+              pc1.render();
+              pc2.render();
+              //gridUpdate(brushed);
+            }
+          };
+        };
+
+        d3.select('#brushReset').on('click', function () {
+
+            console.log(pc1.selected());
+            console.log(pc2.selected());
+            console.log("break");
+            pc1.brushReset();
+            pc2.brushReset();
+
+        });
+
+    </script>
