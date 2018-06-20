@@ -152,11 +152,14 @@
       var km = kmeans(clust_form, k);
       data.forEach(function(d,i) { d.cluster = km.clusters[i]; });
 
+      // assign each data element a weight
+      // get value at each var * var weight assigned in gui (0:1)
+      // get total off all individual weights
+      // divide each item weight by total
+      data.forEach(function(d) {d.weight = 0.5})
+
       // assign each data element an ID for slickgrid and other analysis
       data.forEach(function(d,i) { d.id = d.id || i; });
-
-      // assign each data element a weight, calculated as normalized value from all weight inputs...
-      //data.forEach()
 
       // choose default catagorical color scheme
       // var color_scheme = d3.scale.ordinal()
@@ -174,9 +177,10 @@
 
       // setup objective and decision space
       // remove id (and temporarily cluster) columns
-      var variables = d3.keys(data[0]).slice(0,-2);
+      var variables = d3.keys(data[0]).slice(0,-3);
 
       var id_col = "id"
+      var weight_col = "weight"
       var k_col = "cluster";
       // NOTE: place clusters in decision space, but hide by default
       hidden_pc2.push(k_col)
@@ -184,7 +188,7 @@
       var decision_vars = _.union(variables.slice(0, variables.length - n_objs));
       var objective_vars = _.difference(variables, decision_vars);
       decision_vars = _.union(decision_vars, [k_col], [id_col]);
-      objective_vars = _.union(objective_vars, [id_col]);
+      objective_vars = _.union(objective_vars, [id_col], [weight_col]);
       // var decision_vars = _.difference(variables.slice(n_objs), [k_col]);
       // decision_vars = _.union(decision_vars, [id_col]);
 
