@@ -112,7 +112,7 @@
     // var hidden_pc2 = [];
 
     // link brushes between pc plots
-    var link = function link(pc1, pc2, data) {
+    var link = function link(pc1, pc2, dataView, data) {
       return function () {
         // console.log(pc1.selected());
         // console.log(pc2.selected());
@@ -120,7 +120,7 @@
           // edge case when all brushes are clicked away
           pc1.brushReset();
           pc2.brushReset();
-          //gridUpdate(data);
+          gridUpdate(dataView, data);
         } else {
           // brushes must exist since function is called "on brush"
           var brushed = _.intersection(pc1.selected(), pc2.selected());
@@ -129,16 +129,43 @@
           pc2.brushed(brushed);
           pc1.render();
           pc2.render();
-          //gridUpdate(brushed);
+          gridUpdate(dataView, brushed);
         }
       };
     };
+
+    function gridUpdate(dataView, data) {
+        dataView.beginUpdate();
+        dataView.setItems(data);
+        // if marked data exists, keep in grid
+        // only need to look at once plot since marks are linked
+        // if (pc1.marked().length) {
+        //   pc1.marked().forEach(function(i) { dataView.insertItem(0,i); });
+        // }
+        dataView.endUpdate();
+    };
+
+    // function gridUpdate(data) {
+    //   dataView.beginUpdate();
+    //   dataView.setItems(data);
+    //   // if marked data exists, keep in grid
+    //   // only need to look at once plot since marks are linked
+    //   // if (pc1.marked().length) {
+    //   //   pc1.marked().forEach(function(i) { dataView.insertItem(0,i); });
+    //   // }
+    //   dataView.endUpdate();
+    // };
 
     function visualize(data, n_objs, k = 3) {
 
       // check that n_objs < length data - 1
       if (n_objs >= d3.keys(data[0]).length - 1) {
         throw new Error("Number of objectives exceeds length of data.");
+      }
+
+      function convert_to_float(x) {
+          var converted = parseFloat(x);
+          return isNaN(converted) ? x : converted
       }
 
       // max clusters = 6
@@ -152,19 +179,68 @@
       var km = kmeans(clust_form, k);
       data.forEach(function(d,i) { d.cluster = km.clusters[i]; });
 
-      // assign each data element a weight
-      // get value at each var * var weight assigned in gui (0:1)
-      // get total off all individual weights
-      // divide each item weight by total
-      data.forEach(function(d) {d.weight = 0.5})
-
       // assign each data element an ID for slickgrid and other analysis
       data.forEach(function(d,i) { d.id = d.id || i; });
+
+
+      // build weights for object vars, default is 1 for all
+      // NOTE: is there a faster way to do this?
+      function getWeights(data) {
+        var weights = [];
+        n_vars = Object.keys(data[0]).length
+        Object.keys(data[0]).forEach(function(d, i){
+          console.log(d, i);
+          // weight only counts objectives
+          if (i >= (n_vars - n_objs - 2) && i < (n_vars - 2)) {
+            // objective var
+            weights.push({d: 1}) // NOTE: why doesn't this push the actual name?
+          } else {
+            weights.push({d: 0})
+          }
+        });
+        return weights;
+      };
+
+      function applyWeight(data_element, weights, totals) {
+        // function to compute initial weight for each data element
+        var element_weight = 0
+        Object.values(data_element).forEach(function(v, i) {
+          element_weight = element_weight + convert_to_float(v)*Object.values(weights[i])
+        })
+        data_element.weight = element_weight
+        //console.log("data elem w weight", data_element);
+        totals.push(element_weight)
+      };
+
+      function normalize(data_element, total_weight) {
+        data_element.weight = data_element.weight/total_weight;
+      };
+
+      function buildWeights(data) {
+        var totals = [];
+        var weights = getWeights(data);
+        console.log("weights vec", weights);
+
+        // compute initial weight for each data element
+        data.forEach(function(d) {applyWeight(d, weights, totals)});
+        // get total off all individual weights
+        console.log("totals vec", totals);
+        total_weight = totals.reduce((a, b) => a + b, 0); // compute sum
+        console.log("total weight", total_weight);
+        // divide each item weight by total
+        data.forEach(function(d) {normalize(d, total_weight)});
+
+        //pc1.scale("weights", [0,1]);
+      };
+
+      //buildWeights(data.slice(0,10));
+      buildWeights(data);
+      //console.log(data.slice(0,10));
 
       // choose default catagorical color scheme
       // var color_scheme = d3.scale.ordinal()
       //   .range(colorbrewer.Dark2[k])
-      // with v4 we don't need colorbrewer
+      // with v5 we don't need colorbrewer
       var color_scheme = d3.scaleOrdinal(d3.schemeCategory10);
 
       var palette = function(d) {
@@ -303,17 +379,15 @@
         //   gridUpdate(brushed_pc1);
         // });
 
-        pc1.on("brush", link(pc1, pc2, data));
-        pc2.on("brush", link(pc1, pc2, data));
-
-
       // ---------------------
       // slickgrid setup
       // ---------------------
 
       //remove id col from left and place on right
-      var column_keys = d3.keys(data[0]).slice(0,-1);
-      column_keys.unshift(d3.keys(data[0]).pop());
+      var column_keys = d3.keys(data[0]).slice(0,-2); // leave id and weight
+      column_keys.unshift(d3.keys(data[0]).slice(0,-1).pop()); // id to left
+      column_keys.push(d3.keys(data[0]).pop()); // weight to right
+
 
       var columns = column_keys.map(function(key,i) {
         return {
@@ -367,11 +441,6 @@
       //   return (x == y ? 0 : (x > y ? 1 : -1));
       // }
 
-      function convert_to_float(x) {
-          var converted = parseFloat(x);
-          return isNaN(converted) ? x : converted
-      }
-
       function comparer(a, b) {
           var x = convert_to_float(a[sortcol]), y = convert_to_float(b[sortcol]);
           return (x == y ? 0 : (x > y ? 1 : -1));
@@ -422,23 +491,16 @@
       });
 
       // fill grid with data
-      gridUpdate(data);
-
-      function gridUpdate(data) {
-        dataView.beginUpdate();
-        dataView.setItems(data);
-        // if marked data exists, keep in grid
-        // only need to look at once plot since marks are linked
-        // if (pc1.marked().length) {
-        //   pc1.marked().forEach(function(i) { dataView.insertItem(0,i); });
-        // }
-        dataView.endUpdate();
-      };
+      gridUpdate(dataView, data);
 
 
       // ---------------------
-      // button functionality
+      // events handling
       // ---------------------
+
+      // linked brushing
+      pc1.on("brush", link(pc1, pc2, dataView, data));
+      pc2.on("brush", link(pc1, pc2, dataView, data));
 
       // clear marked
       d3.select('#clear_marked').on('click', function() {
@@ -457,7 +519,7 @@
         pc1.brushReset()
         pc2.brushReset()
 
-        gridUpdate(data);
+        gridUpdate(dataView, data);
       });
 
       // hide axis
@@ -642,7 +704,7 @@
 
         pc1.data(data).render.default();
         pc2.data(data).render.default();
-        gridUpdate(data);
+        gridUpdate(dataView, data);
         pc1.brushReset();
         pc2.brushReset();
         console.log("after:", data.length);
@@ -671,7 +733,7 @@
 
           pc1.data(data).render();
           pc2.data(data).render();
-          gridUpdate(data);
+          gridUpdate(dataView, data);
           pc1.brushReset();
           pc2.brushReset();
         }
