@@ -633,33 +633,46 @@
 
       // set axis limits
       d3.select('#axes_limits').on('click', function() {
-        // if dimension is of type number or date, user should be able to select the type of scale on the axis and input new limits (constrained by data min and max). Axis should update accordingly.
+        // if dimension is of type number or date, user should be able to select the type of scale on the axis and input new limits (constrained by data min and max). Axis updates accordingly.
 
-        // functions of interest
-        // getRange
-        // applyAxisConfig, and sub functions
-        // .dimensions{dimension attribute: "yscale"}
-        // .scale
-
-        var input = "weight (lb)";
-        var upper = 10000;
+        var input = "economy (mpg)";
+        var upper = 500;
         var lower = 0;
-        //console.log(pc1.dimensions()[input]);
-        // range is spatial, domain is data
 
-        console.log(pc1.dimensions()[input].yscale.domain());
-        //pc1.dimensions()[input].yscale.domain([0, 500])
-        pc1.scale(input,[lower, upper]);
+        // determine which plot input is in
+        if ( ! _.difference([input], objective_vars).length ) {
+          // objective space
+          var axis = pc1.dimensions()[input]
+          // verify that axis is numeric and can be scaled
+          if ( axis.type == "number" || axis.type == "date") {
+            // verify that new range is outside current range
+            var range = pc1.dimensions()[input].yscale.domain();
+            if (range[0] >= lower && range[1] <= upper) {
+              pc1.scale(input,[lower, upper]);
+            } else {
+              throw new Error("Input range is not outside data range.")
+            }
+          } else {
+            throw new Error("Axis is non-numeric and cannot be scaled.");
+          }
+        } else {
+          // decision space
+          var axis = pc2.dimensions()[input]
+          // verify that axis is numeric and can be scaled
+          if ( axis.type == "number" || axis.type == "date") {
+            // verify that new range is outside current range
+            var range = pc2.dimensions()[input].yscale.domain();
+            if (range[0] >= lower && range[1] <= upper) {
+              pc2.scale(input,[lower, upper]);
+            } else {
+              throw new Error("Input range is not outside data range.")
+            }
+          } else {
+            throw new Error("Axis is non-numeric and cannot be scaled.");
+          }
+        }
+
         //pc1.data(pc1.data().filter(d => d[input] >= lower && d[input] <= upper));
-
-        console.log(pc1.dimensions()[input].yscale.domain());
-        // console.log(pc1.axis);
-        //pc1.applyAxisConfig(input)
-        //pc1.autoscale();
-        // pc1.updateAxes();
-        // pc1.render();
-
-        console.log(pc1.dimensions()[input].yscale.domain());
 
         // var range = pc1.height() - pc1.margin().top - pc1.margin().bottom;
         // var min = d3.min(data, function(d) {
@@ -669,17 +682,6 @@
         //     return parseInt(d[input]);
         // });
         // var log = d3.scaleLog().domain([min, max]).range([range, 1]);
-
-        var dimensions = pc1.dimensions();
-        console.log(dimensions[input]["yscale"]);
-        dimensions[input]["yscale"] = log;
-        console.log(dimensions[input]["yscale"]);
-        dimensions["weight (lb)"]["type"] = "string";
-        console.log(dimensions);
-
-        //console.log(pc1.detectDimensionTypes(data));
-
-        // pc1.dimensions(dimensions).render();
 
       });
 
