@@ -65,9 +65,11 @@
     <button id="brush_reset">Reset Brushes</button>
     <button id="clear_marked">Clear Marked</button>
 
-    <button id="show_axis">Show Clusters</button>
-    <button id="hide_axis">Hide Clusters</button>
+    <button id="show_axis">Show Axis</button>
+    <button id="hide_axis">Hide Axis</button>
     <button id="axes_limits">Set Axes Limits</button>
+    <button id="cluster">Cluster Data</button>
+    <button id="weights">Apply Weights</button>
     <!-- <input type="select" id="cluster">Clustering</input> -->
     <!-- <button id="cluster">Clustering</button> -->
     <button id="explore">Explore Selections</button>
@@ -102,8 +104,6 @@
     // `
     // $("div#plots").html(plot);
 
-    // clustering library
-    var kmeans = ML.Clust.kmeans;
 
     // keep track of hidden vars between function calls
     // var hidden_pc1 = [];
@@ -166,103 +166,21 @@
           return isNaN(converted) ? x : converted
       }
 
-      // max clusters = 6
-      k = (k <= 6) ?  k : 3;
-
-      // coerce data to array of arrays for clustering
-      var clust_form = [];
-      data.forEach(function(d,i) { clust_form[i] = _.values(d) });
-
-      // preform default clustering
-      var km = kmeans(clust_form, k);
-      data.forEach(function(d,i) { d.cluster = km.clusters[i]; });
-
       // assign each data element an ID for slickgrid and other analysis
       data.forEach(function(d,i) { d.id = d.id || i; });
-
-
-      // build weights for object vars, default is 1 for all
-      // NOTE: is there a faster way to do this?
-      function getWeights(data) {
-        var weights = [];
-        n_vars = Object.keys(data[0]).length
-        Object.keys(data[0]).forEach(function(d, i){
-          console.log(d, i);
-          // weight only counts objectives
-          if (i >= (n_vars - n_objs - 2) && i < (n_vars - 2)) {
-            // objective var
-            weights.push({d: 1}) // NOTE: why doesn't this push the actual name?
-          } else {
-            weights.push({d: 0})
-          }
-        });
-        return weights;
-      };
-
-      function applyWeight(data_element, weights, totals) {
-        // function to compute initial weight for each data element
-        var element_weight = 0
-        Object.values(data_element).forEach(function(v, i) {
-          element_weight = element_weight + convert_to_float(v)*Object.values(weights[i])
-        })
-        data_element.weight = element_weight
-        //console.log("data elem w weight", data_element);
-        totals.push(element_weight)
-      };
-
-      function normalize(data_element, total_weight) {
-        data_element.weight = data_element.weight/total_weight;
-      };
-
-      function buildWeights(data) {
-        var totals = [];
-        var weights = getWeights(data);
-        console.log("weights vec", weights);
-
-        // compute initial weight for each data element
-        data.forEach(function(d) {applyWeight(d, weights, totals)});
-        // get total off all individual weights
-        console.log("totals vec", totals);
-        total_weight = totals.reduce((a, b) => a + b, 0); // compute sum
-        console.log("total weight", total_weight);
-        // divide each item weight by total
-        data.forEach(function(d) {normalize(d, total_weight)});
-
-        //pc1.scale("weights", [0,1]);
-      };
-
-      //buildWeights(data.slice(0,10));
-      buildWeights(data);
-      //console.log(data.slice(0,10));
-
-      // choose default catagorical color scheme
-      // var color_scheme = d3.scale.ordinal()
-      //   .range(colorbrewer.Dark2[k])
-      // with v5 we don't need colorbrewer
-      var color_scheme = d3.scaleOrdinal(d3.schemeCategory10);
-
-      var palette = function(d) {
-        return color_scheme(d['cluster']);
-      };
 
       // keep track of hidden vars
       var hidden_pc1 = [];
       var hidden_pc2 = [];
 
       // setup objective and decision space
-      // remove id (and temporarily cluster) columns
-      var variables = d3.keys(data[0]).slice(0,-3);
-
-      var id_col = "id"
-      var weight_col = "weight"
-      var k_col = "cluster";
-      // NOTE: place clusters in decision space, but hide by default
-      hidden_pc2.push(k_col)
+      // leave out id col
+      var variables = d3.keys(data[0]).slice(0,-1);
 
       var decision_vars = _.union(variables.slice(0, variables.length - n_objs));
       var objective_vars = _.difference(variables, decision_vars);
-      decision_vars = _.union(decision_vars, [k_col], [id_col]);
-      objective_vars = _.union(objective_vars, [id_col], [weight_col]);
+      decision_vars = _.union(decision_vars, ["id"]);
+      objective_vars = _.union(objective_vars, ["id"]);
       // var decision_vars = _.difference(variables.slice(n_objs), [k_col]);
       // decision_vars = _.union(decision_vars, [id_col]);
 
@@ -288,7 +206,7 @@
       // var pc1 = d3.parcoords()("#plot01")
         .data(data)
         .hideAxis(decision_vars)
-        .color(palette)
+        //.color(palette)
         .height(200)
         .alpha(0.4)
         .mode("queue")
@@ -347,7 +265,7 @@
       // var pc2 = d3.parcoords()("#plot02")
         .data(data)
         .hideAxis(_.union(objective_vars, hidden_pc2))
-        .color(palette)
+        //.color(palette)
         .height(200)
         .alpha(0.4)
         .mode("queue")
@@ -381,11 +299,12 @@
       // slickgrid setup
       // ---------------------
 
-      //remove id col from left and place on right
-      var column_keys = d3.keys(data[0]).slice(0,-2); // leave id and weight
-      column_keys.unshift(d3.keys(data[0]).slice(0,-1).pop()); // id to left
-      column_keys.push(d3.keys(data[0]).pop()); // weight to right
+      // write function buildGrid that does everything slick related below
+      // make sure it can universally identify id col and move it
 
+      //remove id col from left and place on right
+      var column_keys = d3.keys(data[0]).slice(0,-1);
+      column_keys.unshift(d3.keys(data[0]).pop()); // id to left
 
       var columns = column_keys.map(function(key,i) {
         return {
@@ -627,6 +546,126 @@
         //   pc1.render();
         //   pc2.render();
         // }
+      });
+
+      // cluster data elements
+      d3.select('#cluster').on('click', function() {
+
+        // clustering library
+        var kmeans = ML.Clust.kmeans;
+
+        // max clusters = 6
+        k = (k <= 6) ?  k : 3;
+
+        // coerce data to array of arrays for clustering
+        var clust_form = [];
+        data.forEach(function(d,i) { clust_form[i] = _.values(d) });
+
+        // preform default clustering
+        var km = kmeans(clust_form, k);
+        data.forEach(function(d,i) { d.cluster = km.clusters[i]; });
+
+        // show clusters in decision space only
+        hidden_pc1.push(["cluster"]);
+
+        // choose default catagorical color scheme
+        // var color_scheme = d3.scale.ordinal()
+        //   .range(colorbrewer.Dark2[k])
+        // with v5 we don't need colorbrewer
+        var color_scheme = d3.scaleOrdinal(d3.schemeCategory10);
+
+        var palette = function(d) {
+          return color_scheme(d['cluster']);
+        };
+
+        pc1
+          .data(data)
+          .hideAxis(_.union(decision_vars, hidden_pc1))
+          .color(palette)
+          .render()
+          .updateAxes();
+
+        pc2
+          .data(data)
+          .hideAxis(_.union(objective_vars, hidden_pc2))
+          .color(palette)
+          .render()
+          .updateAxes();
+
+        //buildGrid(data);
+
+      });
+
+      // apply weights to variables
+      d3.select('#weights').on('click', function() {
+        // build weights for object vars, default is 1 for all
+        function getWeights(data) {
+          var weights = [];
+          n_vars = Object.keys(data[0]).length
+          Object.keys(data[0]).forEach(function(d, i){
+            console.log(d, i);
+            // weight only counts objectives
+            if (i >= (n_vars - n_objs - 2) && i < (n_vars - 2)) {
+              // objective var
+              weights.push({d: 1}) // NOTE: why doesn't this push the actual name?
+            } else {
+              weights.push({d: 0})
+            }
+          });
+          return weights;
+        };
+
+        function normalize_values(data_element) {
+          // function to normalize each value in a data element
+          //console.log(data_element);
+          Object.entries(data_element).forEach(
+            // find max and min of each column (key)
+            //([key, value]) => console.log(key, value)
+            ([key, value]) =>  {
+              var range = pc1.dimensions()[key].yscale.domain()
+              console.log(range);
+            }
+          )
+          //console.log(data_element);
+          //return data_element;
+        }
+
+        function applyWeight(data_element, weights, totals) {
+          // function to compute initial weight for each data element
+          var element_weight = 0
+          normalize_values(data_element)
+          Object.values(data_element).forEach(function(v, i) {
+            element_weight = element_weight + convert_to_float(v)*Object.values(weights[i])
+          })
+          data_element.weight = element_weight
+          //console.log("data elem w weight", data_element);
+          totals.push(element_weight)
+        };
+
+        function normalize_total(data_element, total_weight) {
+          data_element.weight = data_element.weight/total_weight;
+        };
+
+        function buildWeights(data) {
+          var totals = [];
+          var weights = getWeights(data);
+          console.log("weights vec", weights);
+
+          // compute initial weight for each data element
+          data.forEach(function(d) {applyWeight(d, weights, totals)});
+          // get total off all individual weights
+          console.log("totals vec", totals);
+          total_weight = totals.reduce((a, b) => a + b, 0); // compute sum
+          console.log("total weight", total_weight);
+          // divide each item weight by total
+          data.forEach(function(d) {normalize_total(d, total_weight)});
+
+          //pc1.scale("weights", [0,1]);
+        };
+
+        //buildWeights(data.slice(0,10));
+        buildWeights(data);
+        //console.log(data.slice(0,10));
       });
 
       // set axis limits
