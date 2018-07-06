@@ -70,6 +70,7 @@
     <button id="axes_limits">Set Axes Limits</button>
     <button id="cluster">Cluster Data</button>
     <button id="weights">Apply Weights</button>
+    <button id="utopia">Utopia Line</button>
     <!-- <input type="select" id="cluster">Clustering</input> -->
     <!-- <button id="cluster">Clustering</button> -->
     <button id="explore">Explore Selections</button>
@@ -135,7 +136,7 @@
           // edge case when all brushes are clicked away
           pc1.brushReset();
           pc2.brushReset();
-          gridUpdate(dataView, data);
+          gridUpdate(dataView, data, pc1);
         } else {
           // brushes must exist since function is called "on brush"
           var brushed = _.intersection(pc1.selected(), pc2.selected());
@@ -144,7 +145,7 @@
           pc2.brushed(brushed);
           pc1.render();
           pc2.render();
-          gridUpdate(dataView, brushed);
+          gridUpdate(dataView, brushed, pc1);
         }
       };
     };
@@ -268,14 +269,13 @@
 
     };
 
-    function gridUpdate(dataView, data) {
+    function gridUpdate(dataView, data, pc1) {
         dataView.beginUpdate();
         dataView.setItems(data);
         // if marked data exists, keep in grid
-        // only need to look at once plot since marks are linked
-        // if (pc1.marked().length) {
-        //   pc1.marked().forEach(function(i) { dataView.insertItem(0,i); });
-        // }
+        if (pc1.marked().length) {
+          pc1.marked().forEach(function(i) { dataView.insertItem(0,i); });
+        }
         dataView.endUpdate();
     };
 
@@ -434,7 +434,7 @@
       var dataView = slickgrid.dataView;
 
       // fill grid with data
-      gridUpdate(dataView, data);
+      gridUpdate(dataView, data, pc1);
 
       // ---------------------
       // events handling
@@ -448,6 +448,7 @@
       d3.select('#clear_marked').on('click', function() {
         // unmark all elements in grid (fires event)
         grid.setSelectedRows([]);
+        link(pc1, pc2, dataView, data);
       });
 
       // reset brushes
@@ -461,7 +462,7 @@
         pc1.brushReset()
         pc2.brushReset()
 
-        gridUpdate(dataView, data);
+        gridUpdate(dataView, data, pc1);
       });
 
       // hide axis
@@ -621,7 +622,7 @@
         slickgrid = buildGrid(data, pc1, pc2);
         grid = slickgrid.grid;
         dataView = slickgrid.dataView;
-        gridUpdate(dataView, data);
+        gridUpdate(dataView, data, pc1);
 
       });
 
@@ -637,17 +638,6 @@
           "weight (lb)": 1,
           "0-60 mph (s)": 1
         };
-
-        // if (Object.keys(weights).length > d3.keys(data[0]).length) {
-        //   throw new Error("Too many weights listed. Please check 'weights' input.")
-        // } else {
-        //   var zero_out = _.difference(d3.keys(data[0]), Object.keys(weights));
-        //   zero_out.forEach(
-        //     (key) =>  {
-        //       weights[key] = 0;
-        //   });
-        // }
-        // console.log(weights);
 
         function normalize_values(data_object) {
           // function to normalize each value in a data element
@@ -715,7 +705,7 @@
         slickgrid = buildGrid(data, pc1, pc2);
         grid = slickgrid.grid;
         dataView = slickgrid.dataView;
-        gridUpdate(dataView, data);
+        gridUpdate(dataView, data, pc1);
       });
 
       // set axis limits
@@ -793,7 +783,7 @@
 
         pc1.data(data).render.default();
         pc2.data(data).render.default();
-        gridUpdate(dataView, data);
+        gridUpdate(dataView, data, pc1);
         pc1.brushReset();
         pc2.brushReset();
         console.log("after:", data.length);
@@ -822,7 +812,7 @@
 
           pc1.data(data).render();
           pc2.data(data).render();
-          gridUpdate(dataView, data);
+          gridUpdate(dataView, data, pc1);
           pc1.brushReset();
           pc2.brushReset();
         }
@@ -892,6 +882,11 @@
             download.click();
         };
         pc2.mergeParcoords(callback);
+      });
+
+      // draw utopia line
+      d3.select('#utopia').on('click', function() {
+        pc1.utopiaLine();
       });
 
       // explore selected solutions
