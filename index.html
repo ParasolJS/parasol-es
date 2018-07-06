@@ -109,6 +109,23 @@
     // var hidden_pc1 = [];
     // var hidden_pc2 = [];
 
+    var convert_to_float = function(x) {
+        var converted = parseFloat(x);
+        return isNaN(converted) ? x : converted
+    }
+
+    var parcoords_format = function(data) {
+      // data values must be strings so we handle that here
+      // NOTE: there is probably a more consise way to do this
+      data.forEach(
+        (data_object) => {
+          Object.entries(data_object).forEach(
+            ([key, value]) =>  {
+              data_object[key] = value.toString();
+          })
+      });
+    };
+
     // link brushes between pc plots
     var link = function link(pc1, pc2, dataView, data) {
       return function () {
@@ -130,6 +147,125 @@
           gridUpdate(dataView, brushed);
         }
       };
+    };
+
+    var buildGrid = function(data, pc1, pc2) {
+      // ---------------------
+      // slickgrid setup
+      // ---------------------
+
+      // place id col on left
+      var column_keys = d3.keys(data[0]).slice();
+      column_keys = _.difference(column_keys, ["id"]);
+      column_keys.unshift("id");
+
+      var columns = column_keys.map(function(key,i) {
+        return {
+          id: key,
+          name: key,
+          field: key,
+          sortable: true
+        }
+      });
+
+      var options = {
+        enableCellNavigation: true,
+        enableColumnReorder: false,
+        multiColumnSort: false,
+        editable: true,
+        asyncEditorLoading: false,
+        autoEdit: false
+      };
+
+      var checkboxSelector = new Slick.CheckboxSelectColumn({
+        cssClass: "slick-cell-checkboxsel"
+      });
+      // add checkboxes to left grid
+      columns.unshift(checkboxSelector.getColumnDefinition());
+
+      var dataView = new Slick.Data.DataView();
+      var grid = new Slick.Grid("#grid", dataView, columns, options);
+      grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
+      grid.registerPlugin(checkboxSelector);
+
+      // wire up model events to drive the grid
+      dataView.onRowCountChanged.subscribe(function (e, args) {
+        grid.updateRowCount();
+        grid.render();
+      });
+
+      dataView.onRowsChanged.subscribe(function (e, args) {
+        grid.invalidateRows(args.rows);
+        grid.render();
+      });
+
+      // keep checkboxes matched with row on filter/brush
+      dataView.syncGridSelection(grid, preserveHidden=false); //vs true
+
+      // column sorting
+      var sortcol = column_keys[0];
+      var sortdir = 1;
+
+      // function comparer(a, b) {
+      //   var x = a[sortcol], y = b[sortcol];
+      //   return (x == y ? 0 : (x > y ? 1 : -1));
+      // }
+
+      // fix comparer function
+      function comparer(a, b) {
+          var x = convert_to_float(a[sortcol]), y = convert_to_float(b[sortcol]);
+          return (x == y ? 0 : (x > y ? 1 : -1));
+      }
+
+      // click header to sort grid column
+      grid.onSort.subscribe(function (e, args) {
+        sortdir = args.sortAsc ? 1 : -1;
+        sortcol = args.sortCol.field;
+
+        if ($.browser.msie && $.browser.version <= 8) {
+          dataView.fastSort(sortcol, args.sortAsc);
+        } else {
+          dataView.sort(comparer, args.sortAsc);
+        }
+      });
+
+      // highlight row in chart
+      grid.onMouseEnter.subscribe(function(e, args) {
+        var i = grid.getCellFromEvent(e).row;
+        var d1 = pc1.brushed() || data;
+        var d2 = pc2.brushed() || data;
+        pc1.highlight([d1[i]]);
+        pc2.highlight([d2[i]]);
+      });
+      grid.onMouseLeave.subscribe(function(e, args) {
+        pc1.unhighlight();
+        pc2.unhighlight();
+      });
+
+      // mark row in chart
+      grid.onSelectedRowsChanged.subscribe(function (e, args) {
+        // reset and update selected rows
+        var selected_row_ids = grid.getSelectedRows();
+        var brush_union = _.union(pc1.brushed(), pc2.brushed());
+        var d;
+        if (brush_union.length) {
+          d = brush_union;
+        } else {
+          d = data;
+        }
+        pc1.unmark();
+        pc2.unmark();
+        selected_row_ids.forEach(function(i) {
+           pc1.mark([d[i]]);
+           pc2.mark([d[i]]);
+         });
+      });
+
+      return {
+        grid: grid,
+        dataView: dataView
+      };
+
     };
 
     function gridUpdate(dataView, data) {
@@ -159,11 +295,6 @@
       // check that n_objs < length data - 1
       if (n_objs >= d3.keys(data[0]).length - 1) {
         throw new Error("Number of objectives exceeds length of data.");
-      }
-
-      function convert_to_float(x) {
-          var converted = parseFloat(x);
-          return isNaN(converted) ? x : converted
       }
 
       // assign each data element an ID for slickgrid and other analysis
@@ -296,120 +427,14 @@
         // });
 
       // ---------------------
-      // slickgrid setup
+      // build slickgrid
       // ---------------------
-
-      // write function buildGrid that does everything slick related below
-      // make sure it can universally identify id col and move it
-
-      //remove id col from left and place on right
-      var column_keys = d3.keys(data[0]).slice(0,-1);
-      column_keys.unshift(d3.keys(data[0]).pop()); // id to left
-
-      var columns = column_keys.map(function(key,i) {
-        return {
-          id: key,
-          name: key,
-          field: key,
-          sortable: true
-        }
-      });
-
-      var options = {
-        enableCellNavigation: true,
-        enableColumnReorder: false,
-        multiColumnSort: false,
-        editable: true,
-        asyncEditorLoading: false,
-        autoEdit: false
-      };
-
-      var checkboxSelector = new Slick.CheckboxSelectColumn({
-        cssClass: "slick-cell-checkboxsel"
-      });
-      // add checkboxes to left grid
-      columns.unshift(checkboxSelector.getColumnDefinition());
-
-      var dataView = new Slick.Data.DataView();
-      var grid = new Slick.Grid("#grid", dataView, columns, options);
-      grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
-      grid.registerPlugin(checkboxSelector);
-
-      // wire up model events to drive the grid
-      dataView.onRowCountChanged.subscribe(function (e, args) {
-        grid.updateRowCount();
-        grid.render();
-      });
-
-      dataView.onRowsChanged.subscribe(function (e, args) {
-        grid.invalidateRows(args.rows);
-        grid.render();
-      });
-
-      // keep checkboxes matched with row on filter/brush
-      dataView.syncGridSelection(grid, preserveHidden=false); //vs true
-
-      // column sorting
-      var sortcol = column_keys[0];
-      var sortdir = 1;
-
-      // function comparer(a, b) {
-      //   var x = a[sortcol], y = b[sortcol];
-      //   return (x == y ? 0 : (x > y ? 1 : -1));
-      // }
-
-      function comparer(a, b) {
-          var x = convert_to_float(a[sortcol]), y = convert_to_float(b[sortcol]);
-          return (x == y ? 0 : (x > y ? 1 : -1));
-      }
-
-      // click header to sort grid column
-      grid.onSort.subscribe(function (e, args) {
-        sortdir = args.sortAsc ? 1 : -1;
-        sortcol = args.sortCol.field;
-
-        if ($.browser.msie && $.browser.version <= 8) {
-          dataView.fastSort(sortcol, args.sortAsc);
-        } else {
-          dataView.sort(comparer, args.sortAsc);
-        }
-      });
-
-      // highlight row in chart
-      grid.onMouseEnter.subscribe(function(e, args) {
-        var i = grid.getCellFromEvent(e).row;
-        var d1 = pc1.brushed() || data;
-        var d2 = pc2.brushed() || data;
-        pc1.highlight([d1[i]]);
-        pc2.highlight([d2[i]]);
-      });
-      grid.onMouseLeave.subscribe(function(e, args) {
-        pc1.unhighlight();
-        pc2.unhighlight();
-      });
-
-      // mark row in chart
-      grid.onSelectedRowsChanged.subscribe(function (e, args) {
-        // reset and update selected rows
-        var selected_row_ids = grid.getSelectedRows();
-        var brush_union = _.union(pc1.brushed(), pc2.brushed());
-        var d;
-        if (brush_union.length) {
-          d = brush_union;
-        } else {
-          d = data;
-        }
-        pc1.unmark();
-        pc2.unmark();
-        selected_row_ids.forEach(function(i) {
-           pc1.mark([d[i]]);
-           pc2.mark([d[i]]);
-         });
-      });
+      var slickgrid = buildGrid(data, pc1, pc2);
+      var grid = slickgrid.grid;
+      var dataView = slickgrid.dataView;
 
       // fill grid with data
       gridUpdate(dataView, data);
-
 
       // ---------------------
       // events handling
@@ -428,10 +453,10 @@
       // reset brushes
       d3.select('#brush_reset').on('click', function() {
         // reset global vars
-        brushed_pc1 = [];
-        brushed_pc2 = [];
-        isBrushed_pc1 = false;
-        isBrushed_pc2 = false;
+        // brushed_pc1 = [];
+        // brushed_pc2 = [];
+        // isBrushed_pc1 = false;
+        // isBrushed_pc2 = false;
 
         pc1.brushReset()
         pc2.brushReset()
@@ -563,7 +588,7 @@
 
         // preform default clustering
         var km = kmeans(clust_form, k);
-        data.forEach(function(d,i) { d.cluster = km.clusters[i]; });
+        data.forEach(function(d,i) { d.cluster = km.clusters[i].toString(); });
 
         // show clusters in decision space only
         hidden_pc1.push(["cluster"]);
@@ -592,80 +617,105 @@
           .render()
           .updateAxes();
 
-        //buildGrid(data);
+        // rebuild the grid
+        slickgrid = buildGrid(data, pc1, pc2);
+        grid = slickgrid.grid;
+        dataView = slickgrid.dataView;
+        gridUpdate(dataView, data);
 
       });
 
       // apply weights to variables
       d3.select('#weights').on('click', function() {
-        // build weights for object vars, default is 1 for all
-        function getWeights(data) {
-          var weights = [];
-          n_vars = Object.keys(data[0]).length
-          Object.keys(data[0]).forEach(function(d, i){
-            console.log(d, i);
-            // weight only counts objectives
-            if (i >= (n_vars - n_objs - 2) && i < (n_vars - 2)) {
-              // objective var
-              weights.push({d: 1}) // NOTE: why doesn't this push the actual name?
-            } else {
-              weights.push({d: 0})
-            }
-          });
-          return weights;
+        // function should take an object specififying weighting for desired variables, those not listed will be weighted as 0
+
+        // NOTE: make sure that weights can be re-applied
+
+        // setup test input
+        var weights = {
+          "power (hp)": 1,
+          "weight (lb)": 1,
+          "0-60 mph (s)": 1
         };
 
-        function normalize_values(data_element) {
+        // if (Object.keys(weights).length > d3.keys(data[0]).length) {
+        //   throw new Error("Too many weights listed. Please check 'weights' input.")
+        // } else {
+        //   var zero_out = _.difference(d3.keys(data[0]), Object.keys(weights));
+        //   zero_out.forEach(
+        //     (key) =>  {
+        //       weights[key] = 0;
+        //   });
+        // }
+        // console.log(weights);
+
+        function normalize_values(data_object) {
           // function to normalize each value in a data element
-          //console.log(data_element);
-          Object.entries(data_element).forEach(
+          var normed_obj = {};
+          Object.entries(data_object).forEach(
             // find max and min of each column (key)
-            //([key, value]) => console.log(key, value)
             ([key, value]) =>  {
-              var range = pc1.dimensions()[key].yscale.domain()
-              console.log(range);
-            }
-          )
-          //console.log(data_element);
-          //return data_element;
+              if(weights[key]) {
+                var range = pc1.dimensions()[key].yscale.domain()
+                normed_obj[key] = (convert_to_float(value)-range[0])/(range[1]-range[0])
+                // console.log(value);
+              }
+          });
+          return normed_obj;
         }
 
-        function applyWeight(data_element, weights, totals) {
+        function applyWeight(data_object, weights, totals) {
           // function to compute initial weight for each data element
-          var element_weight = 0
-          normalize_values(data_element)
-          Object.values(data_element).forEach(function(v, i) {
-            element_weight = element_weight + convert_to_float(v)*Object.values(weights[i])
-          })
-          data_element.weight = element_weight
-          //console.log("data elem w weight", data_element);
+          var element_weight = 0;
+          normed_obj = normalize_values(data_object);
+          Object.entries(normed_obj).forEach(
+            // find cumulative sum of weight times value
+            ([key, value]) =>  {
+              if(weights[key]) {
+                element_weight += value * weights[key]
+                //console.log(element_weight);
+              }
+          });
+          data_object.weight = element_weight
           totals.push(element_weight)
         };
 
-        function normalize_total(data_element, total_weight) {
-          data_element.weight = data_element.weight/total_weight;
+        function normalize_total(data_object, range) {
+          data_object.weight = (data_object.weight-range[0])/(range[1]-range[0]);
         };
 
         function buildWeights(data) {
           var totals = [];
-          var weights = getWeights(data);
-          console.log("weights vec", weights);
-
           // compute initial weight for each data element
           data.forEach(function(d) {applyWeight(d, weights, totals)});
-          // get total off all individual weights
-          console.log("totals vec", totals);
-          total_weight = totals.reduce((a, b) => a + b, 0); // compute sum
-          console.log("total weight", total_weight);
-          // divide each item weight by total
-          data.forEach(function(d) {normalize_total(d, total_weight)});
-
-          //pc1.scale("weights", [0,1]);
+          // standardize all values against total weight
+          data.forEach(function(d) {normalize_total(d, d3.extent(totals))});
+          // format data as strings
+          parcoords_format(data);
         };
 
-        //buildWeights(data.slice(0,10));
         buildWeights(data);
-        //console.log(data.slice(0,10));
+
+        // show weights in objective space only
+        hidden_pc2.push(["weight"]);
+
+        pc1
+          .data(data)
+          .hideAxis(_.union(decision_vars, hidden_pc1))
+          .render()
+          .updateAxes();
+
+        pc2
+          .data(data)
+          .hideAxis(_.union(objective_vars, hidden_pc2))
+          .render()
+          .updateAxes();
+
+        // rebuild the grid
+        slickgrid = buildGrid(data, pc1, pc2);
+        grid = slickgrid.grid;
+        dataView = slickgrid.dataView;
+        gridUpdate(dataView, data);
       });
 
       // set axis limits
