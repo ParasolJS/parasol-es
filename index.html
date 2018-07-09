@@ -886,7 +886,13 @@
 
       // draw utopia line
       d3.select('#utopia').on('click', function() {
-        pc1.utopiaLine();
+        var optimize_list = {
+          "power (hp)": "max",
+          "weight (lb)": "min",
+          "0-60 mph (s)": "max",
+          "weight": "max"
+        };
+        pc1.utopiaLine(optimize_list);
       });
 
       // explore selected solutions
