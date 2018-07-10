@@ -1,0 +1,19 @@
+
+Examples to include:
+
+basic
+linked brushing
+marking
+clustering
+weighting
+utopia
+
+hide and show
+load and export
+keep and remove
+save image
+
+Key examples from parcoords:
+marking
+reorderable axes
+scale
