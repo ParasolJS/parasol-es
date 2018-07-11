@@ -13,7 +13,10 @@ load and export
 keep and remove
 save image
 
+showcase
+
 Key examples from parcoords:
 marking
 reorderable axes
 scale
+coloring datasets, etc.

@@ -9,26 +9,38 @@
 <link rel="stylesheet" type="text/css" href="../dist/parcoords.css">
 <link rel="stylesheet" type="text/css" href="style.css">
 
+<script src="../lib/underscore.js"></script>
+<script src="../lib/jquery-1.7.min.js"></script>
 <script src="../lib/d3.v5.min.js"></script>
 <script src="../lib/parcoords.standalone.js"></script>
 <script src="../dist/parasol.js"></script>
 
 <body>
-<p>Demonstrates creating two parallel coordinates plots from an example dataset using the ParaVis function.</p>
-<div id="plot1" class="parcoords" style="width:600px;height:200px"></div>
-<div id="plot2" class="parcoords" style="width:600px;height:200px"></div>
+<p>Demonstrates creating n parallel coordinates plots from an example dataset using the ParaVis function.</p>
+<div class="container" ></div>
 </body>
 
 <script>
 d3.csv('data/cars.csv').then(function(dataset) {
-  var plot_list = ParaVis(dataset)
-  console.log(plot_list);
-  plot_list.forEach(
-    (pc) => {
-      pc
-      .hideAxis(["name"])
-      .render()
-      .updateAxes(0)
-  })
+  var n = 2;
+  var partition = {};
+  // setup partition object (don't plot 'name' variable)
+  d3.keys(dataset[0]).forEach(
+    (key) => {
+      if (key != "name") {
+        partition[key] = _.range(n); // array indicating all pids
+      }
+    }
+  );
+  ParaVis(dataset, partition, n, layout=null)
+  // var plot_list = ParaVis(dataset, partition)
+  // console.log(plot_list);
+  // plot_list.forEach(
+  //   (pc) => {
+  //     pc
+  //     .hideAxis(["name"])
+  //     .render()
+  //     .updateAxes(0)
+  // })
 });
 </script>
