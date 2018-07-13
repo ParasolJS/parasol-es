@@ -1,5 +1,5 @@
 
-// NOTE: somehow require d3, parcoords, underscore, jquery, ...
+// NOTE: somehow require d3, parcoords, underscore, ...
 
 // ----------
 // template
@@ -46,12 +46,10 @@
 
 // constructor:
 // initializes two independent ParCoords vars and retuns them in an array
-var ParaVis = function ParaVis(dataset, partition, n, layout=null) {
+var ParaVis = function ParaVis(dataset, partition, n) {
   // dataset: may be either an object or an array, all values should be the same format
   // partition: object indicating which plots a variable should be included in; formatted as partition = { "var": [pids] }
   // n: number of plots to create
-  // layout: object specifying plot dimensions; default is
-  //    layout = {height: "200px", width: "100%"}
   console.log(partition);
 
   // setup array of arrays to store hidden axes for all plots
@@ -77,36 +75,21 @@ var ParaVis = function ParaVis(dataset, partition, n, layout=null) {
     })
   console.log(hidden);
 
-  // setup DOM layout if necessary
-  if(!layout){
-    layout = {height: "200px", width: "100%"}
-  }
-  console.log(layout);
-
-  // build pc plots as array elements
-  var plots = Array.from({length: n},
-    (pid, idx) => {
-      layout["id"] = "pc"+idx
-      layout["class"] = "parcoords"
-      console.log(layout);
-      // create new div for each plot
-
-      // NOTE: try this with the updated version of jQuery
-      var plot_div = document.createElement("div");
-      $(plot_div).attr(layout);
-      // $(plot_div).appendTo( $( ".container" ) );
-      // populate array id with function and plot
-      // pid = ParCoords()('#pc'+idx)
-      //   .data(dataset)
-      //   .hideAxis(hidden[idx])
-      //   .alpha(0.4)
-      //   .alphaOnBrushed(0.1)
-      //   .render()
-      //   .reorderable()
-      //   .mode("queue")
-      //   .brushMode("1D-axes");
-  });
+  // store pc plots in array
+  var plots = [];
+  d3.selectAll(".parcoords")
+    .each(function(d,pid) {
+        plots[pid] = ParCoords()(this)
+          .data(dataset)
+          .hideAxis(hidden[pid])
+          .alpha(0.4)
+          .alphaOnBrushed(0.1)
+          .render()
+          .reorderable()
+          .mode("queue")
+          .brushMode("1D-axes");
+    });
   console.log(plots);
 
-  // return(plot_list);
+  return(plots);
 }

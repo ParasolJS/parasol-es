@@ -10,37 +10,31 @@
 <link rel="stylesheet" type="text/css" href="style.css">
 
 <script src="../lib/underscore.js"></script>
-<script src="../lib/jquery-1.7.min.js"></script>
 <script src="../lib/d3.v5.min.js"></script>
 <script src="../lib/parcoords.standalone.js"></script>
 <script src="../dist/parasol.js"></script>
 
 <body>
-<p>Demonstrates creating n parallel coordinates plots from an example dataset using the ParaVis function.</p>
-<div class="container" ></div>
+<p>Demonstrates creating n parallel coordinates plots from an example dataset using the ParaVis function. Note that user can customize the div id and style for each plot.</p>
+<div id="plot01" class="parcoords" style="height:200px; width:600px;"></div>
+<div id="plot02" class="parcoords" style="height:200px; width:800px;"></div>
+<div class="parcoords" style="height:200px; width:100%;"></div>
 </body>
 
 <script>
 d3.csv('data/cars.csv').then(function(dataset) {
-  var n = 2;
+  var n = 3;
   var partition = {};
   // setup partition object (don't plot 'name' variable)
-  d3.keys(dataset[0]).forEach(
+  Object.keys(dataset[0]).forEach(
     (key) => {
       if (key != "name") {
         partition[key] = _.range(n); // array indicating all pids
       }
     }
   );
-  ParaVis(dataset, partition, n, layout=null)
-  // var plot_list = ParaVis(dataset, partition)
-  // console.log(plot_list);
-  // plot_list.forEach(
-  //   (pc) => {
-  //     pc
-  //     .hideAxis(["name"])
-  //     .render()
-  //     .updateAxes(0)
-  // })
+
+  var plot_list = ParaVis(dataset, partition, n);
+  console.log(plot_list);
 });
 </script>
