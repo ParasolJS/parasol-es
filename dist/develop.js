@@ -43,13 +43,73 @@
 // grid_update(dataView, data, plot_list)
 
 
+/**
+ * Setup a new parallel coordinates chart array.
+ *
+ * @param config
+ * @returns {pc} a parcoords closure
+ */
+var build = function build(config) {
+  /**
+   * Create charts within each container in the d3 selection.
+   *
+   * @param selection a d3 selection
+   * @returns {pc} instance for chained api
+   */
+   config = {} // temporary bypass
 
-// constructor:
-// initializes two independent ParCoords vars and retuns them in an array
-var ParaVis = function ParaVis(dataset, partition, n) {
+  var vis = function vis(selection) {
+    selection = vis.selection = d3Selection.select(selection);
+
+    // store pc plot functions in array
+    vis.list = [];
+    d3.selectAll(selection)
+      .each(function(d,i) {
+          vis.list[i] = ParCoords(config)(this);
+            // .data(dataset)
+            // .hideAxis(hidden[i])
+            // .alpha(0.4)
+            // .alphaOnBrushed(0.1)
+            // .render()
+            // .reorderable()
+            // .mode("queue")
+            // .brushMode("1D-axes");
+      });
+
+    // for chained api
+    return vis;
+  };
+
+  // for partial-application style programming
+  return vis;
+};
+
+
+
+
+var ParaVis = function ParaVis(userConfig, selection) {
   // dataset: may be either an object or an array, all values should be the same format
   // partition: object indicating which plots a variable should be included in; formatted as partition = { "var": [pids] }
   // n: number of plots to create
+
+  selection = vis.selection = d3Selection.select(selection);
+
+
+  // var state = initState(userConfig, selection);
+  // var config = state.config,
+  //     events = state.events,
+  //     flags = state.flags,
+  //     size = state.size; // this will be num of plots, identify by d3selection.size()
+
+
+  var vis = build(config);
+
+  // bindEvents(config, ctx, pc, xscale, flags, brushedQueue, foregroundQueue, events, axis);
+
+
+
+
+
   console.log(partition);
 
   // setup array of arrays to store hidden axes for all plots
@@ -75,20 +135,7 @@ var ParaVis = function ParaVis(dataset, partition, n) {
     })
   console.log(hidden);
 
-  // store pc plots in array
-  var plots = [];
-  d3.selectAll(".parcoords")
-    .each(function(d,pid) {
-        plots[pid] = ParCoords()(this)
-          .data(dataset)
-          .hideAxis(hidden[pid])
-          .alpha(0.4)
-          .alphaOnBrushed(0.1)
-          .render()
-          .reorderable()
-          .mode("queue")
-          .brushMode("1D-axes");
-    });
+
   console.log(plots);
 
   return(plots);
