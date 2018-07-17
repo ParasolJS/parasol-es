@@ -14,6 +14,7 @@ Kasprzyk or William Raseman at the University of Colorado Boulder.
 ## Built With
 
 * [D3 V5](https://d3js.org/) - D3 modules are used
+* [parcoords-es](https://github.com/BigFatDog/parcoords-es) - Parallel Coordinates modules
 * [Rollup](https://github.com/rollup/rollup) - Module bundler
 
 ## Authors
@@ -21,14 +22,12 @@ Kasprzyk or William Raseman at the University of Colorado Boulder.
 * **Josh Jacobson** - *University of Colorado Boulder*
 * **William Raseman** - *University of Colorado Boulder*
 
-Many thanks to **Xing Yun** for porting the [Parallel Coordinates](https://github.com/syntagmatic/parallel-coordinates) project to D3 V5.
-
-See also the list of [contributors](https://github.com/syntagmatic/parallel-coordinates/graphs/contributors) who created Parallel Coordinates.
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## Acknowledgments
 
-This project is based on and extends upon [parcoords-es](https://github.com/BigFatDog/parcoords-es).
+Many thanks to **Xing Yun** for porting the [Parallel Coordinates](https://github.com/syntagmatic/parallel-coordinates) project to D3 V5.
+
+See also the list of [contributors](https://github.com/syntagmatic/parallel-coordinates/graphs/contributors) who created Parallel Coordinates.
