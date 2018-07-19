@@ -46,7 +46,6 @@
     opacity: 0.25;
 }
 
-/* custom "dimmed" class for marked layer */
 .parcoords canvas.dimmed {
     opacity: 0.85;
 }
