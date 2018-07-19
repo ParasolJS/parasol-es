@@ -1,13 +1,13 @@
 {
   "presets": [
-    [
-      "es2015",
-      {
-        "modules": false
-      }
-    ]
+    "env"
   ],
-  "plugins": [
-    "external-helpers"
-  ]
+  "env": {
+    "test": {
+      "plugins": [
+        "istanbul",
+        "external-helpers"
+      ]
+    }
+  }
 }

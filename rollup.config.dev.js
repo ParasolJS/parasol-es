@@ -4,10 +4,9 @@ import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import postcss from 'rollup-plugin-postcss'
 import localResolve from 'rollup-plugin-local-resolve';
+import livereload from 'rollup-plugin-livereload';
+import serve from 'rollup-plugin-serve';
 import json from 'rollup-plugin-json';
-
-let pkg = require('./package.json');
-let external = Object.keys(pkg.dependencies);
 
 export default {
     input: 'src/index.js',
@@ -27,18 +26,25 @@ export default {
             extensions: ['.js']
         }),
         commonjs(),
+        serve({
+            open: true,
+            verbose: true,
+            contentBase: ['demo', 'dist'],
+            historyApiFallback: false,
+            host: 'localhost',
+            port: 3004
+        }),
+        livereload({
+            watch: ['demo', 'dist'],
+            verbose: false
+        })
     ],
-    external: external,
+    external: [],
     output: [
         {
-            file: pkg.main,
+            file: 'dist/parasol.standalone.js',
             format: 'umd',
-            name: 'parasol',
-            sourcemap: 'inline'
-        },
-        {
-            file: pkg.module,
-            format: 'es',
+            name: 'ParCoords',
             sourcemap: 'inline'
         }
     ]

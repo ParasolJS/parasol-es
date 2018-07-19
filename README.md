@@ -1,5 +1,7 @@
 # parasol
 
+[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
+
 ES6 module for visualization of multiobjective optimization problems. This library is based on D3 V5 API and extends upon [parcoords-es](https://github.com/BigFatDog/parcoords-es).
 
 
