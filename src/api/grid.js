@@ -3,7 +3,7 @@ import { difference } from underscore
 
 import convert_to_float from "../util/convert_to_float";
 
-const grid = (config, vis, flags) => {
+const grid = (config, pv, flags) => {
 
   // NOTE: flag grid as active
 
@@ -81,12 +81,12 @@ const grid = (config, vis, flags) => {
   config.grid.onMouseEnter.subscribe( (e, args) => {
     const i = grid.getCellFromEvent(e).row;
     const d = config.brushed || config.data;
-    vis.list.forEach( (pc) => {
+    pv.charts.forEach( (pc) => {
       pc.highlight([d[i]]);
     })
   });
   config.grid.onMouseLeave.subscribe( (e, args) => {
-    vis.list.forEach( (pc) => {
+    pv.charts.forEach( (pc) => {
       pc.unhighlight();
     })
   });
@@ -100,7 +100,7 @@ const grid = (config, vis, flags) => {
     } else {
       const d = config.data;
     }
-    vis.list.forEach( (pc) => {
+    pv.charts.forEach( (pc) => {
       pc.unmark();
       pc.mark(selected_row_ids); //NOTE: this may not work initially
     })

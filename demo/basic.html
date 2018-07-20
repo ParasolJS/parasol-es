@@ -11,8 +11,8 @@
 
 <script src="../lib/underscore.js"></script>
 <script src="../lib/d3.v5.min.js"></script>
-<script src="../lib/parcoords.standalone.js"></script>
-<script src="../dist/parasol.js"></script>
+<!-- <script src="../lib/parcoords.standalone.js"></script> -->
+<script src="../dist/parasol.standalone.js"></script>
 
 <body>
 <p>Demonstrates creating a set of parallel coordinates plots from an example dataset and editing each plot indiviually. Note that user retains freedom to customize each plot div as well.</p>
@@ -23,18 +23,21 @@
 
 <script>
 d3.csv('data/cars.csv').then(function(dataset) {
+  var config = {};
   var n = 3;
-  var partition = {};
+  config.partition = {};
   // setup partition object (don't plot 'name' variable)
   Object.keys(dataset[0]).forEach(
     (key) => {
       if (key != "name") {
-        partition[key] = _.range(n); // array indicating all pids
+        config.partition[key] = _.range(n); // array indicating all pids
       }
     }
   );
+  console.log(config);
+  console.log(config.partition);
 
-  var plot_list = ParaVis(dataset, partition, n);
-  console.log(plot_list);
+  var pv = ParaVis(config)('.parcoords');
+  console.log(pv);
 });
 </script>
