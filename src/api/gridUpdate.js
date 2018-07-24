@@ -8,7 +8,7 @@ const gridUpdate = (config, pv, flags) => (
 	config.dataView.setItems(data);
 	// if marked data exists, keep in grid
 	if (flags.marked) {
-		array_of_all_marked_data.forEach( (i) => {
+		// array_of_all_marked_data.forEach( (i) => {
 			config.dataView.insertItem(0,i);
 		});
 	}

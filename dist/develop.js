@@ -32,6 +32,16 @@
 // grid_update(dataView, data, plot_list)
 
 
+var config = {};
+config.partition = {};
+// setup partition object
+Object.keys(dataset[0]).forEach(
+  (key) => {
+    if (key != "name") {
+      config.partition[key] = _.range(3); // array indicating all pids
+    }
+  }
+);
 
 
 var ParaVis = function ParaVis(userConfig, selection) {

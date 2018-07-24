@@ -22,16 +22,7 @@ const init = (config) => {
 		selection
 			.each( function(d,i) {
 				ps.charts[i] = ParCoords(config.chartOptions)(this);
-				// 	.data(config.data)
-				// // .hideAxis(hidden[i])
-				// 	.alpha(0.4)
-				// 	.alphaOnBrushed(0.1)
-				// 	.render()
-				// 	.reorderable()
-				// 	.mode("queue")
-				// 	.brushMode("1D-axes");
 			});
-
 		// for chained api
 		return ps;
 	};

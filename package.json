@@ -86,7 +86,7 @@
   },
   "dependencies": {
     "d3": "^5.5.0",
-    "parcoord-es": "^2.1.6",
+    "parcoord-es": "^2.1.7",
     "slickgrid": "^2.3.19"
   }
 }
