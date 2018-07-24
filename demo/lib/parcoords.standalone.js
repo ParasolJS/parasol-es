@@ -1,20 +1,3 @@
-/** --------------------------------------------------------------------
-Kasprzyk Research Group - University of Colorado Boulder
-
-Contributers:
-  Josh Jacobson
-  William Raseman
-
-NOTE: This fork contains some minor edits:
-      - Requires Underscore.js for set operations
-      - Original "marks" canvas layer has been converted to "dots" allowing new "marked" layer to be used with slickgrid to permanently highlight a row of data (search "mark" to trace implementation)
-
-All other functionality is the work of Kai Chang (1), designer of d3.parcoords.js and Xing Yun (2) who ported the project to D3 V4 with an ES6 modular approach
-(1): https://github.com/syntagmatic/parallel-coordinates
-(2): https://github.com/BigFatDog/parcoords-es
----------------------------------------------------------------------**/
-
-
 (function(l, i, v, e) { v = l.createElement(i); v.async = 1; v.src = '//' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; e = l.getElementsByTagName(i)[0]; e.parentNode.insertBefore(v, e)})(document, 'script');
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -4133,7 +4116,9 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
             pc.g().selectAll('.brush').each(function (d) {
               if (d !== dimension) return;
               select(this).call(brushes[d].move, null);
-              brushes[d].event(select(this));
+              if (typeof brushes[d].type === 'function') {
+                brushes[d].event(select(this));
+              }
             });
             pc.renderBrushed();
           }
@@ -4150,7 +4135,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         var brushNodes = state.brushNodes;
 
         var is_brushed = function is_brushed(p) {
-          return brushSelection(brushNodes[p]) !== null;
+          return brushNodes[p] && brushSelection(brushNodes[p]) !== null;
         };
 
         var actives = Object.keys(config.dimensions).filter(is_brushed);
@@ -4228,7 +4213,9 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         _brush.on('start', function () {
           if (event.sourceEvent !== null) {
             events.call('brushstart', pc, config.brushed);
-            event.sourceEvent.stopPropagation();
+            if (typeof event.sourceEvent.stopPropagation === 'function') {
+              event.sourceEvent.stopPropagation();
+            }
           }
         }).on('brush', function () {
           brushUpdated(config, pc, events)(selected(state, config, brushGroup)());
@@ -4278,13 +4265,11 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       };
     };
 
-    var BrushState = {
-      brushes: {},
-      brushNodes: {}
-    };
-
     var install1DAxes = function install1DAxes(brushGroup, config, pc, events) {
-      var state = Object.assign({}, BrushState);
+      var state = {
+        brushes: {},
+        brushNodes: {}
+      };
 
       brushGroup.modes['1D-axes'] = {
         install: install(state, config, pc, events, brushGroup),
@@ -4798,13 +4783,11 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       };
     };
 
-    var BrushState$1 = {
-      brushes: {},
-      brushNodes: {}
-    };
-
     var install1DMultiAxes = function install1DMultiAxes(brushGroup, config, pc, events) {
-      var state = Object.assign({}, BrushState$1);
+      var state = {
+        brushes: {},
+        brushNodes: {}
+      };
 
       brushGroup.modes['1D-axes-multi'] = {
         install: install$1(state, config, pc, events, brushGroup),
@@ -5109,13 +5092,11 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       };
     };
 
-    var BrushState$2 = {
-      strums: {},
-      strumRect: {}
-    };
-
     var install2DStrums = function install2DStrums(brushGroup, config, pc, events, xscale) {
-      var state = Object.assign({}, BrushState$2);
+      var state = {
+        strums: {},
+        strumRect: {}
+      };
 
       brushGroup.modes['2D-strums'] = {
         install: install$2(brushGroup, state, config, pc, events, xscale),
@@ -6013,13 +5994,11 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       };
     };
 
-    var BrushState$3 = {
-      arcs: {},
-      strumRect: {}
-    };
-
     var installAngularBrush = function installAngularBrush(brushGroup, config, pc, events, xscale) {
-      var state = Object.assign({}, BrushState$3);
+      var state = {
+        arcs: {},
+        strumRect: {}
+      };
 
       brushGroup.modes['angular'] = {
         install: install$3(brushGroup, state, config, pc, events, xscale),
@@ -6082,119 +6061,55 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       };
     };
 
-    var selected$4 = function selected(config) {
-      var actives = [];
-      var extents = [];
-      var ranges = {};
-      //get brush selections from each node, convert to actual values
-      //invert order of values in array to comply with the parcoords architecture
-      if (config.brushes.length === 0) {
-        var nodes = selectAll('.brush').nodes();
-        for (var k = 0; k < nodes.length; k++) {
-          if (brushSelection(nodes[k]) !== null) {
-            actives.push(nodes[k].__data__);
-            var values = [];
-            var ranger = brushSelection(nodes[k]);
-            if (typeof config.dimensions[nodes[k].__data__].yscale.domain()[0] === 'number') {
-              for (var i = 0; i < ranger.length; i++) {
-                if (actives.includes(nodes[k].__data__) && config.flipAxes.includes(nodes[k].__data__)) {
-                  values.push(config.dimensions[nodes[k].__data__].yscale.invert(ranger[i]));
-                } else if (config.dimensions[nodes[k].__data__].yscale() !== 1) {
-                  values.unshift(config.dimensions[nodes[k].__data__].yscale.invert(ranger[i]));
+    var selected$4 = function selected(config, pc) {
+      return function () {
+        var actives = [];
+        var extents = [];
+        var ranges = {};
+        //get brush selections from each node, convert to actual values
+        //invert order of values in array to comply with the parcoords architecture
+        if (config.brushes.length === 0) {
+          var nodes = pc.g().selectAll('.brush').nodes();
+          for (var k = 0; k < nodes.length; k++) {
+            if (brushSelection(nodes[k]) !== null) {
+              actives.push(nodes[k].__data__);
+              var values = [];
+              var ranger = brushSelection(nodes[k]);
+              if (typeof config.dimensions[nodes[k].__data__].yscale.domain()[0] === 'number') {
+                for (var i = 0; i < ranger.length; i++) {
+                  if (actives.includes(nodes[k].__data__) && config.flipAxes.includes(nodes[k].__data__)) {
+                    values.push(config.dimensions[nodes[k].__data__].yscale.invert(ranger[i]));
+                  } else if (config.dimensions[nodes[k].__data__].yscale() !== 1) {
+                    values.unshift(config.dimensions[nodes[k].__data__].yscale.invert(ranger[i]));
+                  }
                 }
-              }
-              extents.push(values);
-              for (var ii = 0; ii < extents.length; ii++) {
-                if (extents[ii].length === 0) {
-                  extents[ii] = [1, 1];
+                extents.push(values);
+                for (var ii = 0; ii < extents.length; ii++) {
+                  if (extents[ii].length === 0) {
+                    extents[ii] = [1, 1];
+                  }
                 }
-              }
-            } else {
-              ranges[nodes[k].__data__] = brushSelection(nodes[k]);
-              var dimRange = config.dimensions[nodes[k].__data__].yscale.range();
-              var dimDomain = config.dimensions[nodes[k].__data__].yscale.domain();
-              for (var j = 0; j < dimRange.length; j++) {
-                if (dimRange[j] >= ranger[0] && dimRange[j] <= ranger[1] && actives.includes(nodes[k].__data__) && config.flipAxes.includes(nodes[k].__data__)) {
-                  values.push(dimRange[j]);
-                } else if (dimRange[j] >= ranger[0] && dimRange[j] <= ranger[1]) {
-                  values.unshift(dimRange[j]);
+              } else {
+                ranges[nodes[k].__data__] = brushSelection(nodes[k]);
+                var dimRange = config.dimensions[nodes[k].__data__].yscale.range();
+                var dimDomain = config.dimensions[nodes[k].__data__].yscale.domain();
+                for (var j = 0; j < dimRange.length; j++) {
+                  if (dimRange[j] >= ranger[0] && dimRange[j] <= ranger[1] && actives.includes(nodes[k].__data__) && config.flipAxes.includes(nodes[k].__data__)) {
+                    values.push(dimRange[j]);
+                  } else if (dimRange[j] >= ranger[0] && dimRange[j] <= ranger[1]) {
+                    values.unshift(dimRange[j]);
+                  }
                 }
-              }
-              extents.push(values);
-              for (var _ii = 0; _ii < extents.length; _ii++) {
-                if (extents[_ii].length === 0) {
-                  extents[_ii] = [1, 1];
+                extents.push(values);
+                for (var _ii = 0; _ii < extents.length; _ii++) {
+                  if (extents[_ii].length === 0) {
+                    extents[_ii] = [1, 1];
+                  }
                 }
               }
             }
           }
-        }
-        // test if within range
-        var within = {
-          date: function date(d, p, dimension) {
-            var category = d[p];
-            var categoryIndex = config.dimensions[p].yscale.domain().indexOf(category);
-            var categoryRangeValue = config.dimensions[p].yscale.range()[categoryIndex];
-            return categoryRangeValue >= ranges[p][0] && categoryRangeValue <= ranges[p][1];
-          },
-          number: function number(d, p, dimension) {
-            return extents[dimension][0] <= d[p] && d[p] <= extents[dimension][1];
-          },
-          string: function string(d, p, dimension) {
-            var category = d[p];
-            var categoryIndex = config.dimensions[p].yscale.domain().indexOf(category);
-            var categoryRangeValue = config.dimensions[p].yscale.range()[categoryIndex];
-            return categoryRangeValue >= ranges[p][0] && categoryRangeValue <= ranges[p][1];
-          }
-        };
-        return config.data.filter(function (d) {
-          return actives.every(function (p, dimension) {
-            return within[config.dimensions[p].type](d, p, dimension);
-          });
-        });
-      } else {
-        // need to get data from each brush instead of each axis
-        // first must find active axes by iterating through all brushes
-        // then go through similiar process as above.
-        var multiBrushData = [];
-
-        var _loop = function _loop(idx) {
-          var brush$$1 = config.brushes[idx];
-          var values = [];
-          var ranger = brush$$1.extent;
-          var actives = [brush$$1.data];
-          if (typeof config.dimensions[brush$$1.data].yscale.domain()[0] === 'number') {
-            for (var _i = 0; _i < ranger.length; _i++) {
-              if (actives.includes(brush$$1.data) && config.flipAxes.includes(brush$$1.data)) {
-                values.push(config.dimensions[brush$$1.data].yscale.invert(ranger[_i]));
-              } else if (config.dimensions[brush$$1.data].yscale() !== 1) {
-                values.unshift(config.dimensions[brush$$1.data].yscale.invert(ranger[_i]));
-              }
-            }
-            extents.push(values);
-            for (var _ii2 = 0; _ii2 < extents.length; _ii2++) {
-              if (extents[_ii2].length === 0) {
-                extents[_ii2] = [1, 1];
-              }
-            }
-          } else {
-            ranges[brush$$1.data] = brush$$1.extent;
-            var _dimRange = config.dimensions[brush$$1.data].yscale.range();
-            var _dimDomain = config.dimensions[brush$$1.data].yscale.domain();
-            for (var _j = 0; _j < _dimRange.length; _j++) {
-              if (_dimRange[_j] >= ranger[0] && _dimRange[_j] <= ranger[1] && actives.includes(brush$$1.data) && config.flipAxes.includes(brush$$1.data)) {
-                values.push(_dimRange[_j]);
-              } else if (_dimRange[_j] >= ranger[0] && _dimRange[_j] <= ranger[1]) {
-                values.unshift(_dimRange[_j]);
-              }
-            }
-            extents.push(values);
-            for (var _ii3 = 0; _ii3 < extents.length; _ii3++) {
-              if (extents[_ii3].length === 0) {
-                extents[_ii3] = [1, 1];
-              }
-            }
-          }
+          // test if within range
           var within = {
             date: function date(d, p, dimension) {
               var category = d[p];
@@ -6203,7 +6118,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
               return categoryRangeValue >= ranges[p][0] && categoryRangeValue <= ranges[p][1];
             },
             number: function number(d, p, dimension) {
-              return extents[idx][0] <= d[p] && d[p] <= extents[idx][1];
+              return extents[dimension][0] <= d[p] && d[p] <= extents[dimension][1];
             },
             string: function string(d, p, dimension) {
               var category = d[p];
@@ -6212,27 +6127,93 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
               return categoryRangeValue >= ranges[p][0] && categoryRangeValue <= ranges[p][1];
             }
           };
-
-          // filter data, but instead of returning it now,
-          // put it into multiBrush data which is returned after
-          // all brushes are iterated through.
-          var filtered = config.data.filter(function (d) {
+          return config.data.filter(function (d) {
             return actives.every(function (p, dimension) {
               return within[config.dimensions[p].type](d, p, dimension);
             });
           });
-          for (var z = 0; z < filtered.length; z++) {
-            multiBrushData.push(filtered[z]);
-          }
-          actives = [];
-          ranges = {};
-        };
+        } else {
+          // need to get data from each brush instead of each axis
+          // first must find active axes by iterating through all brushes
+          // then go through similiar process as above.
+          var multiBrushData = [];
 
-        for (var idx = 0; idx < config.brushes.length; idx++) {
-          _loop(idx);
+          var _loop = function _loop(idx) {
+            var brush$$1 = config.brushes[idx];
+            var values = [];
+            var ranger = brush$$1.extent;
+            var actives = [brush$$1.data];
+            if (typeof config.dimensions[brush$$1.data].yscale.domain()[0] === 'number') {
+              for (var _i = 0; _i < ranger.length; _i++) {
+                if (actives.includes(brush$$1.data) && config.flipAxes.includes(brush$$1.data)) {
+                  values.push(config.dimensions[brush$$1.data].yscale.invert(ranger[_i]));
+                } else if (config.dimensions[brush$$1.data].yscale() !== 1) {
+                  values.unshift(config.dimensions[brush$$1.data].yscale.invert(ranger[_i]));
+                }
+              }
+              extents.push(values);
+              for (var _ii2 = 0; _ii2 < extents.length; _ii2++) {
+                if (extents[_ii2].length === 0) {
+                  extents[_ii2] = [1, 1];
+                }
+              }
+            } else {
+              ranges[brush$$1.data] = brush$$1.extent;
+              var _dimRange = config.dimensions[brush$$1.data].yscale.range();
+              var _dimDomain = config.dimensions[brush$$1.data].yscale.domain();
+              for (var _j = 0; _j < _dimRange.length; _j++) {
+                if (_dimRange[_j] >= ranger[0] && _dimRange[_j] <= ranger[1] && actives.includes(brush$$1.data) && config.flipAxes.includes(brush$$1.data)) {
+                  values.push(_dimRange[_j]);
+                } else if (_dimRange[_j] >= ranger[0] && _dimRange[_j] <= ranger[1]) {
+                  values.unshift(_dimRange[_j]);
+                }
+              }
+              extents.push(values);
+              for (var _ii3 = 0; _ii3 < extents.length; _ii3++) {
+                if (extents[_ii3].length === 0) {
+                  extents[_ii3] = [1, 1];
+                }
+              }
+            }
+            var within = {
+              date: function date(d, p, dimension) {
+                var category = d[p];
+                var categoryIndex = config.dimensions[p].yscale.domain().indexOf(category);
+                var categoryRangeValue = config.dimensions[p].yscale.range()[categoryIndex];
+                return categoryRangeValue >= ranges[p][0] && categoryRangeValue <= ranges[p][1];
+              },
+              number: function number(d, p, dimension) {
+                return extents[idx][0] <= d[p] && d[p] <= extents[idx][1];
+              },
+              string: function string(d, p, dimension) {
+                var category = d[p];
+                var categoryIndex = config.dimensions[p].yscale.domain().indexOf(category);
+                var categoryRangeValue = config.dimensions[p].yscale.range()[categoryIndex];
+                return categoryRangeValue >= ranges[p][0] && categoryRangeValue <= ranges[p][1];
+              }
+            };
+
+            // filter data, but instead of returning it now,
+            // put it into multiBrush data which is returned after
+            // all brushes are iterated through.
+            var filtered = config.data.filter(function (d) {
+              return actives.every(function (p, dimension) {
+                return within[config.dimensions[p].type](d, p, dimension);
+              });
+            });
+            for (var z = 0; z < filtered.length; z++) {
+              multiBrushData.push(filtered[z]);
+            }
+            actives = [];
+            ranges = {};
+          };
+
+          for (var idx = 0; idx < config.brushes.length; idx++) {
+            _loop(idx);
+          }
+          return multiBrushData;
         }
-        return multiBrushData;
-      }
+      };
     };
 
     var brushPredicate = function brushPredicate(brushGroup, config, pc) {
@@ -6337,7 +6318,6 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         }
 
         var g_data = pc.svg.selectAll('.dimension').data(pc.getOrderedDimensionKeys());
-
         // Enter
         g_data.enter().append('svg:g').attr('class', 'dimension').attr('transform', function (p) {
           return 'translate(' + position(p) + ')';
@@ -6347,13 +6327,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
           axisElement.selectAll('path').style('fill', 'none').style('stroke', '#222').style('shape-rendering', 'crispEdges');
 
           axisElement.selectAll('line').style('fill', 'none').style('stroke', '#222').style('shape-rendering', 'crispEdges');
-        }).append('svg:text').attr({
-          'text-anchor': 'middle',
-          y: 0,
-          transform: 'translate(0,-5) rotate(' + config.dimensionTitleRotation + ')',
-          x: 0,
-          class: 'label'
-        }).text(dimensionLabels(config)).on('dblclick', flipAxisAndUpdatePCP(config, pc, axis)).on('wheel', rotateLabels(config, pc));
+        }).append('svg:text').attr('text-anchor', 'middle').attr('class', 'label').attr('x', 0).attr('y', 0).attr('transform', 'translate(0,-5) rotate(' + config.dimensionTitleRotation + ')').text(dimensionLabels(config)).on('dblclick', flipAxisAndUpdatePCP(config, pc, axis)).on('wheel', rotateLabels(config, pc));
 
         // Update
         g_data.attr('opacity', 0);
@@ -6365,7 +6339,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         // Exit
         g_data.exit().remove();
 
-        g = pc.svg.selectAll('.dimension');
+        var g = pc.svg.selectAll('.dimension');
         g.transition().duration(animationTime).attr('transform', function (p) {
           return 'translate(' + position(p) + ')';
         }).style('opacity', 1);
@@ -7021,23 +6995,49 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       };
     }
 
-    function formatDefault (x, p) {
-      x = x.toPrecision(p);
+    // [[fill]align][sign][symbol][0][width][,][.precision][~][type]
+    var re = /^(?:(.)?([<>=^]))?([+\-\( ])?([$#])?(0)?(\d+)?(,)?(\.\d+)?(~)?([a-z%])?$/i;
 
-      out: for (var n = x.length, i = 1, i0 = -1, i1; i < n; ++i) {
-        switch (x[i]) {
+    function formatSpecifier(specifier) {
+      return new FormatSpecifier(specifier);
+    }
+
+    formatSpecifier.prototype = FormatSpecifier.prototype; // instanceof
+
+    function FormatSpecifier(specifier) {
+      if (!(match = re.exec(specifier))) throw new Error("invalid format: " + specifier);
+      var match;
+      this.fill = match[1] || " ";
+      this.align = match[2] || ">";
+      this.sign = match[3] || "-";
+      this.symbol = match[4] || "";
+      this.zero = !!match[5];
+      this.width = match[6] && +match[6];
+      this.comma = !!match[7];
+      this.precision = match[8] && +match[8].slice(1);
+      this.trim = !!match[9];
+      this.type = match[10] || "";
+    }
+
+    FormatSpecifier.prototype.toString = function () {
+      return this.fill + this.align + this.sign + this.symbol + (this.zero ? "0" : "") + (this.width == null ? "" : Math.max(1, this.width | 0)) + (this.comma ? "," : "") + (this.precision == null ? "" : "." + Math.max(0, this.precision | 0)) + (this.trim ? "~" : "") + this.type;
+    };
+
+    // Trims insignificant zeros, e.g., replaces 1.2000k with 1.2k.
+    function formatTrim (s) {
+      out: for (var n = s.length, i = 1, i0 = -1, i1; i < n; ++i) {
+        switch (s[i]) {
           case ".":
             i0 = i1 = i;break;
           case "0":
             if (i0 === 0) i0 = i;i1 = i;break;
-          case "e":
-            break out;
           default:
-            if (i0 > 0) i0 = 0;break;
+            if (i0 > 0) {
+              if (!+s[i]) break out;i0 = 0;
+            }break;
         }
       }
-
-      return i0 > 0 ? x.slice(0, i0) + x.slice(i1 + 1) : x;
+      return i0 > 0 ? s.slice(0, i0) + s.slice(i1 + 1) : s;
     }
 
     var prefixExponent;
@@ -7061,7 +7061,6 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     }
 
     var formatTypes = {
-      "": formatDefault,
       "%": function _(x, p) {
         return (x * 100).toFixed(p);
       },
@@ -7099,53 +7098,6 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       }
     };
 
-    // [[fill]align][sign][symbol][0][width][,][.precision][type]
-    var re = /^(?:(.)?([<>=^]))?([+\-\( ])?([$#])?(0)?(\d+)?(,)?(\.\d+)?([a-z%])?$/i;
-
-    function formatSpecifier(specifier) {
-      return new FormatSpecifier(specifier);
-    }
-
-    formatSpecifier.prototype = FormatSpecifier.prototype; // instanceof
-
-    function FormatSpecifier(specifier) {
-      if (!(match = re.exec(specifier))) throw new Error("invalid format: " + specifier);
-
-      var match,
-          fill = match[1] || " ",
-          align = match[2] || ">",
-          sign = match[3] || "-",
-          symbol = match[4] || "",
-          zero = !!match[5],
-          width = match[6] && +match[6],
-          comma = !!match[7],
-          precision = match[8] && +match[8].slice(1),
-          type = match[9] || "";
-
-      // The "n" type is an alias for ",g".
-      if (type === "n") comma = true, type = "g";
-
-      // Map invalid types to the default format.
-      else if (!formatTypes[type]) type = "";
-
-      // If zero fill is specified, padding goes after sign and before digits.
-      if (zero || fill === "0" && align === "=") zero = true, fill = "0", align = "=";
-
-      this.fill = fill;
-      this.align = align;
-      this.sign = sign;
-      this.symbol = symbol;
-      this.zero = zero;
-      this.width = width;
-      this.comma = comma;
-      this.precision = precision;
-      this.type = type;
-    }
-
-    FormatSpecifier.prototype.toString = function () {
-      return this.fill + this.align + this.sign + this.symbol + (this.zero ? "0" : "") + (this.width == null ? "" : Math.max(1, this.width | 0)) + (this.comma ? "," : "") + (this.precision == null ? "" : "." + Math.max(0, this.precision | 0)) + this.type;
-    };
-
     function identity$3 (x) {
       return x;
     }
@@ -7170,7 +7122,17 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
             width = specifier.width,
             comma = specifier.comma,
             precision = specifier.precision,
+            trim = specifier.trim,
             type = specifier.type;
+
+        // The "n" type is an alias for ",g".
+        if (type === "n") comma = true, type = "g";
+
+        // The "" type, and any invalid type, is an alias for ".12~g".
+        else if (!formatTypes[type]) precision == null && (precision = 12), trim = true, type = "g";
+
+        // If zero fill is specified, padding goes after sign and before digits.
+        if (zero || fill === "0" && align === "=") zero = true, fill = "0", align = "=";
 
         // Compute the prefix and suffix.
         // For SI-prefix, the suffix is lazily computed.
@@ -7181,13 +7143,13 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         // Is this an integer type?
         // Can this type generate exponential notation?
         var formatType = formatTypes[type],
-            maybeSuffix = !type || /[defgprs%]/.test(type);
+            maybeSuffix = /[defgprs%]/.test(type);
 
         // Set the default precision if not specified,
         // or clamp the specified precision to the supported range.
         // For significant precision, it must be in [1, 21].
         // For fixed precision, it must be in [0, 20].
-        precision = precision == null ? type ? 6 : 12 : /[gprs]/.test(type) ? Math.max(1, Math.min(21, precision)) : Math.max(0, Math.min(20, precision));
+        precision = precision == null ? 6 : /[gprs]/.test(type) ? Math.max(1, Math.min(21, precision)) : Math.max(0, Math.min(20, precision));
 
         function format(value) {
           var valuePrefix = prefix,
@@ -7205,6 +7167,9 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
             // Perform the initial formatting.
             var valueNegative = value < 0;
             value = formatType(Math.abs(value), precision);
+
+            // Trim insignificant zeros.
+            if (trim) value = formatTrim(value);
 
             // If a negative value rounds to zero during formatting, treat as positive.
             if (valueNegative && +value === 0) valueNegative = false;
@@ -7516,6 +7481,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         return (end - start) / k;
       });
     };
+    var milliseconds = millisecond.range;
 
     var durationSecond = 1e3;
     var durationMinute = 6e4;
@@ -7532,6 +7498,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     }, function (date) {
       return date.getUTCSeconds();
     });
+    var seconds = second.range;
 
     var minute = newInterval(function (date) {
       date.setTime(Math.floor(date / durationMinute) * durationMinute);
@@ -7542,6 +7509,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     }, function (date) {
       return date.getMinutes();
     });
+    var minutes = minute.range;
 
     var hour = newInterval(function (date) {
       var offset = date.getTimezoneOffset() * durationMinute % durationHour;
@@ -7554,6 +7522,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     }, function (date) {
       return date.getHours();
     });
+    var hours = hour.range;
 
     var day = newInterval(function (date) {
       date.setHours(0, 0, 0, 0);
@@ -7564,6 +7533,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     }, function (date) {
       return date.getDate() - 1;
     });
+    var days = day.range;
 
     function weekday(i) {
       return newInterval(function (date) {
@@ -7584,6 +7554,8 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     var friday = weekday(5);
     var saturday = weekday(6);
 
+    var sundays = sunday.range;
+
     var month = newInterval(function (date) {
       date.setDate(1);
       date.setHours(0, 0, 0, 0);
@@ -7594,6 +7566,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     }, function (date) {
       return date.getMonth();
     });
+    var months = month.range;
 
     var year = newInterval(function (date) {
       date.setMonth(0, 1);
@@ -7616,6 +7589,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         date.setFullYear(date.getFullYear() + step * k);
       });
     };
+    var years = year.range;
 
     var utcMinute = newInterval(function (date) {
       date.setUTCSeconds(0, 0);
@@ -7626,6 +7600,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     }, function (date) {
       return date.getUTCMinutes();
     });
+    var utcMinutes = utcMinute.range;
 
     var utcHour = newInterval(function (date) {
       date.setUTCMinutes(0, 0, 0);
@@ -7636,6 +7611,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     }, function (date) {
       return date.getUTCHours();
     });
+    var utcHours = utcHour.range;
 
     var utcDay = newInterval(function (date) {
       date.setUTCHours(0, 0, 0, 0);
@@ -7646,6 +7622,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     }, function (date) {
       return date.getUTCDate() - 1;
     });
+    var utcDays = utcDay.range;
 
     function utcWeekday(i) {
       return newInterval(function (date) {
@@ -7666,6 +7643,8 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     var utcFriday = utcWeekday(5);
     var utcSaturday = utcWeekday(6);
 
+    var utcSundays = utcSunday.range;
+
     var utcMonth = newInterval(function (date) {
       date.setUTCDate(1);
       date.setUTCHours(0, 0, 0, 0);
@@ -7676,6 +7655,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     }, function (date) {
       return date.getUTCMonth();
     });
+    var utcMonths = utcMonth.range;
 
     var utcYear = newInterval(function (date) {
       date.setUTCMonth(0, 1);
@@ -7698,6 +7678,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         date.setUTCFullYear(date.getUTCFullYear() + step * k);
       });
     };
+    var utcYears = utcYear.range;
 
     function localDate(d) {
       if (0 <= d.y && d.y < 100) {
@@ -8569,7 +8550,9 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
           }
         };
         Object.keys(config.dimensions).forEach(function (k) {
-          if (config.dimensions[k].yscale === undefined || config.dimensions[k].yscale === null) config.dimensions[k].yscale = defaultScales[config.dimensions[k].type](k);
+          if (config.dimensions[k].yscale === undefined || config.dimensions[k].yscale === null) {
+            config.dimensions[k].yscale = defaultScales[config.dimensions[k].type](k);
+          }
         });
 
         // xscale
@@ -8592,9 +8575,9 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         ctx.brushed.scale(devicePixelRatio, devicePixelRatio);
         ctx.highlight.lineWidth = 3;
         ctx.highlight.scale(devicePixelRatio, devicePixelRatio);
-        ctx.marked.lineWidth = 3;
-        ctx.marked.shadowColor = "#ffffff";
-        ctx.marked.shadowBlur = 10;
+        ctx.marked.lineWidth = config.markedLineWidth;
+        ctx.marked.shadowColor = config.markedShadowColor;
+        ctx.marked.shadowBlur = config.markedShadowBlur;
         ctx.marked.scale(devicePixelRatio, devicePixelRatio);
 
         return this;
@@ -8768,9 +8751,9 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
           axisElement.selectAll('line').style('fill', 'none').style('stroke', '#222').style('shape-rendering', 'crispEdges');
         }).append('svg:text').attr('text-anchor', 'middle').attr('y', 0).attr('transform', 'translate(0,-5) rotate(' + config.dimensionTitleRotation + ')').attr('x', 0).attr('class', 'label').text(dimensionLabels(config)).on('dblclick', flipAxisAndUpdatePCP(config, pc, axis)).on('wheel', rotateLabels(config, pc));
 
-        if (config.nullValueSeparator == 'top') {
+        if (config.nullValueSeparator === 'top') {
           pc.svg.append('line').attr('x1', 0).attr('y1', 1 + config.nullValueSeparatorPadding.top).attr('x2', w(config)).attr('y2', 1 + config.nullValueSeparatorPadding.top).attr('stroke-width', 1).attr('stroke', '#777').attr('fill', 'none').attr('shape-rendering', 'crispEdges');
-        } else if (config.nullValueSeparator == 'bottom') {
+        } else if (config.nullValueSeparator === 'bottom') {
           pc.svg.append('line').attr('x1', 0).attr('y1', h(config) + 1 - config.nullValueSeparatorPadding.bottom).attr('x2', w(config)).attr('y2', h(config) + 1 - config.nullValueSeparatorPadding.bottom).attr('stroke-width', 1).attr('stroke', '#777').attr('fill', 'none').attr('shape-rendering', 'crispEdges');
         }
 
@@ -9010,7 +8993,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
           delete dragging[d];
           select(this).transition().attr('transform', 'translate(' + xscale(d) + ')');
           pc.render();
-          pc.renderMarkedDefault();
+          pc.renderMarked();
         }));
         flags.reorderable = true;
         return this;
@@ -9219,9 +9202,9 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
 
     // returns the y-position just beyond the separating null value line
     var getNullPosition = function getNullPosition(config) {
-      if (config.nullValueSeparator == 'bottom') {
+      if (config.nullValueSeparator === 'bottom') {
         return h(config) + 1;
-      } else if (config.nullValueSeparator == 'top') {
+      } else if (config.nullValueSeparator === 'top') {
         return 1;
       } else {
         console.log("A value is NULL, but nullValueSeparator is not set; set it to 'bottom' or 'top'.");
@@ -9230,13 +9213,12 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     };
 
     var singlePath = function singlePath(config, position, d, ctx) {
-      entries(config.dimensions).forEach(function (p, i) {
-        //p isn't really p
-        if (i == 0) {
-          ctx.moveTo(position(p.key), typeof d[p.key] == 'undefined' ? getNullPosition(config) : config.dimensions[p.key].yscale(d[p.key]));
-        } else {
-          ctx.lineTo(position(p.key), typeof d[p.key] == 'undefined' ? getNullPosition(config) : config.dimensions[p.key].yscale(d[p.key]));
-        }
+      Object.keys(config.dimensions).map(function (p) {
+        return [position(p), d[p] === undefined ? getNullPosition(config) : config.dimensions[p].yscale(d[p])];
+      }).sort(function (a, b) {
+        return a[0] - b[0];
+      }).forEach(function (p, i) {
+        i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]);
       });
     };
 
@@ -9254,6 +9236,43 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
     var _functor = function _functor(v) {
       return typeof v === 'function' ? v : function () {
         return v;
+      };
+    };
+
+    var pathMark = function pathMark(config, ctx, position) {
+      return function (d, i) {
+        ctx.marked.strokeStyle = _functor(config.color)(d, i);
+        return colorPath(config, position, d, ctx.marked);
+      };
+    };
+
+    var renderMarkedDefault = function renderMarkedDefault(config, pc, ctx, position) {
+      return function () {
+        pc.clear('marked');
+
+        if (config.marked.length) {
+          config.marked.forEach(pathMark(config, ctx, position));
+        }
+      };
+    };
+
+    var renderMarkedQueue = function renderMarkedQueue(config, markedQueue) {
+      return function () {
+        if (config.marked) {
+          markedQueue(config.marked);
+        } else {
+          markedQueue([]); // This is needed to clear the currently marked items
+        }
+      };
+    };
+
+    var renderMarked = function renderMarked(config, pc, events) {
+      return function () {
+        if (!Object.keys(config.dimensions).length) pc.detectDimensions();
+
+        pc.renderMarked[config.mode]();
+        events.call('render', this);
+        return this;
       };
     };
 
@@ -9311,7 +9330,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         config.brushed = false;
 
         if (pc.g() !== undefined) {
-          var nodes = selectAll('.brush').nodes();
+          var nodes = pc.g().selectAll('.brush').nodes();
           for (var i = 0; i < nodes.length; i++) {
             if (nodes[i].__data__ === dimension) {
               // remove all dummy brushes for this axis or the real brush
@@ -9344,43 +9363,6 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         ret.push([arr[i], arr[i + 1]]);
       }
       return ret;
-    };
-
-    var pathMarked = function pathMarked(config, ctx, position) {
-      return function (d, i) {
-        ctx.marked.strokeStyle = _functor(config.color)(d, i);
-      	return colorPath(config, position, d, ctx.marked);
-      };
-    };
-
-    var renderMarkedDefault = function renderMarkedDefault(config, ctx, position, pc) {
-      return function () {
-        pc.clear('marked');
-
-        if (config.marked.length) {
-          config.marked.forEach(pathMarked(config, ctx, position));
-        }
-      };
-    };
-
-    var renderMarkedQueue = function renderMarkedQueue(config, markedQueue) {
-      return function () {
-        if (config.marked) {
-          markedQueue(config.marked);
-        } else {
-          markedQueue([]); // This is needed to clear the currently marked items
-        }
-      };
-    };
-
-    var renderMarked = function renderMarked(config, pc, events) {
-      return function () {
-        if (!Object.keys(config.dimensions).length) pc.detectDimensions();
-
-        //pc.renderMarked[config.mode]();
-        events.call('render', this);
-        return this;
-      };
     };
 
     var pathHighlight = function pathHighlight(config, ctx, position) {
@@ -9427,16 +9409,16 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
           return config.marked;
         }
 
-        // add row to already marked data
-        config.marked = _.union( config.marked, data);
+        // add array to already marked data
+        config.marked = config.marked.concat(data);
         selectAll([canvas.foreground, canvas.brushed]).classed('dimmed', true);
-        data.forEach(pathMarked(config, ctx, position));
+        data.forEach(pathMark(config, ctx, position));
         events.call('mark', this, data);
         return this;
       };
     };
 
-    // clear marked data
+    // clear marked data arrays
     var unmark = function unmark(config, pc, canvas) {
       return function () {
         config.marked = [];
@@ -9568,7 +9550,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         config.width = selection$$1.node().clientWidth;
         config.height = selection$$1.node().clientHeight;
         // canvas data layers
-        ['dots', 'foreground', 'brushed', 'highlight', 'marked'].forEach(function (layer) {
+        ['dots', 'foreground', 'brushed', 'marked', 'highlight'].forEach(function (layer) {
           canvas[layer] = selection$$1.append('canvas').attr('class', layer).node();
           ctx[layer] = canvas[layer].getContext('2d');
         });
@@ -9599,15 +9581,17 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       };
     };
 
-    var scale = function scale(config) {
+    var scale = function scale(config, pc) {
       return function (d, domain) {
         config.dimensions[d].yscale.domain(domain);
+        pc.render.default();
+        pc.updateAxes();
 
         return this;
       };
     };
 
-    var version = "2.0.9";
+    var version = "2.1.7";
 
     var DefaultConfig = {
       data: [],
@@ -9620,6 +9604,9 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       brushedColor: null,
       alphaOnBrushed: 0.0,
       mode: 'default',
+      markedLineWidth: 3,
+      markedShadowColor: '#ffffff',
+      markedShadowBlur: 10,
       rate: 20,
       width: 600,
       height: 300,
@@ -9748,7 +9735,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       return arr;
     };
 
-    var sideEffects = function sideEffects(config, ctx, pc, xscale, flags, brushedQueue, foregroundQueue) {
+    var sideEffects = function sideEffects(config, ctx, pc, xscale, flags, brushedQueue, markedQueue, foregroundQueue) {
       return dispatch.apply(_this$5, Object.keys(config)).on('composite', function (d) {
         ctx.foreground.globalCompositeOperation = d.value;
         ctx.brushed.globalCompositeOperation = d.value;
@@ -9803,7 +9790,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       });
     };
 
-    var getset = function getset(obj, state, events, side_effects, pc) {
+    var getset = function getset(obj, state, events, side_effects) {
       Object.keys(state).forEach(function (key) {
         obj[key] = function (x) {
           if (!arguments.length) {
@@ -9840,7 +9827,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       var side_effects = sideEffects(__, ctx, pc, xscale, flags, brushedQueue, markedQueue, foregroundQueue);
 
       // create getter/setters
-      getset(pc, __, events, side_effects, pc);
+      getset(pc, __, events, side_effects);
 
       // expose events
       // getter/setter with event firing
@@ -9877,7 +9864,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         return pc.clear('brushed');
       });
 
-      var markedQueue = renderQueue(pathMarked(config, ctx, position)).rate(50).clear(function () {
+      var markedQueue = renderQueue(pathMark(config, ctx, position)).rate(50).clear(function () {
         return pc.clear('marked');
       });
 
@@ -9886,15 +9873,14 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
         pc.clear('highlight');
       });
 
-      bindEvents(config, ctx, pc, xscale, flags, brushedQueue,
-        markedQueue, foregroundQueue, events, axis);
+      bindEvents(config, ctx, pc, xscale, flags, brushedQueue, markedQueue, foregroundQueue, events, axis);
 
       // expose the state of the chart
       pc.state = config;
       pc.flags = flags;
 
       pc.autoscale = autoscale(config, pc, xscale, ctx);
-      pc.scale = scale(config);
+      pc.scale = scale(config, pc);
       pc.flip = flip(config);
       pc.commonScale = commonScale(config, pc);
       pc.detectDimensions = detectDimensions(pc);
@@ -9911,7 +9897,7 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       pc.render.queue = renderDefaultQueue(config, pc, foregroundQueue);
       pc.renderBrushed.default = renderBrushedDefault(config, ctx, position, pc, brush);
       pc.renderBrushed.queue = renderBrushedQueue(config, brush, brushedQueue);
-      pc.renderMarked.default = renderMarkedDefault(config, ctx, position, pc);
+      pc.renderMarked.default = renderMarkedDefault(config, pc, ctx, position);
       pc.renderMarked.queue = renderMarkedQueue(config, markedQueue);
 
       pc.compute_real_centroids = computeRealCentroids(config.dimensions, position);
@@ -9923,8 +9909,8 @@ All other functionality is the work of Kai Chang (1), designer of d3.parcoords.j
       pc.updateAxes = updateAxes(config, pc, position, axis, flags);
       pc.applyAxisConfig = applyAxisConfig;
       pc.brushable = brushable(config, pc, flags);
-      pc.brushReset = brushReset$1(config);
-      pc.selected = selected$4(config);
+      pc.brushReset = brushReset$4(config);
+      pc.selected = selected$4(config, pc);
       pc.reorderable = reorderable(config, pc, xscale, position, dragging, flags);
 
       // Reorder dimensions, such that the highest value (visually) is on the left and

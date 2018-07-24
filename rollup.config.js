@@ -34,12 +34,12 @@ export default {
             file: pkg.main,
             format: 'umd',
             name: 'parasol',
-            sourcemap: 'inline'
+            sourcemap: true
         },
         {
             file: pkg.module,
             format: 'es',
-            sourcemap: 'inline'
+            sourcemap: true
         }
     ]
 };

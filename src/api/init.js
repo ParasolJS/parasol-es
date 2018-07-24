@@ -5,39 +5,38 @@ import ParCoords from 'parcoord-es';
 * Setup a new visualization.
 *
 * @param config
-* @returns {pv} a parasol closure
+* @returns {ps} a parasol closure
 */
 const init = (config) => {
 	/**
   * Create a visualization within a container. The selector can also be a d3 selection.
   *
   * @param selection a d3 selection
-  * @returns {pv} instance for chained api, compatible with parcoords api
+  * @returns {ps} instance for chained api, compatible with parcoords api
   */
-	const pv = function(selection) {
-		selection = pv.selection = select(selection);
+	const ps = function(selection) {
+		selection = ps.selection = selectAll(selection);
 
 		// store pc charts in array
-		pv.charts = [];
-		selectAll(selection)
-			.each(function(d,i) {
-				pv.charts[i] = ParCoords(config.chartOptions)(this);
-				// .data(dataset)
-				// .hideAxis(hidden[i])
-				// .alpha(0.4)
-				// .alphaOnBrushed(0.1)
-				// .render()
-				// .reorderable()
-				// .mode("queue")
-				// .brushMode("1D-axes");
+		ps.charts = [];
+		selection
+			.each( function(d,i) {
+				ps.charts[i] = ParCoords(config.chartOptions)(this);
+				// 	.data(config.data)
+				// // .hideAxis(hidden[i])
+				// 	.alpha(0.4)
+				// 	.alphaOnBrushed(0.1)
+				// 	.render()
+				// 	.reorderable()
+				// 	.mode("queue")
+				// 	.brushMode("1D-axes");
 			});
 
-
 		// for chained api
-		return pv;
+		return ps;
 	};
 	// for partial-application style programming
-	return pv;
+	return ps;
 };
 
 export default init;

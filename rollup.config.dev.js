@@ -44,8 +44,8 @@ export default {
         {
             file: 'dist/parasol.standalone.js',
             format: 'umd',
-            name: 'ParCoords',
-            sourcemap: 'inline'
+            name: 'parasol',
+            sourcemap: true
         }
     ]
 };

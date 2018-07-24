@@ -4,21 +4,21 @@
     <meta content="utf-8" http-equiv="encoding">
 </head>
 
-<title>Basic ParaVis Example</title>
+<title>Basic Example</title>
 
-<link rel="stylesheet" type="text/css" href="../dist/parcoords.css">
+<link rel="stylesheet" type="text/css" href="./parcoords.css">
 <link rel="stylesheet" type="text/css" href="style.css">
 
-<script src="../lib/underscore.js"></script>
-<script src="../lib/d3.v5.min.js"></script>
-<!-- <script src="../lib/parcoords.standalone.js"></script> -->
-<script src="../dist/parasol.standalone.js"></script>
+<script src="./lib/underscore.js"></script>
+<script src="./lib/d3.v5.min.js"></script>
+<!-- <script src="./lib/parcoords.standalone.js"></script> -->
+<script src="./parasol.standalone.js"></script>
 
 <body>
 <p>Demonstrates creating a set of parallel coordinates plots from an example dataset and editing each plot indiviually. Note that user retains freedom to customize each plot div as well.</p>
-<div id="plot01" class="parcoords" style="height:200px; width:600px;"></div>
-<div id="plot02" class="parcoords" style="height:200px; width:800px;"></div>
-<div class="parcoords" style="height:200px; width:100%;"></div>
+<div id="plot01" class="parcoords-basic" style="height:200px; width:600px;"></div>
+<div id="plot02" class="parcoords-basic" style="height:200px; width:800px;"></div>
+<div class="parcoords-basic" style="height:200px; width:100%;"></div>
 </body>
 
 <script>
@@ -34,10 +34,26 @@ d3.csv('data/cars.csv').then(function(dataset) {
       }
     }
   );
+
+  config.data = dataset;
   console.log(config);
   console.log(config.partition);
 
-  var pv = ParaVis(config)('.parcoords');
-  console.log(pv);
+  var ps = parasol(config)('.parcoords-basic');
+  console.log(ps.charts);
+  ps.charts.forEach(
+    (pc) => {
+      pc
+      	.data(config.data)
+      // .hideAxis(hidden[i])
+      	.alpha(0.4)
+      	.alphaOnBrushed(0.1)
+      	.render()
+      	.reorderable()
+      	.mode("queue")
+      	.brushMode("1D-axes")
+        .updateAxes(0);
+    }
+  )
 });
 </script>

@@ -12,7 +12,7 @@ import bindEvents from './bindEvents';
 import { version } from '../package.json';
 
 
-const ParaVis = userConfig => {
+const parasol = userConfig => {
 	const state = initState(userConfig);
 	const {
 		config,
@@ -20,17 +20,17 @@ const ParaVis = userConfig => {
 		flags,
 	} = state;
 
-	const pv = init(config);
+	const ps = init(config);
 
 	// bindEvents();
 
 	// expose the state of the chart
-	pv.state = config;
-	pv.flags = flags;
-	pv.version = version;
+	ps.state = config;
+	ps.flags = flags;
+	ps.version = version;
 
 
-	return pv;
+	return ps;
 };
 
-export default ParaVis;
+export default parasol;
