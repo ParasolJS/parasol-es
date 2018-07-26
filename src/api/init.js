@@ -21,7 +21,10 @@ const init = (config) => {
 		ps.charts = [];
 		selection
 			.each( function(d,i) {
-				ps.charts[i] = ParCoords(config.chartOptions)(this);
+				ps.charts[i] = ParCoords(config.chartOptions)(this)
+					.data(config.data)
+					.alpha(0.4)
+					.render();
 			});
 		// for chained api
 		return ps;

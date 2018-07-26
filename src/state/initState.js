@@ -6,20 +6,21 @@ const initState = userConfig => {
 	const config = Object.assign({}, DefaultConfig, userConfig);
 
 	const eventTypes = [
+		// 'data', // when data in a chart is updated, how does this cascade to linked?
 		// 'render',
 		// 'resize',
 		// 'highlight',
 		// 'mark',
-		// 'brush',
-		// 'brushend',
-		// 'brushstart',
+		'brush',
+		'brushend',
+		'brushstart',
 		// 'axesreorder',
 	].concat(keys(config));
 
 	const events = dispatch.apply(this, eventTypes),
 		flags = {
-			// brushable: false,
-			// reorderable: false,
+			linked: false,
+			grid: false,
 			// axes: false,
 			// interactive: false,
 			// debug: false,

@@ -9,7 +9,6 @@
 <link rel="stylesheet" type="text/css" href="./parcoords.css">
 <link rel="stylesheet" type="text/css" href="style.css">
 
-<script src="./lib/underscore.js"></script>
 <script src="./lib/d3.v5.min.js"></script>
 <script src="./parasol.standalone.js"></script>
 
@@ -23,24 +22,30 @@
 <script>
 d3.csv('data/cars.csv').then(function(dataset) {
   // initialize chart closures
-  var ps = parasol()('.parcoords');
+  var ps = parasol(dataset)('.parcoords');
   // add data and render each chart
   ps.charts.forEach(
     (pc) => {
       pc
-      	.data(dataset)
         .hideAxis(['name'])
-      	.alpha(0.4)
-      	.render()
-        .shadows()
-      	.reorderable()
-      	.mode("queue")
-      	.brushMode("1D-axes")
+        .render()
+        .mode("queue")
+        .brushMode("1D-axes")
+      	// .data(dataset)
+        // .hideAxis(['name'])
+      	// .alpha(0.4)
+      	// .render()
+        // .shadows()
+      	// .reorderable()
+      	// .mode("queue")
+      	// .brushMode("1D-axes")
     }
   )
-  // individual chart manipulation
+  // individual chart manipulation with parcoords-es methods
   // NOTE: uncomment hideAxis once bug is fixed in parcoords
   // ps.charts[0].hideAxis(['name', 'year']).render().updateAxes(0);
+  ps.charts[0].shadows();
   ps.charts[1].color("rgba(128,0,128,0.3)").render(); //transparent purple
+  ps.charts[2].reorderable();
 });
 </script>

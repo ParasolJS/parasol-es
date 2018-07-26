@@ -2,11 +2,13 @@
   "presets": [
     "env"
   ],
+  "plugins": [
+    "external-helpers"
+  ],
   "env": {
     "test": {
       "plugins": [
-        "istanbul",
-        "external-helpers"
+        "istanbul"
       ]
     }
   }

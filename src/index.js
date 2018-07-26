@@ -6,28 +6,39 @@ import './parallel-coordinates.css';
 
 //api
 import init from './api/init';
+// import attachGrid from './api/attachGrid';
+// import gridUpdate from './api/gridUpdate';
+import linked from './api/linked';
 
 import initState from './state/initState';
-import bindEvents from './bindEvents';
+// import bindEvents from './bindEvents';
 import { version } from '../package.json';
 
 
-const parasol = userConfig => {
+const parasol = (data, userConfig) => {
+	userConfig.data = data;
 	const state = initState(userConfig);
 	const {
 		config,
 		events,
 		flags,
 	} = state;
+	console.log(config);
 
 	const ps = init(config);
 
 	// bindEvents();
 
-	// expose the state of the chart
+	// expose the state of charts and grid
 	ps.state = config;
 	ps.flags = flags;
 	ps.version = version;
+	// ps.grid = config.grid;
+	// ps.dataview = config.dataview;
+
+	// ps.attachGrid = attachGrid(config, flags);
+	// ps.gridUpdate = gridUpdate(config, flags);
+	ps.linked = linked(config, ps, flags);
 
 
 	return ps;

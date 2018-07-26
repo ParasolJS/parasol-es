@@ -8,7 +8,7 @@
 // // extensions for ParaVis and ParCoords type vars
 // .grid()
 // .linked([plot_list])
-// .link_reset(brushes, marks, all)
+// .resetLinked(brushes, marks, all)
 // .cluster(k=3, group="both", color_palette)
 // .aggregate({weights})
 // .hide([axes_list])
