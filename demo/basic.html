@@ -20,32 +20,23 @@
 </body>
 
 <script>
-d3.csv('data/cars.csv').then(function(dataset) {
+d3.csv('data/cars.csv').then(function(data) {
   // initialize chart closures
-  var ps = parasol(dataset)('.parcoords');
+  var ps = Parasol(data)('.parcoords');
   // add data and render each chart
   ps.charts.forEach(
     (pc) => {
       pc
         .hideAxis(['name'])
         .render()
-        .mode("queue")
-        .brushMode("1D-axes")
-      	// .data(dataset)
-        // .hideAxis(['name'])
-      	// .alpha(0.4)
-      	// .render()
-        // .shadows()
-      	// .reorderable()
-      	// .mode("queue")
-      	// .brushMode("1D-axes")
+        .updateAxes(0);
     }
   )
   // individual chart manipulation with parcoords-es methods
   // NOTE: uncomment hideAxis once bug is fixed in parcoords
   // ps.charts[0].hideAxis(['name', 'year']).render().updateAxes(0);
-  ps.charts[0].shadows();
+  ps.charts[0].reorderable().shadows().render();
   ps.charts[1].color("rgba(128,0,128,0.3)").render(); //transparent purple
-  ps.charts[2].reorderable();
+  ps.charts[2].alpha(0.6).render();
 });
 </script>

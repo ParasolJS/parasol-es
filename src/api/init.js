@@ -24,7 +24,9 @@ const init = (config) => {
 				ps.charts[i] = ParCoords(config.chartOptions)(this)
 					.data(config.data)
 					.alpha(0.4)
-					.render();
+					.render()
+					.mode('queue')
+					.brushMode('1D-axes'); //1D-axes must be used with linking
 			});
 		// for chained api
 		return ps;

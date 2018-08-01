@@ -15,15 +15,13 @@ import initState from './state/initState';
 import { version } from '../package.json';
 
 
-const parasol = (data, userConfig) => {
-	userConfig.data = data;
-	const state = initState(userConfig);
+const Parasol = (data, userConfig) => {
+	const state = initState(data, userConfig);
 	const {
 		config,
 		events,
 		flags,
 	} = state;
-	console.log(config);
 
 	const ps = init(config);
 
@@ -44,4 +42,4 @@ const parasol = (data, userConfig) => {
 	return ps;
 };
 
-export default parasol;
+export default Parasol;

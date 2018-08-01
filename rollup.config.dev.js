@@ -25,7 +25,18 @@ export default {
             browser: true,
             extensions: ['.js']
         }),
-        commonjs(),
+        // commonjs({
+        //   include: 'node_modules/slickgrid-es6/**',
+        //   namedExports: {
+        //     // left-hand side can be an absolute path, a path
+        //     // relative to the current directory, or the name
+        //     // of a module in node_modules
+        //     'node_modules/slickgrid-es6/src/': [ 'Grid', 'Data', 'Plugins' ]
+        //   }
+        // }),
+        commonjs({
+          exclude: ['node_modules/lodash-es/**']
+        }),
         serve({
             open: true,
             verbose: true,
@@ -44,7 +55,7 @@ export default {
         {
             file: 'dist/parasol.standalone.js',
             format: 'umd',
-            name: 'parasol',
+            name: 'Parasol',
             sourcemap: true
         }
     ]

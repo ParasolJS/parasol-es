@@ -13,16 +13,16 @@
 <script src="./parasol.standalone.js"></script>
 
 <body>
-<p>Demonstrates linking multiple charts for connected interactivity.</p>
+<p>Demonstrates linking multiple charts for connected interactivity. Brush along any axis and watch as all charts respond accordingly.</p>
 <div id="plot01" class="parcoords" style="height:200px; width:800px;"></div>
 <div id="plot02" class="parcoords" style="height:200px; width:800px;"></div>
 <div id="plot03" class="parcoords" style="height:200px; width:800px;"></div>
 </body>
 
 <script>
-d3.csv('data/cars.csv').then(function(dataset) {
+d3.csv('data/cars.csv').then(function(data) {
   // all charts linked by default
-  var ps = parasol(dataset)('.parcoords')
+  var ps = Parasol(data)('.parcoords')
             .linked();
   // update charts
   ps.charts.forEach(
@@ -30,8 +30,7 @@ d3.csv('data/cars.csv').then(function(dataset) {
       pc
         .hideAxis(['name'])
         .render()
-        .mode("queue")
-        .brushMode("1D-axes")
+        .updateAxes(0)
     }
   )
 });

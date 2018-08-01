@@ -2,8 +2,9 @@ import { entries, keys, dispatch } from 'd3';
 
 import DefaultConfig from './defaultConfig';
 
-const initState = userConfig => {
+const initState = (data, userConfig) => {
 	const config = Object.assign({}, DefaultConfig, userConfig);
+	config.data = data;
 
 	const eventTypes = [
 		// 'data', // when data in a chart is updated, how does this cascade to linked?

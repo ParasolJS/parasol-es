@@ -33,7 +33,7 @@ export default {
         {
             file: pkg.main,
             format: 'umd',
-            name: 'parasol',
+            name: 'Parasol',
             sourcemap: true
         },
         {

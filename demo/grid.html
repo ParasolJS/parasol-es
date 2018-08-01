@@ -20,10 +20,13 @@
 </body>
 
 <script>
-d3.csv('data/cars.csv').then(function(dataset) {
+d3.csv('data/cars.csv').then(function(data) {
   // initialize chart closures
-  var ps = parasol(dataset)('.parcoords');
+  var ps = Parasol(data)('.parcoords')
             .attachGrid();
+
+  // update the grid with new data
+  // ps.gridUpdate(blah)
 
 });
 </script>

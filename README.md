@@ -46,6 +46,7 @@ Parasol is currently in a prerelease state but should be available on NPM by Fal
 
 * **Josh Jacobson** - *University of Colorado Boulder*
 * **William Raseman** - *University of Colorado Boulder*
+* **Joseph Kasprzyk** - *University of Colorado Boulder*
 
 ## License
 

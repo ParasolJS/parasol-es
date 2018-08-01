@@ -21,7 +21,8 @@
     "instrument": false
   },
   "scripts": {
-    "_prebuild": "eslint --fix src",
+    "_prebuild": "eslint src",
+    "_prebuild:fix": "eslint --fix src",
     "build": "rollup -c",
     "dev": "rollup -c rollup.config.dev.js -w",
     "watch": "rollup -c -w",
@@ -42,9 +43,8 @@
   },
   "keywords": [
     "es6",
-    "d3",
-    "v5",
-    "ParaVis",
+    "d3v5",
+    "Parasol",
     "parallel coordinates",
     "multiobjective optimization",
     "visualization"
@@ -63,7 +63,6 @@
     "babel-core": "^6.26.3",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-plugin-istanbul": "^4.1.6",
-    "babel-plugin-lodash": "^3.3.4",
     "babel-preset-env": "^1.7.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-register": "^6.26.0",
@@ -90,10 +89,7 @@
   },
   "dependencies": {
     "d3": "^5.5.0",
-    "lodash.difference": "^4.5.0",
-    "lodash.intersection": "^4.4.0",
-    "lodash.spread": "^4.2.1",
-    "lodash.union": "^4.6.0",
+    "lodash-es": "^4.17.10",
     "parcoord-es": "^2.1.7",
     "slickgrid-es6": "^3.0.1"
   }
