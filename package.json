@@ -90,6 +90,7 @@
   "dependencies": {
     "d3": "^5.5.0",
     "lodash-es": "^4.17.10",
+    "ml-kmeans": "^4.0.1",
     "parcoord-es": "^2.1.7",
     "slickgrid-es6": "^3.0.1"
   }

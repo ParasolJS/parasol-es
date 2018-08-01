@@ -9,6 +9,7 @@ import init from './api/init';
 // import attachGrid from './api/attachGrid';
 // import gridUpdate from './api/gridUpdate';
 import linked from './api/linked';
+import cluster from './api/cluster';
 
 import initState from './state/initState';
 // import bindEvents from './bindEvents';
@@ -37,6 +38,7 @@ const Parasol = (data, userConfig) => {
 	// ps.attachGrid = attachGrid(config, flags);
 	// ps.gridUpdate = gridUpdate(config, flags);
 	ps.linked = linked(config, ps, flags);
+	ps.cluster = cluster(config, ps, flags);
 
 
 	return ps;

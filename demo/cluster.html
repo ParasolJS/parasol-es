@@ -1,0 +1,36 @@
+<!doctype html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+</head>
+
+<title>Clustering Example</title>
+
+<link rel="stylesheet" type="text/css" href="./parcoords.css">
+<link rel="stylesheet" type="text/css" href="style.css">
+
+<script src="./lib/d3.v5.min.js"></script>
+<script src="./parasol.standalone.js"></script>
+
+<body>
+<p>Demonstrates basic clustering functionality.</p>
+<div id="plot01" class="parcoords" style="height:200px; width:800px;"></div>
+<div id="plot02" class="parcoords" style="height:200px; width:800px;"></div>
+</body>
+
+<script>
+d3.csv('data/cars.csv').then(function(data) {
+  // all charts linked by default
+  var ps = Parasol(data)('.parcoords')
+            .cluster(4);
+  // update charts
+  // ps.charts.forEach(
+  //   (pc) => {
+  //     pc
+  //       .hideAxis(['name'])
+  //       .render()
+  //       .updateAxes(0)
+  //   }
+  // )
+});
+</script>

@@ -1,5 +1,7 @@
 const DefaultConfig = {
 	data: [],
+	vars: [],
+	hidden: [],
 	partition: {}, // identifies which plots vars appear on
 	dataView: false,
 	grid: false,

@@ -1,4 +1,4 @@
-import { select, selectAll } from 'd3';
+import { selectAll } from 'd3';
 import ParCoords from 'parcoord-es';
 
 /**

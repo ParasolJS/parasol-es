@@ -27999,9 +27999,6 @@
      * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
      */
 
-    // import union from 'lodash/union';
-    // import intersection from 'lodash/intersection';
-
     // synchronize data between linked components
     var sync = function sync(config, ps, flags) {
     	return function () {
@@ -28081,6 +28078,7 @@
 
     var DefaultConfig$1 = {
     	data: [],
+    	vars: [],
     	partition: {}, // identifies which plots vars appear on
     	dataView: false,
     	grid: false,
@@ -28096,6 +28094,7 @@
     var initState$1 = function initState(data, userConfig) {
     	var config = Object.assign({}, DefaultConfig$1, userConfig);
     	config.data = data;
+    	config.vars = keys(data[0]);
 
     	var eventTypes = [
     	// 'data', // when data in a chart is updated, how does this cascade to linked?

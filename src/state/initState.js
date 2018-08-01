@@ -5,6 +5,7 @@ import DefaultConfig from './defaultConfig';
 const initState = (data, userConfig) => {
 	const config = Object.assign({}, DefaultConfig, userConfig);
 	config.data = data;
+	config.vars = keys(data[0]);
 
 	const eventTypes = [
 		// 'data', // when data in a chart is updated, how does this cascade to linked?
