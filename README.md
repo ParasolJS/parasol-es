@@ -6,7 +6,7 @@
          alt="npm version">
   </a> -->
   <a href="https://travis-ci.org/joshhjacobson/parasol">
-    <img src="https://api.travis-ci.org/joshhjacobson/parasol.svg?branch=master"
+    <img src="https://api.travis-ci.org/joshhjacobson/parasol.svg?branch=master?style=flat-square"
          alt="build status">
   </a>
   <!-- <a href="https://codecov.io/gh/prettier/prettier">
@@ -21,7 +21,7 @@
          alt="install size">
   </a> -->
   <a href="https://github.com/joshhjacobson/parasol/blob/master/LICENSE.md">
-    <img src="https://img.shields.io/npm/l/parasol.svg"
+    <img src="https://img.shields.io/npm/l/parasol.svg?style=flat-square"
          alt="license">
   </a>
   <a href="#badge">
