@@ -1,24 +1,28 @@
 import kmeans from 'ml-kmeans';
 import { scaleOrdinal, schemeCategory10 } from 'd3'
 
+import standardize from '../util/standardize';
+
 /**
 * Partition data into k clusters in which each data element belongs to
 * the cluster with the nearest mean.
 *
 * @param k number of clusters
-* @param vars variables to perfom clustering on
 * @param chartList charts that will display cluster colors
 * @param palette function mapping cluster ids to color
+* @param vars variables to perfom clustering on
+* @param standardize convert values to zscores to obtain unbiased clusters
 * @param options ml-kmeans options
 * @param hidden determines whether cluster axis will be displayed on charts
 *               (can be individually updated later)
 */
 const cluster = (config, ps, flags) => (
 	k,
-  vars = config.vars,
-  chartList = ps.charts,
+	chartList = ps.charts,
   palette = null,
+  vars = config.vars,
   options = {},
+	standardize = true,
   hidden = true
 ) => {
   if(palette === null) {
@@ -26,9 +30,16 @@ const cluster = (config, ps, flags) => (
     palette => d => scheme(d['cluster']);
   }
 
+	// if (standardize) {
+	// 	const data = standardize(config.data);
+	// } else {
+	// 	const data = config.data;
+	// }
+
   // get data values in array of arrays for clustering
+	// (values from each row object captured in array)
   const values = [];
-  config.data.forEach( (d,i) => {
+  data.forEach( d => {
     const target = [];
     Object.entries(d).forEach(
       ([key, value]) =>  {
@@ -37,11 +48,11 @@ const cluster = (config, ps, flags) => (
           target.push(value);
         }
     })
-    values.push(target);
+    values.push([target]);
   });
   console.log(values);
 
-  // preform clustering and update data
+  // preform clustering and update config data
   const result = kmeans(values, k, options);
   config.data.forEach( (d,i) => {
     d.cluster = result.clusters[i].toString();
@@ -57,9 +68,9 @@ const cluster = (config, ps, flags) => (
   ps.charts.forEach( pc => {
     pc
       .data(config.data)
-      .hideAxis(hidden)
+      // .hideAxis(config.hidden)
       .render()
-      .updateAxes();
+      // .updateAxes();
   })
 
   chartList.forEach( pc => {

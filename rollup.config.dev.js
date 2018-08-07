@@ -8,6 +8,9 @@ import livereload from 'rollup-plugin-livereload';
 import serve from 'rollup-plugin-serve';
 import json from 'rollup-plugin-json';
 
+let pkg = require('./package.json');
+let external = Object.keys(pkg.dependencies);
+
 export default {
     input: 'src/index.js',
     plugins: [
@@ -35,7 +38,10 @@ export default {
         //   }
         // }),
         commonjs({
-          exclude: ['node_modules/lodash-es/**']
+          exclude: ['node_modules/lodash-es/**'],
+          namedExports: {
+            'node_modules/ml-distance-euclidean/euclidean.js': ['squared']
+          }
         }),
         serve({
             open: true,
@@ -50,6 +56,7 @@ export default {
             verbose: false
         })
     ],
+    // external: external,
     external: [],
     output: [
         {

@@ -5,7 +5,7 @@ const DefaultConfig = {
 	partition: {}, // identifies which plots vars appear on
 	dataView: false,
 	grid: false,
-	chartOptions: {},
+	chartOptions: {}, // parcoords options, applies to all charts
 	linked: [], // list of linked objects
 	brushed: [], // intersection of all brushed data
 	marked: [], // union of all marked data

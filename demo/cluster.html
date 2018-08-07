@@ -10,7 +10,7 @@
 <link rel="stylesheet" type="text/css" href="style.css">
 
 <script src="./lib/d3.v5.min.js"></script>
-<script src="./parasol.standalone.js"></script>
+<!-- <script src="./parasol.standalone.js"></script> -->
 
 <body>
 <p>Demonstrates basic clustering functionality.</p>
@@ -21,8 +21,75 @@
 <script>
 d3.csv('data/cars.csv').then(function(data) {
   // all charts linked by default
-  var ps = Parasol(data)('.parcoords')
-            .cluster(4);
+  console.log(data);
+
+  var test = data.reduce( (acc, obj) => {
+    Object.keys(obj).forEach(function(k) {
+      acc[k] = (acc[k] || []).concat(Number(obj[k]))
+    })
+    return acc
+  },{})
+  console.log(test);
+
+  // from here we could get each array extents (normalize)
+  // or array stats
+  var arr = {
+
+  	sum: function(array) {
+  		var num = 0;
+  		for (var i = 0, l = array.length; i < l; i++) num += array[i];
+  		return num;
+  	},
+
+  	mean: function(array) {
+  		return arr.sum(array) / array.length;
+  	},
+
+  	variance: function(array) {
+  		var mean = arr.mean(array);
+  		return arr.mean(array.map(function(num) {
+  			return Math.pow(num - mean, 2);
+  		}));
+  	},
+
+  	standardDeviation: function(array) {
+  		return Math.sqrt(arr.variance(array));
+  	},
+
+  	zScores: function(array) {
+  		var mean = arr.mean(array);
+  		var standardDeviation = arr.standardDeviation(array);
+  		return array.map(function(num) {
+  			return (num - mean) / standardDeviation;
+  		});
+  	}
+  };
+
+  Object.keys(test).forEach( key => {
+    test[key] = arr.zScores(test[key]);
+  })
+  console.log(test);
+
+  // now we need to go backward (object of arrays to array of objects)
+  var result = [];
+  Object.entries(test).forEach( ([key, values]) => {
+    values.forEach( (val, i) => {
+      result[i] = (result[i] || {});
+      if (isNaN(val)){
+        result[i][key] = data[i][key];
+      } else {
+        result[i][key] = val.toString();
+      }
+    })
+  });
+  console.log(result);
+
+
+
+
+
+  // var ps = Parasol(data)('.parcoords')
+  //           .cluster(4);
   // update charts
   // ps.charts.forEach(
   //   (pc) => {
