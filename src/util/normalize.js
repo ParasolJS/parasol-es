@@ -1,15 +1,15 @@
 import { array_to_object, object_to_array } from './wrangle';
 import arr from './arr_stats';
 
-// convert values to zscores
-const standardize = data => {
+// normalize data values (scale: 0-1) for unbiased aggregate scores
+const normalize = data => {
 
 	// reformat data
 	const df = array_to_object(data);
 
-	// standardize values
-	Object.keys(df).forEach( key => {
-		df[key] = arr.zScores(df[key]);
+	// normalize values
+	Object.entries(df).forEach( ([key, col]) => {
+		df[key] = arr.normed(col);
 	});
 
 	// convert back to original data type
@@ -17,4 +17,4 @@ const standardize = data => {
 
 };
 
-export default standardize;
+export default normalize;

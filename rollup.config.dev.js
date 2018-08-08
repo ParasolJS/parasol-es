@@ -40,7 +40,10 @@ export default {
         commonjs({
           exclude: ['node_modules/lodash-es/**'],
           namedExports: {
-            'node_modules/ml-distance-euclidean/euclidean.js': ['squared']
+            'node_modules/ml-distance-euclidean/euclidean.js': ['squared'],
+            // 'node_modules/slickgrid-es6/dist/slick.es6.min.js': ['Slickgrid']
+            //   'Slick', 'Grid', 'FrozenGrid', 'Data', 'Plugins', 'Editors', 'Formatters'
+            // ]
           }
         }),
         serve({

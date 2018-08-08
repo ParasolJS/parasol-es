@@ -1,4 +1,4 @@
-// source: https://gist.github.com/Daniel-Hug/7273430
+// inspired by: https://gist.github.com/Daniel-Hug/7273430
 const arr = {
 	max: function(array) {
 		return Math.max.apply(null, array);
@@ -42,6 +42,17 @@ const arr = {
 		const standardDeviation = arr.standardDeviation(array);
 		return array.map(function(num) {
 			return (num - mean) / standardDeviation;
+		});
+	},
+
+	normed: function(array) {
+		const extents = arr.extents(array);
+		return array.map(function(num) {
+			if (!isNaN(num)){
+				return (num - extents[0]) / (extents[1] - extents[0]);
+			} else {
+				return num
+			}
 		});
 	}
 };

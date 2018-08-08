@@ -20,9 +20,20 @@
 
 <script>
 d3.csv('data/cars.csv').then(function(data) {
-  // cluster variable hidden by default, only colors are shown
+
+  // setup weights (unspecified vars given weight = 0)
+  var weights = {
+    "power (hp)": 0.8,
+    "weight (lb)": 0.4,
+    "0-60 mph (s)": 1
+  };
+
   var ps = Parasol(data)('.parcoords')
-            .cluster(4);
+            .aggregateScore(weights);
+
+  console.log(ps);
+  // NOTE: determine why ps undefined...
+
   // update charts
   // ps.charts.forEach(
   //   (pc) => {
@@ -30,6 +41,7 @@ d3.csv('data/cars.csv').then(function(data) {
   //       .hideAxis(['name'])
   //       .render()
   //       .updateAxes(0)
+  //       .reorderable()
   //   }
   // )
 });

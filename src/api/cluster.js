@@ -1,5 +1,5 @@
 import kmeans from 'ml-kmeans';
-import { scaleOrdinal, schemeCategory10 } from 'd3'
+import { scaleOrdinal, schemeCategory10 } from 'd3';
 
 import standardize from '../util/standardize';
 
@@ -19,71 +19,72 @@ import standardize from '../util/standardize';
 const cluster = (config, ps, flags) => (
 	k,
 	chartList = ps.charts,
-  palette = null,
-  vars = config.vars,
-  options = {},
+	palette = null,
+	vars = config.vars,
+	options = {},
 	standardize = true,
-  hidden = true
+	hidden = true
 ) => {
-  if(palette === null) {
-    const scheme = scaleOrdinal(schemeCategory10);
-    palette => d => scheme(d['cluster']);
-  }
+	if(palette === null) {
+		const scheme = scaleOrdinal(schemeCategory10);
+		palette => d => scheme(d['cluster']);
+	}
 
 	// if (standardize) {
 	// 	const data = standardize(config.data);
 	// } else {
 	// 	const data = config.data;
 	// }
+	// console.log(data);
 
-  // get data values in array of arrays for clustering
+	// get data values in array of arrays for clustering
 	// (values from each row object captured in array)
-  const values = [];
-  data.forEach( d => {
-    const target = [];
-    Object.entries(d).forEach(
-      ([key, value]) =>  {
-        // only take values from variables listed in function argument
-        if(vars[key] !== undefined) {
-          target.push(value);
-        }
-    })
-    values.push([target]);
-  });
-  console.log(values);
+	const values = [];
+	data.forEach( d => {
+		const target = [];
+		Object.entries(d).forEach(
+			([key, value]) =>  {
+				// only take values from variables listed in function argument
+				if(vars[key] !== undefined) {
+					target.push(value);
+				}
+			});
+		values.push([target]);
+	});
+	console.log(values);
 
-  // preform clustering and update config data
-  const result = kmeans(values, k, options);
-  config.data.forEach( (d,i) => {
-    d.cluster = result.clusters[i].toString();
-  });
-  console.log('kmeans++');
-  console.log(result.iterations, result.centroids.map((c) => c.error));
-  console.log(result.centroids);
+	// preform clustering and update config data
+	const result = kmeans(values, k, options);
+	config.data.forEach( (d,i) => {
+		d.cluster = result.clusters[i].toString();
+	});
+	console.log('kmeans++');
+	console.log(result.iterations, result.centroids.map((c) => c.error));
+	console.log(result.centroids);
 
-  // hide cluster axis and show colors by default
-  config.hidden.push(["cluster"]);
+	// hide cluster axis and show colors by default
+	config.hidden.push(['cluster']);
 
-  // update charts
-  ps.charts.forEach( pc => {
-    pc
-      .data(config.data)
-      // .hideAxis(config.hidden)
-      .render()
-      // .updateAxes();
-  })
+	// update charts
+	ps.charts.forEach( pc => {
+		pc
+			.data(config.data)
+		// .hideAxis(config.hidden)
+			.render();
+		// .updateAxes();
+	});
 
-  chartList.forEach( pc => {
-    pc.color(palette).render()
-  });
+	chartList.forEach( pc => {
+		pc.color(palette).render();
+	});
 
-  // if (flags.grid) {
-  //   // rebuild the grid
-  //   ps.attachGrid();
-  //   ps.gridUpdate();
-  // }
+	// if (flags.grid) {
+	//   // rebuild the grid
+	//   ps.attachGrid();
+	//   ps.gridUpdate();
+	// }
 
-  return this;
-}
+	return this;
+};
 
 export default cluster;

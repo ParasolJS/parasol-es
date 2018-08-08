@@ -1,5 +1,5 @@
-import { Grid, Data, Plugins } from 'slickgrid-es6';
-import difference from 'lodash/difference';
+import Slickgrid from 'slickgrid-es6';
+import { difference } from 'lodash-es';
 
 import convert_to_float from '../util/convert_to_float';
 
