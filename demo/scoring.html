@@ -36,12 +36,10 @@ d3.csv('data/cars.csv').then(function(data) {
     (pc) => {
       pc
         .hideAxis(['name'])
-        .color('orange')
+        .reorderable()
         .render()
         .updateAxes(0)
-        // .reorderable()
     }
   )
-  // ps.aggregateScores(weights);
 });
 </script>

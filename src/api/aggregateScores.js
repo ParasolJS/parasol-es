@@ -1,4 +1,3 @@
-// import reinit from './api/reinit';
 import normalize from '../util/normalize';
 import format_data from '../util/format_data';
 import arr from '../util/arr_stats';
@@ -36,7 +35,7 @@ const aggregateScores = (config, ps, flags) => function(
   // normalize all values against total weight and assign values
   const extents = arr.extents(row_totals);
   data.forEach( (d, i) => {
-    config.data[i]['aggregateScore'] = ((d.score-extents[0])/(extents[1]-extents[0])).toString();
+    config.data[i]['aggregate score'] = ((d.score-extents[0])/(extents[1]-extents[0])).toString();
   });
 
   // aggregate scores are ready, update data and charts
@@ -46,10 +45,11 @@ const aggregateScores = (config, ps, flags) => function(
 			.data(config.data)
 		  // .hideAxis(config.hidden)
 			.render()
+			.createAxes()
 		  // .updateAxes();
 	});
 	// NOTE: partition 'aggregateScore' only to charts in chartList
-	// ps = init(config); // NOTE: need to maintain current state of charts somehow
+	// NOTE: need to maintain current state of charts somehow
 
   // if (flags.grid) {
 	//   // rebuild the grid
