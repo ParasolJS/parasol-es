@@ -26,24 +26,20 @@ export default {
             jsnext: true,
             main: true,
             browser: true,
-            extensions: ['.js']
+            extensions: ['.js', '.ts']
         }),
-        // commonjs({
-        //   include: 'node_modules/slickgrid-es6/**',
-        //   namedExports: {
-        //     // left-hand side can be an absolute path, a path
-        //     // relative to the current directory, or the name
-        //     // of a module in node_modules
-        //     'node_modules/slickgrid-es6/src/': [ 'Grid', 'Data', 'Plugins' ]
-        //   }
-        // }),
         commonjs({
+          include: [
+            'node_modules/slickgrid-es6/dist/slick.es6.min.js',
+            'node_modules/ml-random/lib-es6/index.ts', 'node_modules/ml-distance-euclidean/**', 'node_modules/ml-nearest-vector/**'
+          ],
           exclude: ['node_modules/lodash-es/**'],
           namedExports: {
-            'node_modules/ml-distance-euclidean/euclidean.js': ['squared'],
+            'node_modules/ml-distance-euclidean/euclidean.js': ['euclidean', 'squared'],
             // 'node_modules/slickgrid-es6/dist/slick.es6.min.js': ['Slickgrid']
-            //   'Slick', 'Grid', 'FrozenGrid', 'Data', 'Plugins', 'Editors', 'Formatters'
-            // ]
+            'node_modules/slickgrid-es6/dist/slick.es6.min.js': [
+              'Slick', 'Grid', 'FrozenGrid', 'Data', 'Plugins', 'Editors', 'Formatters'
+            ]
           }
         }),
         serve({

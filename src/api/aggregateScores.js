@@ -1,4 +1,6 @@
+// import reinit from './api/reinit';
 import normalize from '../util/normalize';
+import format_data from '../util/format_data';
 import arr from '../util/arr_stats';
 
 /**
@@ -8,12 +10,13 @@ import arr from '../util/arr_stats';
 * @param weights object specififying weight of each variable, unspecified variables will be assigned weight 0
 * @param chartList charts that will display 'aggregate score' variable
 */
-const aggregateScore = (config, ps, flags) => (
+const aggregateScores = (config, ps, flags) => function(
 	weights,
 	chartList = ps.charts
-) => {
+) {
 
-	const data = normalize(config.data);
+	// NOTE: if data is re-scored, old score will not affect new score unless it is given a weight itself in the 'weights' object
+	let data = normalize(config.data);
 
   // compute initial weight for each data element
   const row_totals = [];
@@ -30,26 +33,23 @@ const aggregateScore = (config, ps, flags) => (
     row_totals.push(d_weight)
   });
 
-  // normalize all values against total weight and assign
+  // normalize all values against total weight and assign values
   const extents = arr.extents(row_totals);
   data.forEach( (d, i) => {
     config.data[i]['aggregateScore'] = ((d.score-extents[0])/(extents[1]-extents[0])).toString();
   });
-  console.log(config.data);
-
-  // NOTE: partition 'aggregateScore' only to charts in chartList
-
-  // NOTE: determine why cols config.data does not technically show aggScore var
 
   // aggregate scores are ready, update data and charts
+	config.data = format_data(config.data);
 	ps.charts.forEach( pc => {
 		pc
 			.data(config.data)
 		  // .hideAxis(config.hidden)
-      .hideAxis(['name'])
 			.render()
-		  .updateAxes();
+		  // .updateAxes();
 	});
+	// NOTE: partition 'aggregateScore' only to charts in chartList
+	// ps = init(config); // NOTE: need to maintain current state of charts somehow
 
   // if (flags.grid) {
 	//   // rebuild the grid
@@ -60,4 +60,4 @@ const aggregateScore = (config, ps, flags) => (
   return this;
 };
 
-export default aggregateScore;
+export default aggregateScores;

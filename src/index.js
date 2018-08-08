@@ -10,7 +10,7 @@ import init from './api/init';
 // import gridUpdate from './api/gridUpdate';
 import linked from './api/linked';
 // import cluster from './api/cluster';
-import aggregateScore from './api/aggregateScore';
+import aggregateScores from './api/aggregateScores';
 
 import initState from './state/initState';
 // import bindEvents from './bindEvents';
@@ -40,7 +40,7 @@ const Parasol = (data, userConfig) => {
 	// ps.gridUpdate = gridUpdate(config, flags);
 	ps.linked = linked(config, ps, flags);
 	// ps.cluster = cluster(config, ps, flags);
-	ps.aggregateScore = aggregateScore(config, ps, flags);
+	ps.aggregateScores = aggregateScores(config, ps, flags);
 
 
 	return ps;

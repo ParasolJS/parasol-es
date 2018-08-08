@@ -29,20 +29,19 @@ d3.csv('data/cars.csv').then(function(data) {
   };
 
   var ps = Parasol(data)('.parcoords')
-            .aggregateScore(weights);
-
-  console.log(ps);
-  // NOTE: determine why ps undefined...
+            .aggregateScores(weights);
 
   // update charts
-  // ps.charts.forEach(
-  //   (pc) => {
-  //     pc
-  //       .hideAxis(['name'])
-  //       .render()
-  //       .updateAxes(0)
-  //       .reorderable()
-  //   }
-  // )
+  ps.charts.forEach(
+    (pc) => {
+      pc
+        .hideAxis(['name'])
+        .color('orange')
+        .render()
+        .updateAxes(0)
+        // .reorderable()
+    }
+  )
+  // ps.aggregateScores(weights);
 });
 </script>

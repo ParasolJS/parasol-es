@@ -45,14 +45,10 @@ const arr = {
 		});
 	},
 
-	normed: function(array) {
+	norms: function(array) {
 		const extents = arr.extents(array);
 		return array.map(function(num) {
-			if (!isNaN(num)){
-				return (num - extents[0]) / (extents[1] - extents[0]);
-			} else {
-				return num
-			}
+			return (num - extents[0]) / (extents[1] - extents[0]);
 		});
 	}
 };

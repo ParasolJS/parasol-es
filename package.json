@@ -89,6 +89,7 @@
   },
   "dependencies": {
     "d3": "^5.5.0",
+    "d3-dsv": "^1.0.8",
     "lodash-es": "^4.17.10",
     "ml-kmeans": "^4.0.1",
     "parcoord-es": "^2.1.7",

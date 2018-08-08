@@ -9,7 +9,7 @@ const normalize = data => {
 
 	// normalize values
 	Object.entries(df).forEach( ([key, col]) => {
-		df[key] = arr.normed(col);
+		df[key] = arr.norms(col);
 	});
 
 	// convert back to original data type

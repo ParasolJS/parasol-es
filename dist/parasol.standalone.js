@@ -4288,6 +4288,9 @@
 
     var csv = dsvFormat(",");
 
+    var csvParse = csv.parse;
+    var csvFormat = csv.format;
+
     var tsv = dsvFormat("\t");
 
     function tree_add (d) {
@@ -28198,14 +28201,10 @@
     		});
     	},
 
-    	normed: function normed(array) {
+    	norms: function norms(array) {
     		var extents = arr.extents(array);
     		return array.map(function (num) {
-    			if (!isNaN(num)) {
-    				return (num - extents[0]) / (extents[1] - extents[0]);
-    			} else {
-    				return num;
-    			}
+    			return (num - extents[0]) / (extents[1] - extents[0]);
     		});
     	}
     };
@@ -28222,14 +28221,20 @@
     		    key = _ref2[0],
     		    col = _ref2[1];
 
-    		df[key] = arr.normed(col);
+    		df[key] = arr.norms(col);
     	});
 
     	// convert back to original data type
     	return object_to_array(df, data);
     };
 
-    var _this$6 = undefined;
+    // format data values as strings
+
+    var format_data = function format_data(data) {
+      return csvParse(csvFormat(data));
+    };
+
+    // import reinit from './api/reinit';
 
     /**
     * Compute individual aggregate scores for each solution based on
@@ -28238,11 +28243,12 @@
     * @param weights object specififying weight of each variable, unspecified variables will be assigned weight 0
     * @param chartList charts that will display 'aggregate score' variable
     */
-    var aggregateScore = function aggregateScore(config, ps, flags) {
+    var aggregateScores = function aggregateScores(config, ps, flags) {
       return function (weights) {
         var chartList = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ps.charts;
 
 
+        // NOTE: if data is re-scored, old score will not affect new score unless it is given a weight itself in the 'weights' object
         var data = normalize(config.data);
 
         // compute initial weight for each data element
@@ -28263,23 +28269,22 @@
           row_totals.push(d_weight);
         });
 
-        // normalize all values against total weight and assign
+        // normalize all values against total weight and assign values
         var extents = arr.extents(row_totals);
         data.forEach(function (d, i) {
           config.data[i]['aggregateScore'] = ((d.score - extents[0]) / (extents[1] - extents[0])).toString();
         });
-        console.log(config.data);
-
-        // NOTE: partition 'aggregateScore' only to charts in chartList
-
-        // NOTE: determine why cols config.data does not technically show aggScore var
 
         // aggregate scores are ready, update data and charts
+        config.data = format_data(config.data);
         ps.charts.forEach(function (pc) {
           pc.data(config.data)
           // .hideAxis(config.hidden)
-          .hideAxis(['name']).render().updateAxes();
+          .render();
+          // .updateAxes();
         });
+        // NOTE: partition 'aggregateScore' only to charts in chartList
+        // ps = init(config); // NOTE: need to maintain current state of charts somehow
 
         // if (flags.grid) {
         //   // rebuild the grid
@@ -28287,7 +28292,7 @@
         //   ps.gridUpdate();
         // }
 
-        return _this$6;
+        return this;
       };
     };
 
@@ -28305,7 +28310,7 @@
     	selections: [] // union of brushed and marked
     };
 
-    var _this$7 = undefined;
+    var _this$6 = undefined;
 
     var initState$1 = function initState(data, userConfig) {
     	var config = Object.assign({}, DefaultConfig$1, userConfig);
@@ -28320,7 +28325,7 @@
     	// 'mark',
     	'brush', 'brushend', 'brushstart'].concat(keys(config));
 
-    	var events = dispatch.apply(_this$7, eventTypes),
+    	var events = dispatch.apply(_this$6, eventTypes),
     	    flags = {
     		linked: false,
     		grid: false
@@ -28368,7 +28373,7 @@
     	// ps.gridUpdate = gridUpdate(config, flags);
     	ps.linked = linked(config, ps, flags);
     	// ps.cluster = cluster(config, ps, flags);
-    	ps.aggregateScore = aggregateScore(config, ps, flags);
+    	ps.aggregateScores = aggregateScores(config, ps, flags);
 
     	return ps;
     };
