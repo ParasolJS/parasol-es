@@ -1,5 +1,3 @@
-
-
 // ----------
 // api
 // ----------
@@ -31,51 +29,46 @@
 // build_grid(userConfig, data, plot_list)
 // grid_update(dataView, data, plot_list)
 
-
 var config = {};
 config.partition = {};
 // setup partition object
-Object.keys(dataset[0]).forEach(
-	(key) => {
-		if (key != 'name') {
-			config.partition[key] = _.range(3); // array indicating all pids
-		}
-	}
-);
-
+Object.keys(dataset[0]).forEach(key => {
+  if (key != 'name') {
+    config.partition[key] = _.range(3); // array indicating all pids
+  }
+});
 
 var ParaVis = function ParaVis(userConfig, selection) {
-	// dataset: may be either an object or an array, all values should be the same format
-	// partition: object indicating which plots a variable should be included in; formatted as partition = { "var": [pids] }
-	// n: number of plots to create
+  // dataset: may be either an object or an array, all values should be the same format
+  // partition: object indicating which plots a variable should be included in; formatted as partition = { "var": [pids] }
+  // n: number of plots to create
 
-	console.log(partition);
+  console.log(partition);
 
-	// setup array of arrays to store hidden axes for all plots
-	var hidden = Array.from({length: n}, (pid) => []);
+  // setup array of arrays to store hidden axes for all plots
+  var hidden = Array.from({ length: n }, pid => []);
 
-	// update hidden variables based on partition
-	Object.entries(partition).forEach(
-		([axis, pids]) => {
-			// identify pids in which an axis should be hidden
-			var hidden_pids = _.difference(_.range(n), pids);
-			// append axis name to hidden[pid] array
-			hidden_pids.forEach(
-				(pid) => { hidden[pid].push(axis); }
-			);
-		}
-	);
+  // update hidden variables based on partition
+  Object.entries(partition).forEach(([axis, pids]) => {
+    // identify pids in which an axis should be hidden
+    var hidden_pids = _.difference(_.range(n), pids);
+    // append axis name to hidden[pid] array
+    hidden_pids.forEach(pid => {
+      hidden[pid].push(axis);
+    });
+  });
 
-	// hide axis from all plots if not found in partition
-	var extraneous_vars = _.difference(Object.keys(dataset[0]), Object.keys(partition));
-	hidden.forEach(
-		(hidden_pid) => {
-			hidden_pid.push(extraneous_vars);
-		});
-	console.log(hidden);
+  // hide axis from all plots if not found in partition
+  var extraneous_vars = _.difference(
+    Object.keys(dataset[0]),
+    Object.keys(partition)
+  );
+  hidden.forEach(hidden_pid => {
+    hidden_pid.push(extraneous_vars);
+  });
+  console.log(hidden);
 
+  console.log(plots);
 
-	console.log(plots);
-
-	return(plots);
+  return plots;
 };

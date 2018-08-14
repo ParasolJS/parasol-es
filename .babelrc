@@ -1,16 +1,9 @@
 {
   "presets": [
-    "env",
-    "es2015"
+    "@babel/preset-env"
   ],
   "plugins": [
-    "external-helpers"
-  ],
-  "env": {
-    "test": {
-      "plugins": [
-        "istanbul"
-      ]
-    }
-  }
+    "@babel/plugin-external-helpers",
+    "@babel/plugin-transform-runtime"
+  ]
 }
