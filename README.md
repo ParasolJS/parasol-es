@@ -30,16 +30,43 @@
 </p>
 
 ## Overview
-ES6 module for visualization of multiobjective optimization problems. This library is based on D3 V5 API and extends upon [parcoords-es](https://github.com/BigFatDog/parcoords-es).
+ES6 module for visualization of multiobjective optimization problems. Parasol aides decision making by turning the paradox of choice into tangible solutions.
+
+This library is based on D3 V5 API and extends upon [parcoords-es](https://github.com/BigFatDog/parcoords-es).
 
 
 ## Usage
 Parasol is currently in a prerelease state but should be available on NPM by Fall 2018.
 
+## Development
+Follow these instructions to setup a development environment for parasol and play with demo examples:
+
+### Prerequisites
+Node package manager ([npm](https://www.npmjs.com/get-npm))
+
+### Clone and Build
+1. Clone this git repo
+```
+git clone git@github.com:joshhjacobson/parasol.git
+```
+2. Establish npm environment and dependencies
+```
+npm install
+```
+3. Compile any changes to source (src) files
+```
+npm run build
+```
+4. Test code and view demos in live browser (internal server will be launched, hosting all demos at localhost:3004)
+```
+npm run dev
+```
+
 ## Built With
 
 * [D3 V5](https://d3js.org/) - D3 modules are used
-* [parcoords-es](https://github.com/BigFatDog/parcoords-es) - Parallel Coordinates module
+* [parcoords-es](https://github.com/BigFatDog/parcoords-es) - Parallel Coordinates charts
+* [SlickGrid](https://github.com/DimitarChristoff/slickgrid-es6) - Customizable and interactive spreadsheet
 * [Rollup](https://github.com/rollup/rollup) - Module bundler
 
 ## Authors
