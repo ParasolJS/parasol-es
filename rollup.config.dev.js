@@ -1,5 +1,5 @@
 import babel from 'rollup-plugin-babel';
-import babelrc from 'babelrc-rollup';
+// import babelrc from 'babelrc-rollup';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import postcss from 'rollup-plugin-postcss'
@@ -20,7 +20,11 @@ export default {
         }),
         localResolve(),
         postcss({ extract: 'dist/parcoords.css' }),
-        babel(babelrc()),
+        // babel(babelrc()),
+        babel({
+          babelrc: false,
+          runtimeHelpers: true
+        }),
         resolve({
             module: true,
             jsnext: true,
