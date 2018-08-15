@@ -91,7 +91,7 @@
     "d3-dsv": "^1.0.8",
     "lodash-es": "^4.17.10",
     "ml-distance-euclidean": "^2.0.0",
-    "ml-kmeans": "^4.1.0",
+    "ml-kmeans": "^4.2.1",
     "ml-xsadd": "^2.0.0",
     "parcoord-es": "^2.1.7",
     "random": "^2.0.12",

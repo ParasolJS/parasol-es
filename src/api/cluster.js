@@ -22,7 +22,7 @@ const cluster = (config, ps, flags) => (
   palette = null,
   vars = config.vars,
   options = {},
-  standardize = true,
+  std = true,
   hidden = true
 ) => {
   if (palette === null) {
@@ -30,12 +30,18 @@ const cluster = (config, ps, flags) => (
     palette => d => scheme(d['cluster']);
   }
 
-  // if (standardize) {
-  // 	const data = standardize(config.data);
-  // } else {
-  // 	const data = config.data;
-  // }
+  // console.log(config.data);
+  let data = [];
+  if (std === true) {
+  	data = standardize(config.data);
+  } else {
+  	data = config.data;
+  }
   // console.log(data);
+
+  // NOTE: try vars as object
+  console.log(vars);
+  console.log(vars["name"]);
 
   // get data values in array of arrays for clustering
   // (values from each row object captured in array)
@@ -44,37 +50,37 @@ const cluster = (config, ps, flags) => (
     const target = [];
     Object.entries(d).forEach(([key, value]) => {
       // only take values from variables listed in function argument
-      if (vars[key] !== undefined) {
+      if (vars[key]) {
         target.push(value);
       }
     });
     values.push([target]);
   });
   console.log(values);
-
-  // preform clustering and update config data
-  const result = kmeans(values, k, options);
-  config.data.forEach((d, i) => {
-    d.cluster = result.clusters[i].toString();
-  });
-  console.log('kmeans++');
-  console.log(result.iterations, result.centroids.map(c => c.error));
-  console.log(result.centroids);
-
-  // hide cluster axis and show colors by default
-  config.hidden.push(['cluster']);
-
-  // update charts
-  ps.charts.forEach(pc => {
-    pc.data(config.data)
-      // .hideAxis(config.hidden)
-      .render();
-    // .updateAxes();
-  });
-
-  chartList.forEach(pc => {
-    pc.color(palette).render();
-  });
+  //
+  // // preform clustering and update config data
+  // const result = kmeans(values, k, options);
+  // config.data.forEach((d, i) => {
+  //   d.cluster = result.clusters[i].toString();
+  // });
+  // console.log('kmeans++');
+  // console.log(result.iterations, result.centroids.map(c => c.error));
+  // console.log(result.centroids);
+  //
+  // // hide cluster axis and show colors by default
+  // config.hidden.push(['cluster']);
+  //
+  // // update charts
+  // ps.charts.forEach(pc => {
+  //   pc.data(config.data)
+  //     // .hideAxis(config.hidden)
+  //     .render();
+  //   // .updateAxes();
+  // });
+  //
+  // chartList.forEach(pc => {
+  //   pc.color(palette).render();
+  // });
 
   // if (flags.grid) {
   //   // rebuild the grid

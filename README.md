@@ -30,7 +30,7 @@
 </p>
 
 ## Overview
-ES6 module for visualization of multiobjective optimization problems. Parasol aides decision making by turning the paradox of choice into tangible solutions.
+ES6 module for visualization of multiobjective optimization problems. Parasol aides decision making by turning the _paradox_ of choice into tangible _solutions_.
 
 This library is based on D3 V5 API and extends upon [parcoords-es](https://github.com/BigFatDog/parcoords-es).
 
