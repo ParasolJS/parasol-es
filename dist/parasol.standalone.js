@@ -10428,31 +10428,31 @@
     //# sourceMappingURL=parcoords.esm.js.map
 
     /**
-    * Setup a new visualization.
-    *
-    * @param config
-    * @returns {ps} a parasol closure
-    */
+     * Setup a new visualization.
+     *
+     * @param config
+     * @returns {ps} a parasol closure
+     */
     var init$2 = function init(config) {
-    	/**
-      * Create a visualization within a container. The selector can also be a d3 selection.
-      *
-      * @param selection a d3 selection
-      * @returns {ps} instance for chained api, compatible with parcoords api
-      */
-    	var ps = function ps(selection$$1) {
-    		selection$$1 = ps.selection = selectAll(selection$$1);
+      /**
+       * Create a visualization within a container. The selector can also be a d3 selection.
+       *
+       * @param selection a d3 selection
+       * @returns {ps} instance for chained api, compatible with parcoords api
+       */
+      var ps = function ps(selection$$1) {
+        selection$$1 = ps.selection = selectAll(selection$$1);
 
-    		// store pc charts in array
-    		ps.charts = [];
-    		selection$$1.each(function (d, i) {
-    			ps.charts[i] = ParCoords(config.chartOptions)(this).data(config.data).alpha(0.4).render().mode('queue').brushMode('1D-axes'); //1D-axes must be used with linking
-    		});
-    		// for chained api
-    		return ps;
-    	};
-    	// for partial-application style programming
-    	return ps;
+        // store pc charts in array
+        ps.charts = [];
+        selection$$1.each(function (d, i) {
+          ps.charts[i] = ParCoords(config.chartOptions)(this).data(config.data).alpha(0.4).render().mode('queue').brushMode('1D-axes'); //1D-axes must be used with linking
+        });
+        // for chained api
+        return ps;
+      };
+      // for partial-application style programming
+      return ps;
     };
 
     /** Detect free variable `global` from Node.js. */
@@ -28042,79 +28042,78 @@
 
     // synchronize data between linked components
     var sync = function sync(config, ps, flags) {
-    	return function () {
+      return function () {
+        //obtain array of brushed data for each chart
+        var brush_extents = [];
+        config.linked.forEach(function (pc) {
+          brush_extents.push(pc.selected());
+        });
+        // console.log(brush_extents);
 
-    		//obtain array of brushed data for each chart
-    		var brush_extents = [];
-    		config.linked.forEach(function (pc) {
-    			brush_extents.push(pc.selected());
-    		});
-    		// console.log(brush_extents);
-
-    		//check edge case where all brushes individually clicked away
-    		// console.log(union(...brush_extents));
-    		if (union.apply(undefined, brush_extents).length == 0) {
-    			config.linked.forEach(function (pc) {
-    				pc.brushReset();
-    			});
-    			// if (flags.grid === true) {
-    			// 	ps.gridUpdate(config.data);
-    			// }
-    		} else {
-    			var brushed = intersection$1.apply(undefined, brush_extents);
-    			// console.log(brushed);
-    			config.linked.forEach(function (pc) {
-    				pc.brushed(brushed).render();
-    			});
-    			// if (flags.grid === true) {
-    			// 	ps.gridUpdate(brush_extents);
-    			// }
-    		}
-    	};
+        //check edge case where all brushes individually clicked away
+        // console.log(union(...brush_extents));
+        if (union.apply(undefined, brush_extents).length == 0) {
+          config.linked.forEach(function (pc) {
+            pc.brushReset();
+          });
+          // if (flags.grid === true) {
+          // 	ps.gridUpdate(config.data);
+          // }
+        } else {
+          var brushed = intersection$1.apply(undefined, brush_extents);
+          // console.log(brushed);
+          config.linked.forEach(function (pc) {
+            pc.brushed(brushed).render();
+          });
+          // if (flags.grid === true) {
+          // 	ps.gridUpdate(brush_extents);
+          // }
+        }
+      };
     };
 
     // link brush activity between user specified charts, and grid if it exists
     var linked = function linked(config, ps, flags) {
-    	return function () {
-    		var chartList = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : ps.charts;
+      return function () {
+        var chartList = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : ps.charts;
 
-    		config.linked = chartList;
-    		chartList.forEach(function (pc) {
-    			pc.on('brush', sync(config, ps, flags));
-    		});
+        config.linked = chartList;
+        chartList.forEach(function (pc) {
+          pc.on('brush', sync(config, ps, flags));
+        });
 
-    		// connect grid
-    		// highlight row in charts
-    		// config.grid.onMouseEnter.subscribe( (e, args) => {
-    		//   const i = grid.getCellFromEvent(e).row;
-    		//   const d = config.brushed || config.data;
-    		//   pv.charts.forEach( pc => {
-    		//     pc.highlight([d[i]]);
-    		//   })
-    		// });
-    		// config.grid.onMouseLeave.subscribe( (e, args) => {
-    		//   pv.charts.forEach( (pc) => {
-    		//     pc.unhighlight();
-    		//   })
-    		// });
+        // connect grid
+        // highlight row in charts
+        // config.grid.onMouseEnter.subscribe( (e, args) => {
+        //   const i = grid.getCellFromEvent(e).row;
+        //   const d = config.brushed || config.data;
+        //   pv.charts.forEach( pc => {
+        //     pc.highlight([d[i]]);
+        //   })
+        // });
+        // config.grid.onMouseLeave.subscribe( (e, args) => {
+        //   pv.charts.forEach( (pc) => {
+        //     pc.unhighlight();
+        //   })
+        // });
 
-    		// mark / unmark rows in charts
-    		// config.grid.onSelectedRowsChanged.subscribe( (e, args) => {
-    		//   const selected_row_ids = config.grid.getSelectedRows();
-    		//   if (config.brushed) {
-    		//     // nothing outside of brushed should be markable
-    		//     const d = config.brushed;
-    		//   } else {
-    		//     const d = config.data;
-    		//   }
-    		//   pv.charts.forEach( (pc) => {
-    		//     pc.unmark();
-    		//     pc.mark(selected_row_ids); //NOTE: this may not work initially
-    		//   })
-    		// });
+        // mark / unmark rows in charts
+        // config.grid.onSelectedRowsChanged.subscribe( (e, args) => {
+        //   const selected_row_ids = config.grid.getSelectedRows();
+        //   if (config.brushed) {
+        //     // nothing outside of brushed should be markable
+        //     const d = config.brushed;
+        //   } else {
+        //     const d = config.data;
+        //   }
+        //   pv.charts.forEach( (pc) => {
+        //     pc.unmark();
+        //     pc.mark(selected_row_ids); //NOTE: this may not work initially
+        //   })
+        // });
 
-    		return this;
-    	};
+        return this;
+      };
     };
 
     // wrangling tools to manipulate data for processing values
@@ -28123,109 +28122,108 @@
     // convert to object of arrays, each array is a column
     // e.g. {"var1": [col1], "var2": [col2]}
     var array_to_object = function array_to_object(data) {
-    	return data.reduce(function (acc, obj) {
-    		Object.keys(obj).forEach(function (k) {
-    			acc[k] = (acc[k] || []).concat(Number(obj[k]));
-    		});
-    		return acc;
-    	}, {});
+      return data.reduce(function (acc, obj) {
+        Object.keys(obj).forEach(function (k) {
+          acc[k] = (acc[k] || []).concat(Number(obj[k]));
+        });
+        return acc;
+      }, {});
     };
 
     // data is formatted as 'data frame' with columns as keys
     // convert back to array of objects with rows as objects
     var object_to_array = function object_to_array(df, data) {
-    	var result = [];
-    	Object.entries(df).forEach(function (_ref) {
-    		var _ref2 = slicedToArray(_ref, 2),
-    		    key = _ref2[0],
-    		    values = _ref2[1];
+      var result = [];
+      Object.entries(df).forEach(function (_ref) {
+        var _ref2 = slicedToArray(_ref, 2),
+            key = _ref2[0],
+            values = _ref2[1];
 
-    		values.forEach(function (val, i) {
-    			result[i] = result[i] || {};
-    			// get original string if value is NaN
-    			if (isNaN(val)) {
-    				result[i][key] = data[i][key];
-    			} else {
-    				result[i][key] = val.toString();
-    			}
-    		});
-    	});
-    	return result;
+        values.forEach(function (val, i) {
+          result[i] = result[i] || {};
+          // get original string if value is NaN
+          if (isNaN(val)) {
+            result[i][key] = data[i][key];
+          } else {
+            result[i][key] = val.toString();
+          }
+        });
+      });
+      return result;
     };
 
     // inspired by: https://gist.github.com/Daniel-Hug/7273430
     var arr = {
-    	max: function max(array) {
-    		return Math.max.apply(null, array);
-    	},
+      max: function max(array) {
+        return Math.max.apply(null, array);
+      },
 
-    	min: function min(array) {
-    		return Math.min.apply(null, array);
-    	},
+      min: function min(array) {
+        return Math.min.apply(null, array);
+      },
 
-    	range: function range(array) {
-    		return arr.max(array) - arr.min(array);
-    	},
+      range: function range(array) {
+        return arr.max(array) - arr.min(array);
+      },
 
-    	extents: function extents(array) {
-    		return [arr.min(array), arr.max(array)];
-    	},
+      extents: function extents(array) {
+        return [arr.min(array), arr.max(array)];
+      },
 
-    	sum: function sum(array) {
-    		var num = 0;
-    		for (var i = 0, l = array.length; i < l; i++) {
-    			num += array[i];
-    		}return num;
-    	},
+      sum: function sum(array) {
+        var num = 0;
+        for (var i = 0, l = array.length; i < l; i++) {
+          num += array[i];
+        }return num;
+      },
 
-    	mean: function mean(array) {
-    		return arr.sum(array) / array.length;
-    	},
+      mean: function mean(array) {
+        return arr.sum(array) / array.length;
+      },
 
-    	variance: function variance(array) {
-    		var mean = arr.mean(array);
-    		return arr.mean(array.map(function (num) {
-    			return Math.pow(num - mean, 2);
-    		}));
-    	},
+      variance: function variance(array) {
+        var mean = arr.mean(array);
+        return arr.mean(array.map(function (num) {
+          return Math.pow(num - mean, 2);
+        }));
+      },
 
-    	standardDeviation: function standardDeviation(array) {
-    		return Math.sqrt(arr.variance(array));
-    	},
+      standardDeviation: function standardDeviation(array) {
+        return Math.sqrt(arr.variance(array));
+      },
 
-    	zScores: function zScores(array) {
-    		var mean = arr.mean(array);
-    		var standardDeviation = arr.standardDeviation(array);
-    		return array.map(function (num) {
-    			return (num - mean) / standardDeviation;
-    		});
-    	},
+      zScores: function zScores(array) {
+        var mean = arr.mean(array);
+        var standardDeviation = arr.standardDeviation(array);
+        return array.map(function (num) {
+          return (num - mean) / standardDeviation;
+        });
+      },
 
-    	norms: function norms(array) {
-    		var extents = arr.extents(array);
-    		return array.map(function (num) {
-    			return (num - extents[0]) / (extents[1] - extents[0]);
-    		});
-    	}
+      norms: function norms(array) {
+        var extents = arr.extents(array);
+        return array.map(function (num) {
+          return (num - extents[0]) / (extents[1] - extents[0]);
+        });
+      }
     };
 
     // normalize data values (scale: 0-1) for unbiased aggregate scores
     var normalize = function normalize(data) {
+      // reformat data
+      var df = array_to_object(data);
 
-    	// reformat data
-    	var df = array_to_object(data);
+      // normalize values
+      Object.entries(df).forEach(function (_ref) {
+        var _ref2 = slicedToArray(_ref, 2),
+            key = _ref2[0],
+            col = _ref2[1];
 
-    	// normalize values
-    	Object.entries(df).forEach(function (_ref) {
-    		var _ref2 = slicedToArray(_ref, 2),
-    		    key = _ref2[0],
-    		    col = _ref2[1];
+        df[key] = arr.norms(col);
+      });
 
-    		df[key] = arr.norms(col);
-    	});
-
-    	// convert back to original data type
-    	return object_to_array(df, data);
+      // convert back to original data type
+      return object_to_array(df, data);
     };
 
     // format data values as strings
@@ -28235,16 +28233,15 @@
     };
 
     /**
-    * Compute individual aggregate scores for each solution based on
-    * user specified weights
-    *
-    * @param weights object specififying weight of each variable, unspecified variables will be assigned weight 0
-    * @param chartList charts that will display 'aggregate score' variable
-    */
+     * Compute individual aggregate scores for each solution based on
+     * user specified weights
+     *
+     * @param weights object specififying weight of each variable, unspecified variables will be assigned weight 0
+     * @param chartList charts that will display 'aggregate score' variable
+     */
     var aggregateScores = function aggregateScores(config, ps, flags) {
       return function (weights) {
         var chartList = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ps.charts;
-
 
         // NOTE: if data is re-scored, old score will not affect new score unless it is given a weight itself in the 'weights' object
         var data = normalize(config.data);
@@ -28262,7 +28259,8 @@
 
             if (weights[key]) {
               d_weight += val * weights[key];
-            }      });
+            }
+          });
           data[i].score = d_weight;
           row_totals.push(d_weight);
         });
@@ -28295,54 +28293,54 @@
     };
 
     var DefaultConfig$1 = {
-    	data: [],
-    	vars: [],
-    	hidden: [],
-    	partition: {}, // identifies which plots vars appear on
-    	dataView: false,
-    	grid: false,
-    	chartOptions: {}, // parcoords options, applies to all charts
-    	linked: [], // list of linked objects
-    	brushed: [], // intersection of all brushed data
-    	marked: [], // union of all marked data
-    	selections: [] // union of brushed and marked
+      data: [],
+      vars: [],
+      hidden: [],
+      partition: {}, // identifies which plots vars appear on
+      dataView: false,
+      grid: false,
+      chartOptions: {}, // parcoords options, applies to all charts
+      linked: [], // list of linked objects
+      brushed: [], // intersection of all brushed data
+      marked: [], // union of all marked data
+      selections: [] // union of brushed and marked
     };
 
     var _this$6 = undefined;
 
     var initState$1 = function initState(data, userConfig) {
-    	var config = Object.assign({}, DefaultConfig$1, userConfig);
-    	config.data = data;
-    	config.vars = keys(data[0]);
+      var config = Object.assign({}, DefaultConfig$1, userConfig);
+      config.data = data;
+      config.vars = keys(data[0]);
 
-    	var eventTypes = [
-    	// 'data', // when data in a chart is updated, how does this cascade to linked?
-    	// 'render',
-    	// 'resize',
-    	// 'highlight',
-    	// 'mark',
-    	'brush', 'brushend', 'brushstart'].concat(keys(config));
+      var eventTypes = [
+      // 'data', // when data in a chart is updated, how does this cascade to linked?
+      // 'render',
+      // 'resize',
+      // 'highlight',
+      // 'mark',
+      'brush', 'brushend', 'brushstart'].concat(keys(config));
 
-    	var events = dispatch.apply(_this$6, eventTypes),
-    	    flags = {
-    		linked: false,
-    		grid: false
-    		// axes: false,
-    		// interactive: false,
-    		// debug: false,
-    	};
-    	// xscale = scalePoint(),
-    	// dragging = {},
-    	// axis = axisLeft().ticks(5),
-    	// ctx = {},
-    	// canvas = {};
+      var events = dispatch.apply(_this$6, eventTypes),
+          flags = {
+        linked: false,
+        grid: false
+        // axes: false,
+        // interactive: false,
+        // debug: false,
+      };
+      // xscale = scalePoint(),
+      // dragging = {},
+      // axis = axisLeft().ticks(5),
+      // ctx = {},
+      // canvas = {};
 
-    	return {
-    		config: config,
-    		events: events,
-    		eventTypes: eventTypes,
-    		flags: flags
-    	};
+      return {
+        config: config,
+        events: events,
+        eventTypes: eventTypes,
+        flags: flags
+      };
     };
 
     var version$2 = "0.0.0";
@@ -28350,30 +28348,30 @@
     //css
 
     var Parasol = function Parasol(data, userConfig) {
-    	var state = initState$1(data, userConfig);
-    	var config = state.config,
-    	    events = state.events,
-    	    flags = state.flags;
+      var state = initState$1(data, userConfig);
+      var config = state.config,
+          events = state.events,
+          flags = state.flags;
 
 
-    	var ps = init$2(config);
+      var ps = init$2(config);
 
-    	// bindEvents();
+      // bindEvents();
 
-    	// expose the state of charts and grid
-    	ps.state = config;
-    	ps.flags = flags;
-    	ps.version = version$2;
-    	// ps.grid = config.grid;
-    	// ps.dataview = config.dataview;
+      // expose the state of charts and grid
+      ps.state = config;
+      ps.flags = flags;
+      ps.version = version$2;
+      // ps.grid = config.grid;
+      // ps.dataview = config.dataview;
 
-    	// ps.attachGrid = attachGrid(config, flags);
-    	// ps.gridUpdate = gridUpdate(config, flags);
-    	ps.linked = linked(config, ps, flags);
-    	// ps.cluster = cluster(config, ps, flags);
-    	ps.aggregateScores = aggregateScores(config, ps, flags);
+      // ps.attachGrid = attachGrid(config, flags);
+      // ps.gridUpdate = gridUpdate(config, flags);
+      ps.linked = linked(config, ps, flags);
+      ps.cluster = cluster(config, ps, flags);
+      ps.aggregateScores = aggregateScores(config, ps, flags);
 
-    	return ps;
+      return ps;
     };
 
     return Parasol;

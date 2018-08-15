@@ -1,16 +1,19 @@
 {
   "presets": [
-    "env",
-    "es2015"
+    [
+      "env",
+      {
+        "modules": false
+      }
+    ]
   ],
   "plugins": [
-    "external-helpers"
-  ],
-  "env": {
-    "test": {
-      "plugins": [
-        "istanbul"
-      ]
-    }
-  }
+    "external-helpers",
+    ["transform-runtime", {
+      "helpers": false,
+      "polyfill": false,
+      "regenerator": true,
+      "moduleName": "babel-runtime"
+    }]
+  ]
 }

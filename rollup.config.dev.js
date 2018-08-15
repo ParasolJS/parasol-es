@@ -20,7 +20,27 @@ export default {
         }),
         localResolve(),
         postcss({ extract: 'dist/parcoords.css' }),
-        babel(babelrc()),
+        // babel(babelrc()),
+        // babel({runtimeHelpers: true}),
+        // babel({
+        //   babelrc: false,
+        //   presets: [
+        //     ['env', {
+        //       targets: {
+        //         browsers: ['last 2 versions']
+        //       },
+        //       modules: false
+        //     }]
+        //   ],
+        //   plugins: [
+        //     ['transform-runtime', {helpers: false, polyfill: false}],
+        //     'external-helpers'
+        //   ]
+        // }),
+        babel({
+          runtimeHelpers: true,
+          exclude: 'node_modules/**'
+        }),
         resolve({
             module: true,
             jsnext: true,
@@ -29,13 +49,9 @@ export default {
             extensions: ['.js', '.ts']
         }),
         commonjs({
-          include: [
-            'node_modules/slickgrid-es6/dist/slick.es6.min.js',
-            'node_modules/ml-random/lib-es6/index.ts', 'node_modules/ml-distance-euclidean/**', 'node_modules/ml-nearest-vector/**'
-          ],
+          include: ['node_modules/**'],
           exclude: ['node_modules/lodash-es/**'],
           namedExports: {
-            'node_modules/ml-distance-euclidean/euclidean.js': ['euclidean', 'squared'],
             // 'node_modules/slickgrid-es6/dist/slick.es6.min.js': ['Slickgrid']
             'node_modules/slickgrid-es6/dist/slick.es6.min.js': [
               'Slick', 'Grid', 'FrozenGrid', 'Data', 'Plugins', 'Editors', 'Formatters'
