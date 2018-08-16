@@ -1,4 +1,5 @@
 import kmeans from 'ml-kmeans';
+// import { difference } from 'lodash-es';
 import { scaleOrdinal, schemeCategory10 } from 'd3';
 
 import standardize from '../util/standardize';
@@ -10,7 +11,7 @@ import standardize from '../util/standardize';
  * @param k number of clusters
  * @param chartList charts that will display cluster colors
  * @param palette function mapping cluster ids to color
- * @param vars variables to perfom clustering on
+ * @param vars variables to perfom clustering on, NOTE about only clustering vars with numeric data only?
  * @param standardize convert values to zscores to obtain unbiased clusters
  * @param options ml-kmeans options
  * @param hidden determines whether cluster axis will be displayed on charts
@@ -30,7 +31,6 @@ const cluster = (config, ps, flags) => (
     palette => d => scheme(d['cluster']);
   }
 
-  // console.log(config.data);
   let data = [];
   if (std === true) {
   	data = standardize(config.data);
@@ -39,9 +39,15 @@ const cluster = (config, ps, flags) => (
   }
   // console.log(data);
 
-  // NOTE: try vars as object
-  console.log(vars);
-  console.log(vars["name"]);
+  // const test = difference(vars, ["name"])
+  // console.log(difference(['name'], test).length);
+  const test = {};
+  vars.forEach( v => {
+    if (v != "name") {
+      test[v] = 1;
+    }
+  })
+  console.log(test);
 
   // get data values in array of arrays for clustering
   // (values from each row object captured in array)
@@ -50,26 +56,28 @@ const cluster = (config, ps, flags) => (
     const target = [];
     Object.entries(d).forEach(([key, value]) => {
       // only take values from variables listed in function argument
-      if (vars[key]) {
-        target.push(value);
+      // NOTE: consider redoing this with partition object
+      // if (difference(key, test).length === 0) {
+      if (test[key]) {
+        target.push(Number(value));
       }
     });
     values.push([target]);
   });
   console.log(values);
-  //
-  // // preform clustering and update config data
-  // const result = kmeans(values, k, options);
-  // config.data.forEach((d, i) => {
-  //   d.cluster = result.clusters[i].toString();
-  // });
-  // console.log('kmeans++');
-  // console.log(result.iterations, result.centroids.map(c => c.error));
-  // console.log(result.centroids);
-  //
-  // // hide cluster axis and show colors by default
-  // config.hidden.push(['cluster']);
-  //
+
+  // preform clustering and update config data
+  const result = kmeans(values, k, options);
+  config.data.forEach((d, i) => {
+    d.cluster = result.clusters[i].toString();
+  });
+  console.log('kmeans++');
+  console.log(result.iterations, result.centroids.map(c => c.error));
+  console.log(result.centroids);
+
+  // hide cluster axis and show colors by default
+  config.hidden.push(['cluster']);
+
   // // update charts
   // ps.charts.forEach(pc => {
   //   pc.data(config.data)
