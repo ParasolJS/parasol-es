@@ -3,6 +3,7 @@ import kmeans from 'ml-kmeans';
 import { scaleOrdinal, schemeCategory10 } from 'd3';
 
 import standardize from '../util/standardize';
+import format_data from '../util/format_data';
 
 /**
  * Partition data into k clusters in which each data element belongs to
@@ -17,86 +18,88 @@ import standardize from '../util/standardize';
  * @param hidden determines whether cluster axis will be displayed on charts
  *               (can be individually updated later)
  */
-const cluster = (config, ps, flags) => (
-  k,
-  chartList = ps.charts,
-  palette = null,
-  vars = config.vars,
-  options = {},
-  std = true,
-  hidden = true
-) => {
-  if (palette === null) {
-    const scheme = scaleOrdinal(schemeCategory10);
-    palette => d => scheme(d['cluster']);
-  }
-
-  let data = [];
-  if (std === true) {
-  	data = standardize(config.data);
-  } else {
-  	data = config.data;
-  }
-  // console.log(data);
-
-  // const test = difference(vars, ["name"])
-  // console.log(difference(['name'], test).length);
-  const test = {};
-  vars.forEach( v => {
-    if (v != "name") {
-      test[v] = 1;
-    }
-  })
-  console.log(test);
-
-  // get data values in array of arrays for clustering
-  // (values from each row object captured in array)
-  const values = [];
-  data.forEach(d => {
-    const target = [];
-    Object.entries(d).forEach(([key, value]) => {
-      // only take values from variables listed in function argument
-      // NOTE: consider redoing this with partition object
-      // if (difference(key, test).length === 0) {
-      if (test[key]) {
-        target.push(Number(value));
+const cluster = (config, ps, flags) =>
+  function (
+    k,
+    chartList = ps.charts,
+    palette = null,
+    vars = config.vars,
+    options = {},
+    std = true,
+    hidden = true
+  ) {
+      if (palette === null) {
+        const scheme = scaleOrdinal(schemeCategory10);
+        palette => d => { scheme(d['cluster']) };
       }
-    });
-    values.push([target]);
-  });
-  console.log(values);
 
-  // preform clustering and update config data
-  const result = kmeans(values, k, options);
-  config.data.forEach((d, i) => {
-    d.cluster = result.clusters[i].toString();
-  });
-  console.log('kmeans++');
-  console.log(result.iterations, result.centroids.map(c => c.error));
-  console.log(result.centroids);
+      let data = [];
+      if (std === true) {
+      	data = standardize(config.data);
+      } else {
+      	data = config.data;
+      }
 
-  // hide cluster axis and show colors by default
-  config.hidden.push(['cluster']);
+      // const test = difference(vars, ["name"])
+      // console.log(difference(['name'], test).length);
+      const test = {};
+      vars.forEach( v => {
+        if (v != "name") {
+          test[v] = 1;
+        }
+      })
+      console.log(test);
 
-  // // update charts
-  // ps.charts.forEach(pc => {
-  //   pc.data(config.data)
-  //     // .hideAxis(config.hidden)
-  //     .render();
-  //   // .updateAxes();
-  // });
-  //
-  // chartList.forEach(pc => {
-  //   pc.color(palette).render();
-  // });
+      // get data values in array of arrays for clustering
+      // (values from each row object captured in array)
+      const values = [];
+      data.forEach(d => {
+        const target = [];
+        Object.entries(d).forEach(([key, value]) => {
+          // only take values from variables listed in function argument
+          // NOTE: consider redoing this with partition object
+          // if (difference(key, test).length === 0) {
+          if (test[key]) {
+            target.push(Number(value));
+          }
+        });
+        values.push(target);
+      });
 
-  // if (flags.grid) {
-  //   // rebuild the grid
-  //   ps.attachGrid();
-  //   ps.gridUpdate();
-  // }
+      // preform clustering and update config data
+      const result = kmeans(values, k, options);
+      config.data.forEach((d, i) => {
+        d.cluster = result.clusters[i].toString();
+      });
+      console.log('kmeans++');
+      console.log(result.iterations, result.centroids.map(c => c.error));
+      console.log(result.centroids);
 
-  return this;
-};
+      // hide cluster axis and show colors by default
+      config.hidden.push(['cluster']);
+
+      // aggregate scores are ready, update data and charts
+      config.data = format_data(config.data);
+      ps.charts.forEach(pc => {
+        pc
+          .data(config.data)
+          .hideAxis(config.hidden)
+          .render()
+          .createAxes();
+        // .updateAxes();
+      });
+
+      chartList.forEach(pc => {
+        pc.color(palette).render();
+      });
+
+      // if (flags.grid) {
+      //   // rebuild the grid
+      //   ps.attachGrid();
+      //   ps.gridUpdate();
+      // }
+
+      return this;
+    };
 
 export default cluster;

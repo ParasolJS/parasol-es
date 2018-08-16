@@ -32738,7 +32738,11 @@
       return object_to_array(df, data);
     };
 
-    var _this$6 = undefined;
+    // format data values as strings
+
+    var format_data = function format_data(data) {
+      return csvParse(csvFormat(data));
+    };
 
     /**
      * Partition data into k clusters in which each data element belongs to
@@ -32771,7 +32775,6 @@
         } else {
           data = config.data;
         }
-        // console.log(data);
 
         // const test = difference(vars, ["name"])
         // console.log(difference(['name'], test).length);
@@ -32800,9 +32803,8 @@
               target.push(Number(value));
             }
           });
-          values$$1.push([target]);
+          values$$1.push(target);
         });
-        console.log(values$$1);
 
         // preform clustering and update config data
         var result = kmeans(values$$1, k, options);
@@ -32818,17 +32820,16 @@
         // hide cluster axis and show colors by default
         config.hidden.push(['cluster']);
 
-        // // update charts
-        // ps.charts.forEach(pc => {
-        //   pc.data(config.data)
-        //     // .hideAxis(config.hidden)
-        //     .render();
-        //   // .updateAxes();
-        // });
-        //
-        // chartList.forEach(pc => {
-        //   pc.color(palette).render();
-        // });
+        // aggregate scores are ready, update data and charts
+        config.data = format_data(config.data);
+        ps.charts.forEach(function (pc) {
+          pc.data(config.data).hideAxis(config.hidden).render().createAxes();
+          // .updateAxes();
+        });
+
+        chartList.forEach(function (pc) {
+          pc.color(palette).render();
+        });
 
         // if (flags.grid) {
         //   // rebuild the grid
@@ -32836,7 +32837,7 @@
         //   ps.gridUpdate();
         // }
 
-        return _this$6;
+        return this;
       };
     };
 
@@ -32856,12 +32857,6 @@
 
       // convert back to original data type
       return object_to_array(df, data);
-    };
-
-    // format data values as strings
-
-    var format_data = function format_data(data) {
-      return csvParse(csvFormat(data));
     };
 
     /**
@@ -32938,7 +32933,7 @@
       selections: [] // union of brushed and marked
     };
 
-    var _this$7 = undefined;
+    var _this$6 = undefined;
 
     var initState$1 = function initState(data, userConfig) {
       var config = Object.assign({}, DefaultConfig$1, userConfig);
@@ -32953,7 +32948,7 @@
       // 'mark',
       'brush', 'brushend', 'brushstart'].concat(keys(config));
 
-      var events = dispatch.apply(_this$7, eventTypes),
+      var events = dispatch.apply(_this$6, eventTypes),
           flags = {
         linked: false,
         grid: false

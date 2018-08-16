@@ -42,7 +42,8 @@ const aggregateScores = (config, ps, flags) =>
     // aggregate scores are ready, update data and charts
     config.data = format_data(config.data);
     ps.charts.forEach(pc => {
-      pc.data(config.data)
+      pc
+        .data(config.data)
         // .hideAxis(config.hidden)
         .render()
         .createAxes();
