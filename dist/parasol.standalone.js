@@ -10641,7 +10641,6 @@
 
       return pc;
     };
-    //# sourceMappingURL=parcoords.esm.js.map
 
     /**
      * Setup a new visualization.
@@ -32767,6 +32766,9 @@
 
         if (palette === null) {
           var scheme$$1 = ordinal(schemeCategory10);
+          palette = function palette(d) {
+            return scheme$$1(Number(d['cluster']));
+          };
         }
 
         var data = [];
@@ -32818,7 +32820,7 @@
         console.log(result.centroids);
 
         // hide cluster axis and show colors by default
-        config.hidden.push(['cluster']);
+        config.hidden.push('cluster');
 
         // aggregate scores are ready, update data and charts
         config.data = format_data(config.data);
@@ -32827,7 +32829,8 @@
           // .updateAxes();
         });
 
-        chartList.forEach(function (pc) {
+        // NOTE: figure out how to use chartlist here
+        ps.charts.forEach(function (pc) {
           pc.color(palette).render();
         });
 

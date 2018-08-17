@@ -30,7 +30,7 @@ const cluster = (config, ps, flags) =>
   ) {
       if (palette === null) {
         const scheme = scaleOrdinal(schemeCategory10);
-        palette => d => { scheme(d['cluster']) };
+        palette = d => scheme(Number(d['cluster']));
       }
 
       let data = [];
@@ -40,8 +40,6 @@ const cluster = (config, ps, flags) =>
       	data = config.data;
       }
 
-      // const test = difference(vars, ["name"])
-      // console.log(difference(['name'], test).length);
       const test = {};
       vars.forEach( v => {
         if (v != "name") {
@@ -76,9 +74,9 @@ const cluster = (config, ps, flags) =>
       console.log(result.centroids);
 
       // hide cluster axis and show colors by default
-      config.hidden.push(['cluster']);
+      config.hidden.push('cluster');
 
-      // aggregate scores are ready, update data and charts
+      // format data, update charts
       config.data = format_data(config.data);
       ps.charts.forEach(pc => {
         pc
@@ -89,7 +87,8 @@ const cluster = (config, ps, flags) =>
         // .updateAxes();
       });
 
-      chartList.forEach(pc => {
+      // NOTE: figure out how to use chartlist here
+      ps.charts.forEach(pc => {
         pc.color(palette).render();
       });
 

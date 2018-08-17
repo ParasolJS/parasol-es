@@ -23,14 +23,17 @@ d3.csv('data/cars.csv').then(function(data) {
   // cluster variable hidden by default, only colors are shown
   var ps = Parasol(data)('.parcoords')
             .cluster(4);
+
   // update charts
-  // ps.charts.forEach(
-  //   (pc) => {
-  //     pc
-  //       .hideAxis(['name'])
-  //       .render()
-  //       .updateAxes(0)
-  //   }
-  // )
+  ps.state.hidden.push('name')
+  ps.charts.forEach(
+    (pc) => {
+      pc
+        .hideAxis(ps.state.hidden)
+        .reorderable()
+        .render()
+        .updateAxes(0)
+    }
+  )
 });
 </script>
