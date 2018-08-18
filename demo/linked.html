@@ -24,6 +24,7 @@ d3.csv('data/cars.csv').then(function(data) {
   // all charts linked by default
   var ps = Parasol(data)('.parcoords')
             .linked();
+            
   // update charts
   ps.charts.forEach(
     (pc) => {

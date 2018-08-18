@@ -10,20 +10,19 @@ import format_data from '../util/format_data';
  * the cluster with the nearest mean.
  *
  * @param k number of clusters
- * @param chartList charts that will display cluster colors
- * @param palette function mapping cluster ids to color
- * @param vars variables to perfom clustering on, NOTE about only clustering vars with numeric data only?
- * @param standardize convert values to zscores to obtain unbiased clusters
+ * @param chartIDs charts that will display cluster colors
+ * @param palette d3 palette or function mapping cluster ids to color
+ * @param vars variables used for clustering. NOTE: var data must be numeric
+ * @param std convert values to zscores to obtain unbiased clusters
  * @param options ml-kmeans options
- * @param hidden determines whether cluster axis will be displayed on charts
- *               (can be individually updated later)
+ * @param hidden determines whether cluster axis will be displayed on charts (can be individually updated later)
  */
 const cluster = (config, ps, flags) =>
   function (
     k,
-    chartList = ps.charts,
+    chartIDs = [],
+    vars = null,
     palette = null,
-    vars = config.vars,
     options = {},
     std = true,
     hidden = true
@@ -32,21 +31,30 @@ const cluster = (config, ps, flags) =>
         const scheme = scaleOrdinal(schemeCategory10);
         palette = d => scheme(Number(d['cluster']));
       }
+      else if (typeof(palette) == 'string') {
+        const scheme = scaleOrdinal(palette);
+        palette = d => scheme(Number(d['cluster']));
+      }
+      else {
+        palette = palette;
+      }
+
+      if ( vars === null ) {
+        vars = config.vars;
+      }
 
       let data = [];
       if (std === true) {
       	data = standardize(config.data);
       } else {
       	data = config.data;
-      }
+      };
 
-      const test = {};
+      // setup object to filter variables that will be used in clustering
+      const cluster_vars = {};
       vars.forEach( v => {
-        if (v != "name") {
-          test[v] = 1;
-        }
+          cluster_vars[v] = true;
       })
-      console.log(test);
 
       // get data values in array of arrays for clustering
       // (values from each row object captured in array)
@@ -55,9 +63,7 @@ const cluster = (config, ps, flags) =>
         const target = [];
         Object.entries(d).forEach(([key, value]) => {
           // only take values from variables listed in function argument
-          // NOTE: consider redoing this with partition object
-          // if (difference(key, test).length === 0) {
-          if (test[key]) {
+          if (cluster_vars[key] == true) {
             target.push(Number(value));
           }
         });
@@ -74,22 +80,31 @@ const cluster = (config, ps, flags) =>
       console.log(result.centroids);
 
       // hide cluster axis and show colors by default
-      config.hidden.push('cluster');
+      if (hidden == true) {
+        Object.keys(config.partition).forEach( id => {
+          config.partition[id].push('cluster')
+        })
+      }
 
       // format data, update charts
       config.data = format_data(config.data);
       ps.charts.forEach(pc => {
         pc
           .data(config.data)
-          .hideAxis(config.hidden)
           .render()
           .createAxes();
         // .updateAxes();
       });
 
-      // NOTE: figure out how to use chartlist here
-      ps.charts.forEach(pc => {
-        pc.color(palette).render();
+      ps.charts.forEach( (pc, i) => {
+        // only color charts in chartIDs
+        if (chartIDs.includes(i)) {
+          pc.color(palette);
+        }
+        pc
+          .hideAxis(config.partition[i])
+          .render()
+          .updateAxes(0);
       });
 
       // if (flags.grid) {

@@ -7,12 +7,29 @@ import arr from '../util/arr_stats';
  * user specified weights
  *
  * @param weights object specififying weight of each variable, unspecified variables will be assigned weight 0
- * @param chartList charts that will display 'aggregate score' variable
+ * @param chartIDs charts that will display 'aggregate score' variable
+ * @param norm normalize values (0-1) to obtain fair weighting
  */
 const aggregateScores = (config, ps, flags) =>
-  function(weights, chartList = ps.charts) {
+  function(
+    weights,
+    chartIDs = [],
+    norm = true
+  ) {
     // NOTE: if data is re-scored, old score will not affect new score unless it is given a weight itself in the 'weights' object
-    let data = normalize(config.data);
+
+    if(chartIDs.length == 0) {
+      chartIDs = Object.keys(config.partition);
+    }
+    // force numeric type for indexing
+    chartIDs = chartIDs.map(Number);
+
+    let data = [];
+    if (norm === true) {
+      data = normalize(config.data);
+    } else {
+      data = config.data;
+    };
 
     // compute initial weight for each data element
     const row_totals = [];
@@ -39,17 +56,24 @@ const aggregateScores = (config, ps, flags) =>
       ).toString();
     });
 
+    // partition scores var on charts
+    Object.keys(config.partition).forEach( i => {
+      if (!chartIDs.includes(Number(i))) {
+        // chart not in chartIDs, hidden on this chart
+        config.partition[Number(i)].push('aggregate score')
+      }
+    })
+
     // aggregate scores are ready, update data and charts
     config.data = format_data(config.data);
-    ps.charts.forEach(pc => {
+    ps.charts.forEach( (pc, i) => {
       pc
         .data(config.data)
-        // .hideAxis(config.hidden)
+        .hideAxis(config.partition[i])
         .render()
         .createAxes();
       // .updateAxes();
     });
-    // NOTE: partition 'aggregateScore' only to charts in chartList
     // NOTE: need to maintain current state of charts somehow
 
     // if (flags.grid) {

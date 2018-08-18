@@ -4,8 +4,10 @@ import DefaultConfig from './defaultConfig';
 
 const initState = (data, userConfig) => {
   const config = Object.assign({}, DefaultConfig, userConfig);
+  // "private" keys -- values must be forced for consistent operation
   config.data = data;
-  config.vars = keys(data[0]);
+  config.vars = Object.keys(data[0]);
+  config.partition = {}; // { chart id: [hidden vars]} built in init.js
 
   const eventTypes = [
     // 'data', // when data in a chart is updated, how does this cascade to linked?

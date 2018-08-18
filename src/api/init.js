@@ -26,6 +26,8 @@ const init = config => {
         .render()
         .mode('queue')
         .brushMode('1D-axes'); //1D-axes must be used with linking
+
+      config.partition[i] = [];
     });
     // for chained api
     return ps;

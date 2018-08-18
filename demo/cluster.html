@@ -16,20 +16,26 @@
 <p>Demonstrates basic clustering functionality.</p>
 <div id="plot01" class="parcoords" style="height:200px; width:800px;"></div>
 <div id="plot02" class="parcoords" style="height:200px; width:800px;"></div>
+<div id="plot03" class="parcoords" style="height:200px; width:800px;"></div>
 </body>
 
 <script>
 d3.csv('data/cars.csv').then(function(data) {
-  // cluster variable hidden by default, only colors are shown
+  // setup variables to use for clustering (data must be numeric)
+  var cluster_vars = d3.keys(data[0]).filter(function(key) {
+    return key !== 'name';
+  });
+  console.log(cluster_vars);
+
+  // cluster variable hidden by default, cluster colors shown on charts in chartIDs
   var ps = Parasol(data)('.parcoords')
-            .cluster(4);
+            .cluster(k=4, chartIDs=[0,2], vars=cluster_vars);
 
   // update charts
-  ps.state.hidden.push('name')
   ps.charts.forEach(
     (pc) => {
       pc
-        .hideAxis(ps.state.hidden)
+        .hideAxis(['name'])
         .reorderable()
         .render()
         .updateAxes(0)

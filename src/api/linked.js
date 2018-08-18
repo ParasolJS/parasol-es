@@ -2,10 +2,22 @@ import sync from './sync';
 
 // link brush activity between user specified charts, and grid if it exists
 const linked = (config, ps, flags) =>
-  function(chartList = ps.charts) {
-    config.linked = chartList;
-    chartList.forEach(pc => {
-      pc.on('brush', sync(config, ps, flags));
+  function(chartIDs = []) {
+    if(chartIDs.length == 0) {
+      chartIDs = Object.keys(config.partition);
+    }
+    // force numeric type for indexing
+    chartIDs = chartIDs.map(Number);
+
+    // setup linked components
+    chartIDs.forEach( i => {
+      config.linked[i] = ps.charts[i]
+    });
+
+    ps.charts.forEach( (pc, i) => {
+      if (chartIDs.includes(i)) {
+        pc.on('brush', sync(config, ps, flags));
+      }
     });
 
     // connect grid
@@ -13,12 +25,12 @@ const linked = (config, ps, flags) =>
     // config.grid.onMouseEnter.subscribe( (e, args) => {
     //   const i = grid.getCellFromEvent(e).row;
     //   const d = config.brushed || config.data;
-    //   pv.charts.forEach( pc => {
+    //   ps.charts.forEach( pc => {
     //     pc.highlight([d[i]]);
     //   })
     // });
     // config.grid.onMouseLeave.subscribe( (e, args) => {
-    //   pv.charts.forEach( (pc) => {
+    //   ps.charts.forEach( (pc) => {
     //     pc.unhighlight();
     //   })
     // });
@@ -32,7 +44,7 @@ const linked = (config, ps, flags) =>
     //   } else {
     //     const d = config.data;
     //   }
-    //   pv.charts.forEach( (pc) => {
+    //   ps.charts.forEach( (pc) => {
     //     pc.unmark();
     //     pc.mark(selected_row_ids); //NOTE: this may not work initially
     //   })

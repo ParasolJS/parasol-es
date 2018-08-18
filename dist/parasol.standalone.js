@@ -10641,6 +10641,7 @@
 
       return pc;
     };
+    //# sourceMappingURL=parcoords.esm.js.map
 
     /**
      * Setup a new visualization.
@@ -10662,6 +10663,8 @@
         ps.charts = [];
         selection$$1.each(function (d, i) {
           ps.charts[i] = ParCoords(config.chartOptions)(this).data(config.data).alpha(0.4).render().mode('queue').brushMode('1D-axes'); //1D-axes must be used with linking
+
+          config.partition[i] = [];
         });
         // for chained api
         return ps;
@@ -28571,11 +28574,23 @@
     // link brush activity between user specified charts, and grid if it exists
     var linked = function linked(config, ps, flags) {
       return function () {
-        var chartList = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : ps.charts;
+        var chartIDs = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
 
-        config.linked = chartList;
-        chartList.forEach(function (pc) {
-          pc.on('brush', sync(config, ps, flags));
+        if (chartIDs.length == 0) {
+          chartIDs = Object.keys(config.partition);
+        }
+        // force numeric type for indexing
+        chartIDs = chartIDs.map(Number);
+
+        // setup linked components
+        chartIDs.forEach(function (i) {
+          config.linked[i] = ps.charts[i];
+        });
+
+        ps.charts.forEach(function (pc, i) {
+          if (chartIDs.includes(i)) {
+            pc.on('brush', sync(config, ps, flags));
+          }
         });
 
         // connect grid
@@ -28583,12 +28598,12 @@
         // config.grid.onMouseEnter.subscribe( (e, args) => {
         //   const i = grid.getCellFromEvent(e).row;
         //   const d = config.brushed || config.data;
-        //   pv.charts.forEach( pc => {
+        //   ps.charts.forEach( pc => {
         //     pc.highlight([d[i]]);
         //   })
         // });
         // config.grid.onMouseLeave.subscribe( (e, args) => {
-        //   pv.charts.forEach( (pc) => {
+        //   ps.charts.forEach( (pc) => {
         //     pc.unhighlight();
         //   })
         // });
@@ -28602,7 +28617,7 @@
         //   } else {
         //     const d = config.data;
         //   }
-        //   pv.charts.forEach( (pc) => {
+        //   ps.charts.forEach( (pc) => {
         //     pc.unmark();
         //     pc.mark(selected_row_ids); //NOTE: this may not work initially
         //   })
@@ -32748,27 +32763,38 @@
      * the cluster with the nearest mean.
      *
      * @param k number of clusters
-     * @param chartList charts that will display cluster colors
-     * @param palette function mapping cluster ids to color
-     * @param vars variables to perfom clustering on, NOTE about only clustering vars with numeric data only?
-     * @param standardize convert values to zscores to obtain unbiased clusters
+     * @param chartIDs charts that will display cluster colors
+     * @param palette d3 palette or function mapping cluster ids to color
+     * @param vars variables used for clustering. NOTE: var data must be numeric
+     * @param std convert values to zscores to obtain unbiased clusters
      * @param options ml-kmeans options
-     * @param hidden determines whether cluster axis will be displayed on charts
-     *               (can be individually updated later)
+     * @param hidden determines whether cluster axis will be displayed on charts (can be individually updated later)
      */
     var cluster$1 = function cluster$$1(config, ps, flags) {
       return function (k) {
-        var chartList = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ps.charts;
-        var palette = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-        var vars = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : config.vars;
+        var chartIDs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+        var vars = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var palette = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
         var options = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
         var std = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : true;
+        var hidden = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : true;
 
         if (palette === null) {
           var scheme$$1 = ordinal(schemeCategory10);
           palette = function palette(d) {
             return scheme$$1(Number(d['cluster']));
           };
+        } else if (typeof palette == 'string') {
+          var _scheme = ordinal(palette);
+          palette = function palette(d) {
+            return _scheme(Number(d['cluster']));
+          };
+        } else {
+          palette = palette;
+        }
+
+        if (vars === null) {
+          vars = config.vars;
         }
 
         var data = [];
@@ -32777,16 +32803,11 @@
         } else {
           data = config.data;
         }
-
-        // const test = difference(vars, ["name"])
-        // console.log(difference(['name'], test).length);
-        var test = {};
+        // setup object to filter variables that will be used in clustering
+        var cluster_vars = {};
         vars.forEach(function (v) {
-          if (v != "name") {
-            test[v] = 1;
-          }
+          cluster_vars[v] = true;
         });
-        console.log(test);
 
         // get data values in array of arrays for clustering
         // (values from each row object captured in array)
@@ -32799,9 +32820,7 @@
                 value = _ref2[1];
 
             // only take values from variables listed in function argument
-            // NOTE: consider redoing this with partition object
-            // if (difference(key, test).length === 0) {
-            if (test[key]) {
+            if (cluster_vars[key] == true) {
               target.push(Number(value));
             }
           });
@@ -32820,18 +32839,25 @@
         console.log(result.centroids);
 
         // hide cluster axis and show colors by default
-        config.hidden.push('cluster');
+        if (hidden == true) {
+          Object.keys(config.partition).forEach(function (id) {
+            config.partition[id].push('cluster');
+          });
+        }
 
-        // aggregate scores are ready, update data and charts
+        // format data, update charts
         config.data = format_data(config.data);
         ps.charts.forEach(function (pc) {
-          pc.data(config.data).hideAxis(config.hidden).render().createAxes();
+          pc.data(config.data).render().createAxes();
           // .updateAxes();
         });
 
-        // NOTE: figure out how to use chartlist here
-        ps.charts.forEach(function (pc) {
-          pc.color(palette).render();
+        ps.charts.forEach(function (pc, i) {
+          // only color charts in chartIDs
+          if (chartIDs.includes(i)) {
+            pc.color(palette);
+          }
+          pc.hideAxis(config.partition[i]).render().updateAxes(0);
         });
 
         // if (flags.grid) {
@@ -32867,15 +32893,28 @@
      * user specified weights
      *
      * @param weights object specififying weight of each variable, unspecified variables will be assigned weight 0
-     * @param chartList charts that will display 'aggregate score' variable
+     * @param chartIDs charts that will display 'aggregate score' variable
+     * @param norm normalize values (0-1) to obtain fair weighting
      */
     var aggregateScores = function aggregateScores(config, ps, flags) {
       return function (weights) {
-        var chartList = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ps.charts;
+        var chartIDs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+        var norm = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
         // NOTE: if data is re-scored, old score will not affect new score unless it is given a weight itself in the 'weights' object
-        var data = normalize(config.data);
 
+        if (chartIDs.length == 0) {
+          chartIDs = Object.keys(config.partition);
+        }
+        // force numeric type for indexing
+        chartIDs = chartIDs.map(Number);
+
+        var data = [];
+        if (norm === true) {
+          data = normalize(config.data);
+        } else {
+          data = config.data;
+        }
         // compute initial weight for each data element
         var row_totals = [];
         data.forEach(function (d, i) {
@@ -32901,15 +32940,20 @@
           config.data[i]['aggregate score'] = ((d.score - extents[0]) / (extents[1] - extents[0])).toString();
         });
 
+        // partition scores var on charts
+        Object.keys(config.partition).forEach(function (i) {
+          if (!chartIDs.includes(Number(i))) {
+            // chart not in chartIDs, hidden on this chart
+            config.partition[Number(i)].push('aggregate score');
+          }
+        });
+
         // aggregate scores are ready, update data and charts
         config.data = format_data(config.data);
-        ps.charts.forEach(function (pc) {
-          pc.data(config.data)
-          // .hideAxis(config.hidden)
-          .render().createAxes();
+        ps.charts.forEach(function (pc, i) {
+          pc.data(config.data).hideAxis(config.partition[i]).render().createAxes();
           // .updateAxes();
         });
-        // NOTE: partition 'aggregateScore' only to charts in chartList
         // NOTE: need to maintain current state of charts somehow
 
         // if (flags.grid) {
@@ -32923,25 +32967,25 @@
     };
 
     var DefaultConfig$1 = {
-      data: [],
-      vars: [],
-      hidden: [],
-      partition: {}, // identifies which plots vars appear on
       dataView: false,
       grid: false,
       chartOptions: {}, // parcoords options, applies to all charts
-      linked: [], // list of linked objects
+      linked: [], // list of linked components
       brushed: [], // intersection of all brushed data
       marked: [], // union of all marked data
-      selections: [] // union of brushed and marked
+      selections: function selections() {
+        return union(this.brushed, this.marked);
+      }
     };
 
     var _this$6 = undefined;
 
     var initState$1 = function initState(data, userConfig) {
       var config = Object.assign({}, DefaultConfig$1, userConfig);
+      // "private" keys -- values must be forced for consistent operation
       config.data = data;
-      config.vars = keys(data[0]);
+      config.vars = Object.keys(data[0]);
+      config.partition = {}; // { chart id: [hidden vars]} built in init.js
 
       var eventTypes = [
       // 'data', // when data in a chart is updated, how does this cascade to linked?
