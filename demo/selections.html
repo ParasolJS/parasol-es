@@ -13,7 +13,7 @@
 <script src="./parasol.standalone.js"></script>
 
 <body>
-<p>Selected data is the collection of brushed and marked data. This example demonstrates dataset refinement using the keep- and remove-selection functions.</p>
+<p>Selected data is the collection of brushed and marked data. This example demonstrates dataset refinement using the keep- and remove-selection functions. Selected solutions can also be downloaded as a csv file for further analysis.</p>
 
 <p>
     <button id="reset_brushes">Reset Brushes</button>
@@ -21,6 +21,7 @@
     <button id="reset_selections">Reset Selections</button>
     <button id="keep_selected">Keep Selected</button>
     <button id="remove_selected">Remove Selected</button>
+    <button id="export_data">Export Data</button>
 </p>
 
 <div id="plot01" class="parcoords" style="height:200px; width:800px;"></div>
@@ -64,6 +65,10 @@ d3.csv('data/cars.csv').then(function(data) {
 
   d3.select('#remove_selected').on('click', function() {
     ps.removeSelection('both')
+  });
+
+  d3.select('#export_data').on('click', function() {
+    ps.exportData('all', filename='parasol_demo.csv')
   });
 
 });
