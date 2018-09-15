@@ -27,7 +27,14 @@ const sync = (config, ps, flags) =>
         pc.brushed(brushed).render();
       });
 
-      config.brushed = brushed;
+      // NOTE: once pc.selected issue fixed, remove if statement and uncomment line below
+      //config.brushed = brushed;
+      if (brushed.length < config.data.length) {
+        config.brushed = brushed;
+      } else {
+        config.brushed = [];
+      }
+
       // if (flags.grid === true) {
       // 	ps.gridUpdate(brush_extents);
       // }

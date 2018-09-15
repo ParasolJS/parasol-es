@@ -10,9 +10,12 @@ import init from './api/init';
 import linked from './api/linked';
 import cluster from './api/cluster';
 import aggregateScores from './api/aggregateScores';
+import keepSelection from './api/keepSelection';
+import removeSelection from './api/removeSelection';
 
 import globalBrushReset from './api/globalBrushReset';
 import globalMarkReset from './api/globalMarkReset';
+import resetSelections from './api/resetSelections';
 
 import initState from './state/initState';
 // import bindEvents from './bindEvents';
@@ -38,9 +41,12 @@ const Parasol = (data, userConfig) => {
   ps.linked = linked(config, ps, flags);
   ps.cluster = cluster(config, ps, flags);
   ps.aggregateScores = aggregateScores(config, ps, flags);
+  ps.keepSelection = keepSelection(config, ps, flags);
+  ps.removeSelection = removeSelection(config, ps, flags);
 
   ps.globalBrushReset = globalBrushReset(config, ps, flags);
   ps.globalMarkReset = globalMarkReset(config, ps, flags);
+  ps.resetSelections = resetSelections(config, ps, flags);
 
   return ps;
 };

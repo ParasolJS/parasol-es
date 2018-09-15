@@ -1,16 +1,14 @@
 // reset marks and preform necessary updates
-const globalMarkReset = (config, ps, flags) => chartIDs => {
+const globalMarkReset = (config, ps, flags) => charts => {
   if (config.grid) {
     // use slickgrid to unmark all data; fires event
     config.grid.setSelectedRows([]);
     config.marked = [];
-  } else if(Array.isArray(chartIDs)) {
-    // reset marks in listed chats
-    chartIDs.forEach( i => {
-      if(ps.charts[i]) {
-        ps.charts[i].unmark();
-      }
-    })
+  } else if(Array.isArray(charts)) {
+    // reset marks in provided charts
+    charts.forEach( pc => {
+      pc.unmark();
+    });
   }
 };
 

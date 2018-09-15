@@ -28565,7 +28565,14 @@
             pc.brushed(brushed).render();
           });
 
-          config.brushed = brushed;
+          // NOTE: once pc.selected issue fixed, remove if statement and uncomment line below
+          //config.brushed = brushed;
+          if (brushed.length < config.data.length) {
+            config.brushed = brushed;
+          } else {
+            config.brushed = [];
+          }
+
           // if (flags.grid === true) {
           // 	ps.gridUpdate(brush_extents);
           // }
@@ -32970,23 +32977,117 @@
       };
     };
 
+    /**
+     * Keep only selected data update components
+     *
+     * @param selection: One of {'brushed', 'marked', 'both'} keywords as string
+     *
+     * NOTE: Any existing brushes or marks will be overwritten
+     */
+    var keepSelection = function keepSelection(config, ps, flags) {
+      return function (selection) {
+        console.log('before:', config.data.length);
+
+        // identify data
+        var d = [];
+        if (selection == 'brushed') {
+          d = config.brushed;
+        } else if (selection == 'marked') {
+          d = config.marked;
+        } else if (selection == 'both') {
+          d = config.selections();
+        }
+        console.log(d);
+
+        if (d.length > 0) {
+          // reset selections and update config
+          ps.resetSelections();
+
+          // update charts and grid
+          ps.charts.forEach(function (pc) {
+            pc.data(d).render.default();
+            pc.brushReset();
+          });
+          if (config.grid) {
+            console.log('here');
+            // gridUpdate()
+          }
+
+          // update data
+          config.data = d;
+        } else {
+          console.log('Error: No data selected.');
+        }
+
+        console.log('after:', config.data.length);
+        return this;
+      };
+    };
+
+    /**
+     * Remove selected data and components
+     *
+     * @param selection: One of {'brushed', 'marked', 'both'} keywords as string
+     *
+     * NOTE: Any existing brushes or marks will be overwritten
+     */
+    var removeSelection = function removeSelection(config, ps, flags) {
+      return function (selection) {
+        console.log('before:', config.data.length);
+
+        // identify data
+        var d = [];
+        if (selection == 'brushed') {
+          d = config.brushed;
+        } else if (selection == 'marked') {
+          d = config.marked;
+        } else if (selection == 'both') {
+          d = config.selections();
+        }
+        d = difference(config.data, d);
+        console.log(d);
+
+        if (d.length > 0 && d.length < config.data.length) {
+          // reset selections and update config
+          ps.resetSelections();
+
+          // update charts and grid
+          ps.charts.forEach(function (pc) {
+            pc.data(d).render.default();
+            pc.brushReset();
+          });
+          if (config.grid) {
+            console.log('here');
+            // gridUpdate()
+          }
+
+          // update data
+          config.data = d;
+        } else {
+          console.log('Error: No data selected.');
+        }
+
+        console.log('after:', config.data.length);
+        return this;
+      };
+    };
+
     // reset listed brushes and preform necessary updates
     // NOTE: why is this so slow?
 
     var globalBrushReset = function globalBrushReset(config, ps, flags) {
-      return function (chartIDs) {
-
-        if (Array.isArray(chartIDs)) {
-          // reset brushes in listed chats
-          chartIDs.forEach(function (i) {
-            if (ps.charts[i]) {
-              ps.charts[i].brushReset();
-            }
+      return function (charts) {
+        if (Array.isArray(charts)) {
+          // reset brushes in provided charts
+          charts.forEach(function (pc) {
+            pc.brushReset();
           });
 
           // NOTE: if charts are linked and at least one is not reset, then none will be reset
 
-          // NOTE: brushed data is config is updated by sync() as consequence of pc.brushReset()
+          // NOTE: brushed data in config is updated by sync() as consequence of pc.brushReset()
+          // currently need to force due to issue with ParCoords.selected() returning entire dataset if brush extents are empty
+          config.brushed = [];
 
           // if (grid) {
           //   update with config.brushed
@@ -32997,19 +33098,39 @@
 
     // reset marks and preform necessary updates
     var globalMarkReset = function globalMarkReset(config, ps, flags) {
-      return function (chartIDs) {
+      return function (charts) {
         if (config.grid) {
           // use slickgrid to unmark all data; fires event
           config.grid.setSelectedRows([]);
           config.marked = [];
-        } else if (Array.isArray(chartIDs)) {
-          // reset marks in listed chats
-          chartIDs.forEach(function (i) {
-            if (ps.charts[i]) {
-              ps.charts[i].unmark();
-            }
+        } else if (Array.isArray(charts)) {
+          // reset marks in provided charts
+          charts.forEach(function (pc) {
+            pc.unmark();
           });
         }
+      };
+    };
+
+    /**
+     * Selections are the collection of all brushed and marked data; reset all or just a subset -- brushed or marked
+     *
+     * @param selection: One of {'brushed', 'marked', 'both'} keywords as string
+     *
+     * NOTE: only linked charts are affected
+     */
+    var resetSelections = function resetSelections(config, ps, flags) {
+      return function (selection) {
+        console.log("config linked: ", config.linked);
+        if (selection == 'brushed') {
+          ps.globalBrushReset(config.linked);
+        } else if (selection == 'marked') {
+          ps.globalMarkReset(config.linked);
+        } else if (selection == 'both') {
+          ps.globalBrushReset(config.linked);
+          ps.globalMarkReset(config.linked);
+        }
+        console.log(config.selections());
       };
     };
 
@@ -33091,9 +33212,12 @@
       ps.linked = linked(config, ps, flags);
       ps.cluster = cluster$1(config, ps, flags);
       ps.aggregateScores = aggregateScores(config, ps, flags);
+      ps.keepSelection = keepSelection(config, ps, flags);
+      ps.removeSelection = removeSelection(config, ps, flags);
 
       ps.globalBrushReset = globalBrushReset(config, ps, flags);
       ps.globalMarkReset = globalMarkReset(config, ps, flags);
+      ps.resetSelections = resetSelections(config, ps, flags);
 
       return ps;
     };

@@ -1,19 +1,18 @@
 // reset listed brushes and preform necessary updates
 // NOTE: why is this so slow?
 
-const globalBrushReset = (config, ps, flags) => chartIDs => {
-
-  if (Array.isArray(chartIDs)) {
-    // reset brushes in listed chats
-    chartIDs.forEach( i => {
-      if(ps.charts[i]) {
-        ps.charts[i].brushReset();
-      }
-    })
+const globalBrushReset = (config, ps, flags) => charts => {
+  if (Array.isArray(charts)) {
+    // reset brushes in provided charts
+    charts.forEach( pc => {
+      pc.brushReset();
+    });
 
     // NOTE: if charts are linked and at least one is not reset, then none will be reset
 
-    // NOTE: brushed data is config is updated by sync() as consequence of pc.brushReset()
+    // NOTE: brushed data in config is updated by sync() as consequence of pc.brushReset()
+    // currently need to force due to issue with ParCoords.selected() returning entire dataset if brush extents are empty
+    config.brushed = [];
 
     // if (grid) {
     //   update with config.brushed

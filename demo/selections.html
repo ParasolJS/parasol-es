@@ -1,0 +1,70 @@
+<!doctype html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+</head>
+
+<title>Data Selections</title>
+
+<link rel="stylesheet" type="text/css" href="./parcoords.css">
+<link rel="stylesheet" type="text/css" href="style.css">
+
+<script src="./lib/d3.v5.min.js"></script>
+<script src="./parasol.standalone.js"></script>
+
+<body>
+<p>Selected data is the collection of brushed and marked data. This example demonstrates dataset refinement using the keep- and remove-selection functions.</p>
+
+<p>
+    <button id="reset_brushes">Reset Brushes</button>
+    <button id="reset_marks">Reset Marks</button>
+    <button id="reset_selections">Reset Selections</button>
+    <button id="keep_selected">Keep Selected</button>
+    <button id="remove_selected">Remove Selected</button>
+</p>
+
+<div id="plot01" class="parcoords" style="height:200px; width:800px;"></div>
+<div id="plot02" class="parcoords" style="height:200px; width:800px;"></div>
+</body>
+
+<script>
+d3.csv('data/cars.csv').then(function(data) {
+  // initialize chart closures
+  var ps = Parasol(data)('.parcoords')
+            .linked();
+
+  // NOTE: add grid to this example once functional
+
+  ps.charts.forEach(
+    (pc) => {
+      pc
+        .hideAxis(['name'])
+        .reorderable()
+        .render()
+        .updateAxes(0);
+    }
+  )
+
+  // wire-up buttons
+  d3.select('#reset_brushes').on('click', function() {
+    ps.resetSelections('brushed')
+  });
+
+  d3.select('#reset_marks').on('click', function() {
+    ps.resetSelections('marked')
+  });
+
+  d3.select('#reset_selections').on('click', function() {
+    ps.resetSelections('both')
+  });
+
+  d3.select('#keep_selected').on('click', function() {
+    ps.keepSelection('both')
+  });
+
+  d3.select('#remove_selected').on('click', function() {
+    ps.removeSelection('both')
+  });
+
+});
+</script>
