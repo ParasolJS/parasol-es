@@ -32974,16 +32974,14 @@
     // NOTE: why is this so slow?
 
     var globalBrushReset = function globalBrushReset(config, ps, flags) {
-      return function (charts) {
+      return function (chartIDs) {
 
-        if (Array.isArray(charts)) {
+        if (Array.isArray(chartIDs)) {
           // reset brushes in listed chats
-          charts.forEach(function (i) {
+          chartIDs.forEach(function (i) {
             if (ps.charts[i]) {
-              console.log(ps.charts[i]);
               ps.charts[i].brushReset();
             }
-            // pc.brushReset();
           });
 
           // NOTE: if charts are linked and at least one is not reset, then none will be reset
@@ -32993,6 +32991,24 @@
           // if (grid) {
           //   update with config.brushed
           // }
+        }
+      };
+    };
+
+    // reset marks and preform necessary updates
+    var globalMarkReset = function globalMarkReset(config, ps, flags) {
+      return function (chartIDs) {
+        if (config.grid) {
+          // use slickgrid to unmark all data; fires event
+          config.grid.setSelectedRows([]);
+          config.marked = [];
+        } else if (Array.isArray(chartIDs)) {
+          // reset marks in listed chats
+          chartIDs.forEach(function (i) {
+            if (ps.charts[i]) {
+              ps.charts[i].unmark();
+            }
+          });
         }
       };
     };
@@ -33077,6 +33093,7 @@
       ps.aggregateScores = aggregateScores(config, ps, flags);
 
       ps.globalBrushReset = globalBrushReset(config, ps, flags);
+      ps.globalMarkReset = globalMarkReset(config, ps, flags);
 
       return ps;
     };

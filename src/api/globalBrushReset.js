@@ -1,12 +1,11 @@
-
 // reset listed brushes and preform necessary updates
 // NOTE: why is this so slow?
 
-const globalBrushReset = (config, ps, flags) => charts => {
+const globalBrushReset = (config, ps, flags) => chartIDs => {
 
-  if (Array.isArray(charts)) {
+  if (Array.isArray(chartIDs)) {
     // reset brushes in listed chats
-    charts.forEach( i => {
+    chartIDs.forEach( i => {
       if(ps.charts[i]) {
         ps.charts[i].brushReset();
       }

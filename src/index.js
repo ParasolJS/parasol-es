@@ -12,6 +12,7 @@ import cluster from './api/cluster';
 import aggregateScores from './api/aggregateScores';
 
 import globalBrushReset from './api/globalBrushReset';
+import globalMarkReset from './api/globalMarkReset';
 
 import initState from './state/initState';
 // import bindEvents from './bindEvents';
@@ -39,6 +40,7 @@ const Parasol = (data, userConfig) => {
   ps.aggregateScores = aggregateScores(config, ps, flags);
 
   ps.globalBrushReset = globalBrushReset(config, ps, flags);
+  ps.globalMarkReset = globalMarkReset(config, ps, flags);
 
   return ps;
 };
