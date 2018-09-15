@@ -11,7 +11,7 @@ const linked = (config, ps, flags) =>
 
     // setup linked components
     chartIDs.forEach( i => {
-      config.linked[i] = ps.charts[i]
+      config.linked[i] = ps.charts[i];
     });
 
     ps.charts.forEach( (pc, i) => {

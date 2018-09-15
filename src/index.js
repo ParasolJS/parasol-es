@@ -11,6 +11,8 @@ import linked from './api/linked';
 import cluster from './api/cluster';
 import aggregateScores from './api/aggregateScores';
 
+import globalBrushReset from './api/globalBrushReset';
+
 import initState from './state/initState';
 // import bindEvents from './bindEvents';
 import { version } from '../package.json';
@@ -35,6 +37,8 @@ const Parasol = (data, userConfig) => {
   ps.linked = linked(config, ps, flags);
   ps.cluster = cluster(config, ps, flags);
   ps.aggregateScores = aggregateScores(config, ps, flags);
+
+  ps.globalBrushReset = globalBrushReset(config, ps, flags);
 
   return ps;
 };

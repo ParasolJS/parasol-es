@@ -14,6 +14,12 @@
 
 <body>
 <p>Demonstrates linking multiple charts for connected interactivity. Brush along any axis and watch as all charts respond accordingly.</p>
+
+<p>
+    <button id="reset_brushes">Reset Brushes</button>
+</p>
+
+
 <div id="plot01" class="parcoords" style="height:200px; width:800px;"></div>
 <div id="plot02" class="parcoords" style="height:200px; width:800px;"></div>
 <div id="plot03" class="parcoords" style="height:200px; width:800px;"></div>
@@ -24,7 +30,7 @@ d3.csv('data/cars.csv').then(function(data) {
   // all charts linked by default
   var ps = Parasol(data)('.parcoords')
             .linked();
-            
+
   // update charts
   ps.charts.forEach(
     (pc) => {
@@ -34,5 +40,10 @@ d3.csv('data/cars.csv').then(function(data) {
         .updateAxes(0)
     }
   )
+
+  d3.select('#reset_brushes').on('click', function() {
+    ps.globalBrushReset([0,1])
+  });
+
 });
 </script>

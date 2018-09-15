@@ -29,7 +29,7 @@ const aggregateScores = (config, ps, flags) =>
       data = normalize(config.data);
     } else {
       data = config.data;
-    };
+    }
 
     // compute initial weight for each data element
     const row_totals = [];
@@ -60,9 +60,9 @@ const aggregateScores = (config, ps, flags) =>
     Object.keys(config.partition).forEach( i => {
       if (!chartIDs.includes(Number(i))) {
         // chart not in chartIDs, hidden on this chart
-        config.partition[Number(i)].push('aggregate score')
+        config.partition[Number(i)].push('aggregate score');
       }
-    })
+    });
 
     // aggregate scores are ready, update data and charts
     config.data = format_data(config.data);

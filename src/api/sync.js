@@ -16,6 +16,7 @@ const sync = (config, ps, flags) =>
       config.linked.forEach(pc => {
         pc.brushReset();
       });
+      config.brushed = [];
       // if (flags.grid === true) {
       // 	ps.gridUpdate(config.data);
       // }
@@ -25,6 +26,8 @@ const sync = (config, ps, flags) =>
       config.linked.forEach(pc => {
         pc.brushed(brushed).render();
       });
+
+      config.brushed = brushed;
       // if (flags.grid === true) {
       // 	ps.gridUpdate(brush_extents);
       // }

@@ -5,8 +5,8 @@ const DefaultConfig = {
   grid: false,
   chartOptions: {}, // parcoords options, applies to all charts
   linked: [], // list of linked components
-  brushed: [], // intersection of all brushed data
-  marked: [], // union of all marked data
+  brushed: [], // intersection of all brushed data in linked charts
+  marked: [], // union of all marked data in linked charts
   selections: function() { return(union(this.brushed, this.marked)); },
 };
 

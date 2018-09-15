@@ -95,6 +95,7 @@
     "ml-xsadd": "^2.0.0",
     "parcoord-es": "^2.1.7",
     "random": "^2.0.12",
+    "slickgrid": "^2.3.21",
     "slickgrid-es6": "^3.0.1"
   }
 }

@@ -10641,7 +10641,6 @@
 
       return pc;
     };
-    //# sourceMappingURL=parcoords.esm.js.map
 
     /**
      * Setup a new visualization.
@@ -28555,6 +28554,7 @@
           config.linked.forEach(function (pc) {
             pc.brushReset();
           });
+          config.brushed = [];
           // if (flags.grid === true) {
           // 	ps.gridUpdate(config.data);
           // }
@@ -28564,6 +28564,8 @@
           config.linked.forEach(function (pc) {
             pc.brushed(brushed).render();
           });
+
+          config.brushed = brushed;
           // if (flags.grid === true) {
           // 	ps.gridUpdate(brush_extents);
           // }
@@ -32803,6 +32805,7 @@
         } else {
           data = config.data;
         }
+
         // setup object to filter variables that will be used in clustering
         var cluster_vars = {};
         vars.forEach(function (v) {
@@ -32915,6 +32918,7 @@
         } else {
           data = config.data;
         }
+
         // compute initial weight for each data element
         var row_totals = [];
         data.forEach(function (d, i) {
@@ -32966,13 +32970,40 @@
       };
     };
 
+    // reset listed brushes and preform necessary updates
+    // NOTE: why is this so slow?
+
+    var globalBrushReset = function globalBrushReset(config, ps, flags) {
+      return function (charts) {
+
+        if (Array.isArray(charts)) {
+          // reset brushes in listed chats
+          charts.forEach(function (i) {
+            if (ps.charts[i]) {
+              console.log(ps.charts[i]);
+              ps.charts[i].brushReset();
+            }
+            // pc.brushReset();
+          });
+
+          // NOTE: if charts are linked and at least one is not reset, then none will be reset
+
+          // NOTE: brushed data is config is updated by sync() as consequence of pc.brushReset()
+
+          // if (grid) {
+          //   update with config.brushed
+          // }
+        }
+      };
+    };
+
     var DefaultConfig$1 = {
       dataView: false,
       grid: false,
       chartOptions: {}, // parcoords options, applies to all charts
       linked: [], // list of linked components
-      brushed: [], // intersection of all brushed data
-      marked: [], // union of all marked data
+      brushed: [], // intersection of all brushed data in linked charts
+      marked: [], // union of all marked data in linked charts
       selections: function selections() {
         return union(this.brushed, this.marked);
       }
@@ -33044,6 +33075,8 @@
       ps.linked = linked(config, ps, flags);
       ps.cluster = cluster$1(config, ps, flags);
       ps.aggregateScores = aggregateScores(config, ps, flags);
+
+      ps.globalBrushReset = globalBrushReset(config, ps, flags);
 
       return ps;
     };
