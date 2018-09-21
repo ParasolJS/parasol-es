@@ -10,6 +10,8 @@ import init from './api/init';
 import linked from './api/linked';
 import cluster from './api/cluster';
 import aggregateScores from './api/aggregateScores';
+import hideAxes from './api/hideAxes';
+import showAxes from './api/showAxes';
 import keepSelection from './api/keepSelection';
 import removeSelection from './api/removeSelection';
 import exportData from './api/exportData';
@@ -42,6 +44,8 @@ const Parasol = (data, userConfig) => {
   ps.linked = linked(config, ps, flags);
   ps.cluster = cluster(config, ps, flags);
   ps.aggregateScores = aggregateScores(config, ps, flags);
+  ps.hideAxes = hideAxes(config, ps, flags);
+  ps.showAxes = showAxes(config, ps, flags);
   ps.keepSelection = keepSelection(config, ps, flags);
   ps.removeSelection = removeSelection(config, ps, flags);
   ps.exportData = exportData(config, ps, flags);

@@ -5630,6 +5630,8 @@
     var saturday = weekday(6);
 
     var sundays = sunday.range;
+    var mondays = monday.range;
+    var thursdays = thursday.range;
 
     var month = newInterval(function(date) {
       date.setDate(1);
@@ -5719,6 +5721,8 @@
     var utcSaturday = utcWeekday(6);
 
     var utcSundays = utcSunday.range;
+    var utcMondays = utcMonday.range;
+    var utcThursdays = utcThursday.range;
 
     var utcMonth = newInterval(function(date) {
       date.setUTCDate(1);
@@ -10641,7 +10645,6 @@
 
       return pc;
     };
-    //# sourceMappingURL=parcoords.esm.js.map
 
     /**
      * Setup a new visualization.
@@ -32979,6 +32982,104 @@
     };
 
     /**
+     * Hide a set of axes globally or from specific charts
+     *
+     * @param partition: array or object idenifying axes to be hidden; if object, format as { chart id: [hidden vars]}
+     */
+    var hideAxes = function hideAxes(config, ps, flags) {
+      return function (partition) {
+        console.log(partition);
+        console.log(config.partition);
+
+        if (Array.isArray(partition)) {
+          // append array to every key in config.partition
+          Object.keys(config.partition).forEach(function (id) {
+            config.partition[id] = union(config.partition[id], partition);
+          });
+        } else if (isPlainObject(partition)) {
+          // take union of values for each key that is also in config.partition
+          Object.entries(partition).forEach(function (_ref) {
+            var _ref2 = slicedToArray(_ref, 2),
+                key = _ref2[0],
+                values = _ref2[1];
+
+            if (config.partition[key]) {
+              config.partition[key] = union(config.partition[key], partition[key]);
+            }
+          });
+        } else {
+          console.log('Error: please provide an object or array as argument.');
+        }
+
+        console.log(config.partition);
+
+        // iterate over partition keys and hide all variables in value array
+        Object.entries(config.partition).forEach(function (_ref3) {
+          var _ref4 = slicedToArray(_ref3, 2),
+              chartID = _ref4[0],
+              vars = _ref4[1];
+
+          ps.charts[chartID].hideAxis(vars);
+          ps.charts[chartID].render().updateAxes(500);
+        });
+
+        return this;
+      };
+    };
+
+    /**
+     * Show a set of axes globally or on specific charts
+     *
+     * @param partition: array or object idenifying axes to be shown; if object, format as { chart id: [vars to show]}
+     */
+    var showAxes = function showAxes(config, ps, flags) {
+      return function (partition) {
+        console.log(partition);
+        console.log(config.partition);
+
+        if (typeof partition === 'undefined') {
+          // show all axes on all charts (empty partition)
+          Object.keys(config.partition).forEach(function (id) {
+            config.partition[id] = [];
+          });
+        } else if (Array.isArray(partition)) {
+          // remove array from every key in config.partition
+          Object.keys(config.partition).forEach(function (id) {
+            config.partition[id] = difference(config.partition[id], partition);
+          });
+        } else if (isPlainObject(partition)) {
+          // take difference of values for each key that is also in config.partition
+          // (i.e. remove from hidden)
+          Object.entries(partition).forEach(function (_ref) {
+            var _ref2 = slicedToArray(_ref, 2),
+                key = _ref2[0],
+                values = _ref2[1];
+
+            if (config.partition[key]) {
+              config.partition[key] = difference(config.partition[key], partition[key]);
+            }
+          });
+        } else {
+          console.log('Error: please provide an object or array as argument.');
+        }
+
+        console.log(config.partition);
+
+        // iterate over partition keys and hide only remaining variables in value array
+        Object.entries(config.partition).forEach(function (_ref3) {
+          var _ref4 = slicedToArray(_ref3, 2),
+              chartID = _ref4[0],
+              vars = _ref4[1];
+
+          ps.charts[chartID].hideAxis(vars);
+          ps.charts[chartID].render().updateAxes(500);
+        });
+
+        return this;
+      };
+    };
+
+    /**
      * Keep only selected data update components
      *
      * @param selection: One of {'brushed', 'marked', 'both'} keywords as string
@@ -33359,7 +33460,7 @@
      */
     var resetSelections = function resetSelections(config, ps, flags) {
       return function (selection) {
-        console.log("config linked: ", config.linked);
+        console.log('config linked: ', config.linked);
         if (selection == 'brushed') {
           ps.globalBrushReset(config.linked);
         } else if (selection == 'marked') {
@@ -33450,6 +33551,8 @@
       ps.linked = linked(config, ps, flags);
       ps.cluster = cluster$1(config, ps, flags);
       ps.aggregateScores = aggregateScores(config, ps, flags);
+      ps.hideAxes = hideAxes(config, ps, flags);
+      ps.showAxes = showAxes(config, ps, flags);
       ps.keepSelection = keepSelection(config, ps, flags);
       ps.removeSelection = removeSelection(config, ps, flags);
       ps.exportData = exportData(config, ps, flags);

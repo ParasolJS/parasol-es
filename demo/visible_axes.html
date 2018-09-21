@@ -1,0 +1,64 @@
+<!doctype html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+</head>
+
+<title>Visible Axes</title>
+
+<link rel="stylesheet" type="text/css" href="./parcoords.css">
+<link rel="stylesheet" type="text/css" href="style.css">
+
+<script src="./lib/d3.v5.min.js"></script>
+<script src="./parasol.standalone.js"></script>
+
+<body>
+<p>This example demonstrates the abiltiy to hide and show an axis or set of axes, either across all charts or partitioned to specific charts.</p>
+
+<p>
+    <button id="hide_name">Hide 'Name'</button>
+    <button id="hide_partition">Hide Partition</button>
+    <button id="show_name">Show 'Name'</button>
+    <button id="show_partition">Show Partition</button>
+    <button id="show_all">Show All</button>
+</p>
+
+<div id="plot01" class="parcoords" style="height:200px; width:800px;"></div>
+<div id="plot02" class="parcoords" style="height:200px; width:800px;"></div>
+<div id="plot02" class="parcoords" style="height:200px; width:800px;"></div>
+</body>
+
+<script>
+d3.csv('data/cars.csv').then(function(data) {
+  // initialize chart closures
+  var ps = Parasol(data)('.parcoords');
+
+  var partition = {
+    // 0: ['weight (lb)', '0-60 mph (s)'], // for some reason this breaks...
+    1: ['displacement (cc)'],
+    2: ['cylinders', 'power (hp)']
+  }
+
+  // wire-up buttons
+  d3.select('#hide_name').on('click', function() {
+    ps.hideAxes(['name'])
+  });
+
+  d3.select('#hide_partition').on('click', function() {
+    ps.hideAxes(partition)
+  });
+
+  d3.select('#show_name').on('click', function() {
+    ps.showAxes(['name'])
+  });
+
+  d3.select('#show_partition').on('click', function() {
+    ps.showAxes(partition)
+  });
+
+  d3.select('#show_all').on('click', function() {
+    ps.showAxes()
+  });
+
+});
+</script>
