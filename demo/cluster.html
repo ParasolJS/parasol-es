@@ -21,15 +21,48 @@
 
 <script>
 d3.csv('data/cars.csv').then(function(data) {
-  // setup variables to use for clustering (data must be numeric)
-  var cluster_vars = d3.keys(data[0]).filter(function(key) {
-    return key !== 'name';
-  });
-  console.log(cluster_vars);
 
-  // cluster variable hidden by default, cluster colors shown on charts in chartIDs
+  // setup variables to use for clustering (data must be numeric)
+  var cluster_vars = d3.keys(data[0]) // get all the variable names
+    .filter(function(key) {   // filter out unwanted variables. specifically,
+      return key !== 'name';  // don't include cars names because not numeric data
+    });
+
+  /* simple example (start) */
+  // choose 4 clusters and color the 1st and 3rd chart
   var ps = Parasol(data)('.parcoords')
             .cluster(k=4, chartIDs=[0,2], vars=cluster_vars);
+  /* simple example (end) */
+
+  /* complex example (start) */
+  //// alter each of the inputs for more control
+
+  //// specify k-means clustering options
+  // const defaultOptions = {
+  //   maxIterations: 100,
+  //   tolerance: 1e-6,
+  //   withIterations: false,
+  //   initialization: 'kmeans++'
+  //   // distanceFunction: squaredEuclidean  // need to import 'squaredEuclidean'
+  //       // to used this function
+  // };
+
+  // var ps = Parasol(data)('.parcoords')
+  //           .cluster(k=4, chartIDs=[0,2], vars=cluster_vars,
+  //           palette=d3.schemeCategory10, std=true,
+  //           options=defaultOptions, hidden=false);
+  /* complex example (end) */
+
+  // palette defaults to d3.schemeCategory10, for other options test other
+  // categorical color palettes provided by d3, such as:
+  //    d3.schemeAccent
+  //    d3.schemeDark2
+  //    d3.schemePaired
+  //    d3.schemePastel1
+  //    d3.schemePastel2
+  //    d3.schemeSet1
+  //    d3.schemeSet2
+  //    d3.schemeSet3
 
   // update charts
   ps.charts.forEach(
