@@ -19,7 +19,8 @@
 </body>
 
 <script>
-d3.csv('data/cars.csv').then(function(data) {
+// d3.csv('data/cars.csv').then(function(data) {
+d3.csv('data/cars_no-names.csv').then(function(data) {
 
   // setup weights (unspecified vars given weight = 0)
   var weights = {
@@ -35,7 +36,7 @@ d3.csv('data/cars.csv').then(function(data) {
   ps.charts.forEach(
     (pc) => {
       pc
-        .hideAxis(['name'])
+        // .hideAxis(['name'])
         .reorderable()
         .render()
         .updateAxes(0)
