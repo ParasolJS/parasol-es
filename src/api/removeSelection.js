@@ -3,9 +3,8 @@ import { difference } from 'lodash-es';
 /**
  * Remove selected data and components
  *
- * @param selection: One of {'brushed', 'marked', 'both'} keywords as string
- *
- * NOTE: Any existing brushes or marks will be overwritten
+ * @param {string} selection - one of {'brushed', 'marked', 'both'} keywords as string.
+ * NOTE: any existing brushes or marks will be overwritten
  */
 const removeSelection = (config, ps, flags) =>
   function(selection) {
@@ -30,7 +29,7 @@ const removeSelection = (config, ps, flags) =>
       ps.resetSelections();
 
       // update charts and grid
-      ps.charts.forEach( pc => {
+      ps.charts.forEach(pc => {
         pc.data(d).render.default();
         pc.brushReset();
       });
@@ -47,7 +46,6 @@ const removeSelection = (config, ps, flags) =>
 
     console.log('after:', config.data.length);
     return this;
-
   };
 
 export default removeSelection;

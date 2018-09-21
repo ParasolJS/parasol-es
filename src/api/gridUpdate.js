@@ -1,3 +1,5 @@
+// TODO: add documentation info here
+
 //update data displayed in grid
 const gridUpdate = config => (data = null) => {
   if (data === null) {

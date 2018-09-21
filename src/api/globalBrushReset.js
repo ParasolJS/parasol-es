@@ -1,10 +1,12 @@
 // reset listed brushes and preform necessary updates
 // NOTE: why is this so slow?
 
+// TODO: add documentation info here
+
 const globalBrushReset = (config, ps, flags) => charts => {
   if (Array.isArray(charts)) {
     // reset brushes in provided charts
-    charts.forEach( pc => {
+    charts.forEach(pc => {
       pc.brushReset();
     });
 
@@ -17,7 +19,6 @@ const globalBrushReset = (config, ps, flags) => charts => {
     // if (grid) {
     //   update with config.brushed
     // }
-
   }
 };
 

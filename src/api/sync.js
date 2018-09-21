@@ -1,5 +1,7 @@
 import { union, intersection } from 'lodash-es';
 
+// TODO: add documentation info here. are there any parameters?
+
 // synchronize data between linked components
 const sync = (config, ps, flags) =>
   function() {

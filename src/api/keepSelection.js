@@ -1,8 +1,7 @@
 /**
  * Keep only selected data update components
  *
- * @param selection: One of {'brushed', 'marked', 'both'} keywords as string
- *
+ * @param {string} selection - one of {'brushed', 'marked', 'both'} keywords as string.
  * NOTE: Any existing brushes or marks will be overwritten
  */
 const keepSelection = (config, ps, flags) =>
@@ -27,7 +26,7 @@ const keepSelection = (config, ps, flags) =>
       ps.resetSelections();
 
       // update charts and grid
-      ps.charts.forEach( pc => {
+      ps.charts.forEach(pc => {
         pc.data(d).render.default();
         pc.brushReset();
       });
@@ -44,7 +43,6 @@ const keepSelection = (config, ps, flags) =>
 
     console.log('after:', config.data.length);
     return this;
-
   };
 
 export default keepSelection;
