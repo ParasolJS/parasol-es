@@ -27,9 +27,9 @@
 
 <script>
 d3.csv('data/cars.csv').then(function(data) {
-  // all charts linked by default
   var ps = Parasol(data)('.parcoords')
-            .linked(chartIDs = [0,1]);
+            .linked();  // all charts linked by default
+            // .linked(chartIDs = [0,1]);  // only link first two charts
 
   // update charts
   ps.charts.forEach(
@@ -41,9 +41,10 @@ d3.csv('data/cars.csv').then(function(data) {
     }
   )
 
+  // TODO: brush reset is not working
   d3.select('#reset_brushes').on('click', function() {
-    // reset first two plots
-    ps.globalBrushReset([0,1])
+    ps.globalBrushReset();  //  reset all brushes
+    // ps.globalBrushReset([0,1])  // reset first two plots
   });
 
 });
