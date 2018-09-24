@@ -1,6 +1,11 @@
 import Slickgrid from 'slickgrid-es6';
 import { difference } from 'lodash-es';
 
+// TODO: add documentation info here. are there parameters?
+
+/**
+ * Attach interactive grid.
+ */
 import convert_to_float from '../util/convert_to_float';
 
 const attachGrid = (config, flags) => (columns = null, options = null) => {

@@ -4,11 +4,11 @@ import { saveAs } from 'file-saver/FileSaver';
 /**
  * Export selected data to new csv and download
  *
- * @param selection: {string} one of {'brushed', 'marked', 'both', 'all'}
- * @param filename: {string} name of csv file to be downloaded
+ * @param {string} selection - choose from {'brushed', 'marked', 'both', 'all'}
+ * @param {string} filename - name of csv file to be downloaded
  */
 const exportData = (config, ps, flags) =>
-  function(selection='all', filename=null) {
+  function(selection = 'all', filename = null) {
     if (filename === null) {
       filename = 'parasol_data.csv';
     }
@@ -34,9 +34,8 @@ const exportData = (config, ps, flags) =>
       const csv = csvFormat(d, config.vars);
 
       // create url and download
-      const file = new Blob([csv], {type: 'text/csv'});
+      const file = new Blob([csv], { type: 'text/csv' });
       saveAs(file, filename);
-
     } else {
       console.log('Error: No data selected.');
     }

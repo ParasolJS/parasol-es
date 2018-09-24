@@ -31,7 +31,8 @@
     "test:watch": "nyc mocha --reporter min --watch",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "prepare": "prettier --single-quote --trailing-comma es5 --write \"{src,__{demo,dist}__}/**/*.js\"",
-    "prebulish": "npm run build prepare"
+    "prepublish": "npm run build prepare",
+    "docs": "jsdoc src -r -d docs"
   },
   "files": [
     "src",
@@ -69,6 +70,7 @@
     "cross-env": "^5.2.0",
     "eslint": "^4.19.1",
     "istanbul": "^1.1.0-alpha.1",
+    "jsdoc": "^3.5.5",
     "livereload": "^0.7.0",
     "mocha": "^5.2.0",
     "prettier": "1.13.5",
