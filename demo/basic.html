@@ -20,15 +20,15 @@
 </body>
 
 <script>
-// d3.csv('data/cars.csv').then(function(data) {
-d3.csv('data/cars_no-names.csv').then(function(data) {
+// d3.csv('data/cars.csv').then(function(data) {  // no longer applicable, removed 'name' column
+d3.csv('data/cars.csv').then(function(data) {
   // initialize chart closures
   var ps = Parasol(data)('.parcoords');
   // add data and render each chart
   ps.charts.forEach(
     (pc) => {
       pc
-        // .hideAxis(['name'])
+        // .hideAxis(['name'])  // no longer applicable, removed 'name' column from cars.csv
         .render()
         .updateAxes(0);
     }
