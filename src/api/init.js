@@ -1,6 +1,8 @@
 import { selectAll } from 'd3';
 import ParCoords from 'parcoord-es';
 
+// TODO: add documentation info here. add more detail about config.
+
 /**
  * Setup a new visualization.
  *
