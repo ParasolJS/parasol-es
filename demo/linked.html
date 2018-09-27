@@ -43,7 +43,7 @@ d3.csv('data/cars.csv').then(function(data) {
 
   // TODO: brush reset is not working
   d3.select('#reset_brushes').on('click', function() {
-    ps.globalBrushReset();  //  reset all brushes
+    ps.resetSelections('brushed');  //  reset all brushes
     // ps.globalBrushReset([0,1])  // reset first two plots
   });
 
