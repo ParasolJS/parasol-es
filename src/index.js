@@ -5,8 +5,8 @@ import './parallel-coordinates.css';
 
 //api
 import init from './api/init';
-// import attachGrid from './api/attachGrid';
-// import gridUpdate from './api/gridUpdate';
+import attachGrid from './api/attachGrid';
+import gridUpdate from './api/gridUpdate';
 import linked from './api/linked';
 import cluster from './api/cluster';
 import aggregateScores from './api/aggregateScores';
@@ -36,11 +36,11 @@ const Parasol = (data, userConfig) => {
   ps.state = config;
   ps.flags = flags;
   ps.version = version;
-  // ps.grid = config.grid;
-  // ps.dataview = config.dataview;
+  ps.grid = config.grid;
+  ps.dataview = config.dataview;
 
-  // ps.attachGrid = attachGrid(config, flags);
-  // ps.gridUpdate = gridUpdate(config, flags);
+  ps.attachGrid = attachGrid(config, flags);
+  ps.gridUpdate = gridUpdate(config, flags);
   ps.linked = linked(config, ps, flags);
   ps.cluster = cluster(config, ps, flags);
   ps.aggregateScores = aggregateScores(config, ps, flags);

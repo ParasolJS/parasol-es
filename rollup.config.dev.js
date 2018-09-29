@@ -51,12 +51,12 @@ export default {
         commonjs({
           include: ['node_modules/**'],
           exclude: ['node_modules/lodash-es/**'],
-          namedExports: {
-            // 'node_modules/slickgrid-es6/dist/slick.es6.min.js': ['Slickgrid']
-            'node_modules/slickgrid-es6/dist/slick.es6.min.js': [
-              'Slick', 'Grid', 'FrozenGrid', 'Data', 'Plugins', 'Editors', 'Formatters'
-            ]
-          }
+          // namedExports: {
+          //   // 'node_modules/slickgrid-es6/dist/slick.es6.min.js': ['Slickgrid']
+          //   'node_modules/slickgrid-es6/dist/slick.es6.min.js': [
+          //     'Slick', 'Grid', 'FrozenGrid', 'Data', 'Plugins', 'Editors', 'Formatters'
+          //   ]
+          // }
         }),
         serve({
             open: true,

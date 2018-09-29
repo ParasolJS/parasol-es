@@ -1,12 +1,12 @@
 import Slickgrid from 'slickgrid-es6';
 import { difference } from 'lodash-es';
 
-import convert_to_float from '../util/convert_to_float';
+import as_float from '../util/as_float';
 
 const attachGrid = (config, flags) => (columns = null, options = null) => {
   flags.grid = true;
 
-  const checkboxSelector = new Plugins.CheckboxSelectColumn({
+  const checkboxSelector = new slickgrid.Plugins.CheckboxSelectColumn({
     cssClass: 'slick-cell-checkboxsel',
   });
 
@@ -37,10 +37,10 @@ const attachGrid = (config, flags) => (columns = null, options = null) => {
   }
 
   // initialize
-  config.dataView = new Data.DataView();
-  config.grid = new Grid('#grid', config.dataView, columns, options);
+  config.dataView = new slickgrid.Data.DataView();
+  config.grid = new slickgrid.Grid('#grid', config.dataView, columns, options);
   config.grid.setSelectionModel(
-    new Plugins.RowSelectionModel({ selectActiveRow: false })
+    new slickgrid.Plugins.RowSelectionModel({ selectActiveRow: false })
   );
   config.grid.registerPlugin(checkboxSelector);
 
@@ -63,8 +63,8 @@ const attachGrid = (config, flags) => (columns = null, options = null) => {
   // const sortdir = 1;
   //
   // const comparer = (a, b) => {
-  //     const x = convert_to_float(a[sortcol]);
-  //     const y = convert_to_float(b[sortcol]);
+  //     const x = as_float(a[sortcol]);
+  //     const y = as_float(b[sortcol]);
   //     return (x == y ? 0 : (x > y ? 1 : -1));
   // };
   //
