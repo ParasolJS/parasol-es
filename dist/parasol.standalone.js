@@ -22363,7 +22363,7 @@
 
     });
 
-    unwrapExports(slick_es6_min);
+    var SlickGrid = unwrapExports(slick_es6_min);
 
     /** Detect free variable `global` from Node.js. */
     var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
@@ -40231,23 +40231,28 @@
      * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
      */
 
-    var _this$6 = undefined;
-
-    var attachGrid = function attachGrid(config, flags) {
+    /**
+       * Creates a new instance of the grid.
+       * @class SlickGrid
+       * @constructor
+       * @param {Array}             columns     An array of column definitions.
+       * @param {Object}            options     Grid options.
+    **/
+    var attachGrid = function attachGrid(config, ps, flags) {
       return function () {
         var columns = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
-        flags.grid = true;
+        // flags.grid = true;
 
-        var checkboxSelector = new slickgrid.Plugins.CheckboxSelectColumn({
+        var checkboxSelector = new SlickGrid.Plugins.CheckboxSelectColumn({
           cssClass: 'slick-cell-checkboxsel'
         });
 
         if (columns === null) {
           // place id col on left
-          var column_keys = Object.keys(config.data[0]).slice();
-          column_keys = difference(column_keys, ['id']);
+          var column_keys = config.vars;
+          // column_keys = difference(column_keys, ['id']);
           column_keys.unshift('id');
 
           columns = column_keys.map(function (key, i) {
@@ -40260,22 +40265,25 @@
           });
           columns.unshift(checkboxSelector.getColumnDefinition());
         }
+        console.log(columns);
 
         if (options === null) {
           options = {
             enableCellNavigation: true,
-            enableColumnReorder: false,
+            enableColumnReorder: true,
             multiColumnSort: false,
             editable: true,
             asyncEditorLoading: false,
             autoEdit: false
           };
         }
+        console.log(options);
 
         // initialize
-        config.dataView = new slickgrid.Data.DataView();
-        config.grid = new slickgrid.Grid('#grid', config.dataView, columns, options);
-        config.grid.setSelectionModel(new slickgrid.Plugins.RowSelectionModel({ selectActiveRow: false }));
+        config.dataView = new SlickGrid.Data.DataView();
+        console.log(config.dataView);
+        config.grid = new SlickGrid.Grid('#grid', config.dataView, columns, options);
+        config.grid.setSelectionModel(new SlickGrid.Plugins.RowSelectionModel({ selectActiveRow: false }));
         config.grid.registerPlugin(checkboxSelector);
 
         // wire up model events to drive the grid
@@ -40310,11 +40318,18 @@
         //   config.dataView.sort(comparer, args.sortAsc);
         // });
 
-        return _this$6;
+        // config.dataView.setItems(config.data);
+        // config.grid.render();
+        config.dataView.beginUpdate();
+        config.dataView.setItems(config.data);
+        config.dataView.endUpdate();
+
+        // return this;
+        return config.grid; //??
       };
     };
 
-    var _this$7 = undefined;
+    var _this$6 = undefined;
 
     //update data displayed in grid
     var gridUpdate = function gridUpdate(config) {
@@ -40335,7 +40350,7 @@
         // }
         config.dataView.endUpdate();
 
-        return _this$7;
+        return _this$6;
       };
     };
 
@@ -45268,7 +45283,7 @@
       }
     };
 
-    var _this$8 = undefined;
+    var _this$7 = undefined;
 
     var initState$1 = function initState(data, userConfig) {
       var config = Object.assign({}, DefaultConfig$1, userConfig);
@@ -45285,7 +45300,7 @@
       // 'mark',
       'brush', 'brushend', 'brushstart'].concat(keys(config));
 
-      var events = dispatch.apply(_this$8, eventTypes),
+      var events = dispatch.apply(_this$7, eventTypes),
           flags = {
         linked: false,
         grid: false
