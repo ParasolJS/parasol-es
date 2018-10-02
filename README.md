@@ -89,7 +89,6 @@ d3.csv('data/cars.csv').then(function(data) {
 	  // can chain Parasol API here:
 	  // for example,
 	  // .cluster()
-	  // .renderAll()
   )
 ```
 
@@ -138,6 +137,7 @@ Parasol.hideAxes(partition);
 ```
 
 TODO: change to keepData
+
 <a name="keep_selection" href="#keep_selection">#</a> Parasol.<b>keepSelection</b>(<i>selection</i>)
 
 Keep only selected data on charts. See related <a href="#remove_selection">Parasol.removeSelection</a>.
@@ -147,6 +147,7 @@ Keep only selected data on charts. See related <a href="#remove_selection">Paras
 Link brush activity between user-specified charts and grid, if it exists.
 
 TODO: change to removeData
+
 <a name="remove_selection" href="#remove_selection">#</a> Parasol.<b>removeSelection</b>(<i>selection</i>)
 
 Remove selected data on charts. See related <a href="#keep_selection">Parasol.keepSelection</a>.
@@ -157,7 +158,7 @@ Reset selections (i.e. brushed or marked data).
 
 <a name="show_axes" href="#show_axes">#</a> Parasol.<b>showAxes</b>(<i>partition</i>)
 
-Show a set of axes globally or from specific charts. See related <a href="#show_axes">Parasol.showAxes</a>.
+Show a set of axes globally or from specific charts. See related <a href="#hide_axes">Parasol.hideAxes</a>.
 
 ### Using the Parcoords API
 Parasol builds off the work of [Syntagmatic's Parcoords library](https://github.com/syntagmatic/parallel-coordinates) and [BigFatDog's ES6 module of Parcoords](https://github.com/BigFatDog/parcoords-es). To allow users to fine tune their parallel coordinate plots with the Parcoords API, users can use the following syntax:
