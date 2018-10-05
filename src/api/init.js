@@ -22,6 +22,7 @@ const init = config => {
     selection.each(function(d, i) {
       ps.charts[i] = ParCoords(config.chartOptions)(this)
         .data(config.data)
+        .hideAxis(['id'])
         .alpha(0.4)
         .render()
         .mode('queue')
@@ -29,6 +30,12 @@ const init = config => {
 
       config.partition[i] = [];
     });
+
+    // add "id" to partition globally
+    Object.keys(config.partition).forEach(function(id) {
+      config.partition[id] = config.partition[id].concat('id');
+    });
+
     // for chained api
     return ps;
   };
