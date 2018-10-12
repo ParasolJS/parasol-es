@@ -39,8 +39,8 @@ const Parasol = (data, userConfig) => {
   ps.grid = config.grid;
   ps.dataview = config.dataview;
 
-  ps.attachGrid = attachGrid(config, flags);
-  ps.gridUpdate = gridUpdate(config, flags);
+  ps.attachGrid = attachGrid(config, ps, flags);
+  ps.gridUpdate = gridUpdate(config, ps, flags);
   ps.linked = linked(config, ps, flags);
   ps.cluster = cluster(config, ps, flags);
   ps.aggregateScores = aggregateScores(config, ps, flags);

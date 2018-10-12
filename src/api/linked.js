@@ -11,14 +11,18 @@ const linked = (config, ps, flags) =>
 
     // setup linked components
     chartIDs.forEach( i => {
-      config.linked[i] = ps.charts[i];
+      ps.linked[i] = ps.charts[i];
     });
 
-    ps.charts.forEach( (pc, i) => {
-      if (chartIDs.includes(i)) {
-        pc.on('brush', sync(config, ps, flags));
-      }
+    ps.linked.forEach( pc => {
+      pc.on('brush', sync(config, ps, flags));
     });
+
+    // ps.charts.forEach( (pc, i) => {
+    //   if (chartIDs.includes(i)) {
+    //     pc.on('brush', sync(config, ps, flags));
+    //   }
+    // });
 
     // connect grid
     // highlight row in charts

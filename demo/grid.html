@@ -6,18 +6,23 @@
 
 <title>SlickGrid Example</title>
 
+<link rel="stylesheet" type="text/css" href="style.css">
 <link rel="stylesheet" type="text/css" href="./parcoords.css">
-<link rel="stylesheet" type="text/css" href="slickgrid.scss">
-<link rel="stylesheet" href="./lib/slickgrid/jquery-ui-1.8.16.custom.css" type="text/css" />
 
-<script src="./lib/slickgrid/jquery-1.7.min.js"></script>
-<script src="./lib/slickgrid/jquery.event.drag-2.0.min.js"></script>
+<!-- include slickgrid stylesheets -->
+<link rel="stylesheet" href="./lib/slickgrid/slick.grid.css" type="text/css" media="screen" charset="utf-8">
+<link rel="stylesheet" href="./lib/slickgrid/jquery-ui-1.8.16.custom.css" type="text/css" />
+<link rel="stylesheet" href="./lib/slickgrid/plugins/slick.columnpicker.css" type="text/css"/>
 
 <script src="./lib/d3.v5.min.js"></script>
 <script src="./parasol.standalone.js"></script>
 
 <body>
 <p>Demonstrates basic SlickGrid functionality.</p>
+<p>
+    <button id="grid_update">Grid Update</button>
+</p>
+
 <div id="plot01" class="parcoords" style="height:200px; width:800px;"></div>
 <div id="plot02" class="parcoords" style="height:200px; width:800px;"></div>
 <div id="grid" style="width:100%;height:500px;" class="slickgrid-container"></div>
@@ -27,10 +32,12 @@
 d3.csv('data/cars.csv').then(function(data) {
   // initialize chart closures
   var ps = Parasol(data)('.parcoords')
-            .attachGrid();
+            .attachGrid('#grid');
 
   // update the grid with new data
-  // ps.gridUpdate(blah)
+  d3.select('#grid_update').on('click', function() {
+    ps.gridUpdate(data.slice(1,10))
+  });
 
 });
 </script>

@@ -12,7 +12,7 @@ const initState = (data, userConfig) => {
 
   // assign each data element an ID for slickgrid and other analyses
   config.data.forEach( (d,i) => { d.id = d.id || i; });
-  // config.data = format_data(config.data);
+  config.data = format_data(config.data);
 
   // NOTE: "id" col hidden globally by default in init.js
 
