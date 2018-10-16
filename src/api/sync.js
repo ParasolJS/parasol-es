@@ -5,7 +5,7 @@ const sync = (config, ps, flags) =>
   function() {
     //obtain array of brushed data for each chart
     const brush_extents = [];
-    config.linked.forEach(pc => {
+    ps.linked.forEach(pc => {
       brush_extents.push(pc.selected());
     });
     // console.log(brush_extents);
@@ -13,17 +13,18 @@ const sync = (config, ps, flags) =>
     //check edge case where all brushes individually clicked away
     // console.log(union(...brush_extents));
     if (union(...brush_extents).length == 0) {
-      config.linked.forEach(pc => {
+      ps.linked.forEach(pc => {
         pc.brushReset();
       });
       config.brushed = [];
-      // if (flags.grid === true) {
-      // 	ps.gridUpdate(config.data);
-      // }
+      // update data in grid
+      if (flags.grid) {
+      	ps.gridUpdate(config.data);
+      }
     } else {
       const brushed = intersection(...brush_extents);
       // console.log(brushed);
-      config.linked.forEach(pc => {
+      ps.linked.forEach(pc => {
         pc.brushed(brushed).render();
       });
 
@@ -34,10 +35,11 @@ const sync = (config, ps, flags) =>
       } else {
         config.brushed = [];
       }
-
-      // if (flags.grid === true) {
-      // 	ps.gridUpdate(brush_extents);
-      // }
+      // update data in grid
+      // NOTE: again, once pc.selected fixed, change brushed to config.brushed
+      if (flags.grid) {
+      	ps.gridUpdate(brushed);
+      }
     }
   };
 

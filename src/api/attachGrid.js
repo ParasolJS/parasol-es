@@ -22,6 +22,7 @@ const attachGrid = (config, ps, flags) =>
       // place id col on left
       let column_keys = config.vars;
       column_keys = difference(column_keys, ['id']);
+      // NOTE: remove line below to remove id col from grid
       column_keys.unshift('id');
 
       columns = column_keys.map((key, i) => ({
@@ -85,45 +86,6 @@ const attachGrid = (config, ps, flags) =>
       sortcol = args.sortCol.field;
 
       config.dataView.sort(comparer, args.sortAsc);
-    });
-
-    // NOTE: Move the rest to linked!
-
-    // highlight row in chart
-    config.grid.onMouseEnter.subscribe((e, args) => {
-      const i = config.grid.getCellFromEvent(e).row;
-      const d = config.data;
-      ps.charts.forEach(pc => {
-        pc.highlight([d[i]]);
-      });
-    });
-    config.grid.onMouseLeave.subscribe((e, args) => {
-      ps.charts.forEach(pc => {
-        pc.unhighlight();
-      });
-    });
-
-    // mark row in chart
-    config.grid.onSelectedRowsChanged.subscribe((e, args) =>  {
-      // reset and update selected rows
-      const selected_row_ids = config.grid.getSelectedRows();
-      let d;
-      if (config.brushed.length) {
-        d = config.brushed;
-      } else {
-        d = config.data;
-      }
-      ps.charts.forEach(pc => {
-        pc.unmark();
-      });
-      selected_row_ids.forEach( i => {
-        ps.charts.forEach(pc => {
-          pc.mark([d[i]]);
-        });
-      });
-
-      // update marked data
-      config.marked = config.linked[0].marked();
     });
 
     return this;

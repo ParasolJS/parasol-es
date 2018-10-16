@@ -10,49 +10,52 @@ const linked = (config, ps, flags) =>
     chartIDs = chartIDs.map(Number);
 
     // setup linked components
-    chartIDs.forEach( i => {
-      ps.linked[i] = ps.charts[i];
+    ps.linked = [];
+    chartIDs.forEach( (i, j) => {
+      ps.linked[j] = ps.charts[i];
     });
 
     ps.linked.forEach( pc => {
       pc.on('brush', sync(config, ps, flags));
     });
 
-    // ps.charts.forEach( (pc, i) => {
-    //   if (chartIDs.includes(i)) {
-    //     pc.on('brush', sync(config, ps, flags));
-    //   }
-    // });
-
     // connect grid
-    // highlight row in charts
-    // config.grid.onMouseEnter.subscribe( (e, args) => {
-    //   const i = grid.getCellFromEvent(e).row;
-    //   const d = config.brushed || config.data;
-    //   ps.charts.forEach( pc => {
-    //     pc.highlight([d[i]]);
-    //   })
-    // });
-    // config.grid.onMouseLeave.subscribe( (e, args) => {
-    //   ps.charts.forEach( (pc) => {
-    //     pc.unhighlight();
-    //   })
-    // });
+    if (flags.grid) {
 
-    // mark / unmark rows in charts
-    // config.grid.onSelectedRowsChanged.subscribe( (e, args) => {
-    //   const selected_row_ids = config.grid.getSelectedRows();
-    //   if (config.brushed) {
-    //     // nothing outside of brushed should be markable
-    //     const d = config.brushed;
-    //   } else {
-    //     const d = config.data;
-    //   }
-    //   ps.charts.forEach( (pc) => {
-    //     pc.unmark();
-    //     pc.mark(selected_row_ids); //NOTE: this may not work initially
-    //   })
-    // });
+      // highlight row in chart
+      config.grid.onMouseEnter.subscribe((e, args) => {
+        let i = config.grid.getCellFromEvent(e).row;
+        const d = config.dataView.getItems() || config.data;
+        ps.linked.forEach(pc => {
+          pc.highlight([d[i]]);
+        });
+      });
+      config.grid.onMouseLeave.subscribe((e, args) => {
+        ps.linked.forEach(pc => {
+          pc.unhighlight();
+        });
+      });
+
+      // mark row in chart
+      config.grid.onSelectedRowsChanged.subscribe((e, args) =>  {
+        // reset and update selected rows
+        const selected_row_ids = config.grid.getSelectedRows();
+        // NOTE: want to remove row from grid when unselected if not in brush extents
+        const d = config.dataView.getItems() || config.data;
+        ps.linked.forEach(pc => {
+          pc.unmark();
+        });
+        selected_row_ids.forEach( i => {
+          ps.linked.forEach(pc => {
+            pc.mark([d[i]]);
+          });
+        });
+
+        // update marked data
+        config.marked = ps.linked[0].marked();
+      });
+
+    };
 
     return this;
   };
