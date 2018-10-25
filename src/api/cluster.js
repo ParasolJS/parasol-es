@@ -4,6 +4,7 @@ import { scaleOrdinal, schemeCategory10 } from 'd3';
 
 import standardize from '../util/standardize';
 import format_data from '../util/format_data';
+import add_column from '../util/add_column';
 
 /**
  * Partition data into k clusters in which each data element belongs to
@@ -12,35 +13,27 @@ import format_data from '../util/format_data';
  * @param k number of clusters
  * @param chartIDs charts that will display cluster colors
  * @param palette d3 palette or function mapping cluster ids to color
- * @param vars variables used for clustering. NOTE: var data must be numeric
+ * @param vars variables used for clustering. NOTE: associated data must be numeric
  * @param std convert values to zscores to obtain unbiased clusters
  * @param options ml-kmeans options
  * @param hidden determines whether cluster axis will be displayed on charts (can be individually updated later)
  */
 const cluster = (config, ps, flags) =>
-  function (
-    k,
-    chartIDs = [],
-    vars = null,
-    palette = null,
+  function ({
+    k = 3,
+    chartIDs = [...Array(ps.charts.length).keys()],
+    vars = config.vars,
+    palette = schemeCategory10,
     options = {},
     std = true,
     hidden = true
-  ) {
-    if (palette === null) {
-      const scheme = scaleOrdinal(schemeCategory10);
-      palette = d => scheme(Number(d['cluster']));
-    }
-    else if (typeof(palette) == 'string') {
+  }={}) {
+    if (Array.isArray(palette)) {
       const scheme = scaleOrdinal(palette);
       palette = d => scheme(Number(d['cluster']));
     }
     else {
       palette = palette;
-    }
-
-    if ( vars === null ) {
-      vars = config.vars;
     }
 
     let data = [];
@@ -75,9 +68,9 @@ const cluster = (config, ps, flags) =>
     config.data.forEach((d, i) => {
       d.cluster = result.clusters[i].toString();
     });
-    console.log('kmeans++');
-    console.log(result.iterations, result.centroids.map(c => c.error));
-    console.log(result.centroids);
+    // console.log('kmeans++');
+    // console.log(result.iterations, result.centroids.map(c => c.error));
+    // console.log(result.centroids);
 
     // hide cluster axis and show colors by default
     if (hidden == true) {
@@ -107,11 +100,11 @@ const cluster = (config, ps, flags) =>
         .updateAxes(0);
     });
 
-    // if (flags.grid) {
-    //   // rebuild the grid
-    //   ps.attachGrid();
-    //   ps.gridUpdate();
-    // }
+    if (flags.grid) {
+      // add column
+      const cols = add_column(config.grid.getColumns(), 'cluster');
+      ps.gridUpdate({ columns: cols });
+    }
 
     return this;
   };

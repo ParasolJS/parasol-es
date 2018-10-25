@@ -1,12 +1,8 @@
 // reset listed brushes and preform necessary updates
-// NOTE: why is this so slow?
-
 const globalBrushReset = (config, ps, flags) => charts => {
   if (Array.isArray(charts)) {
     // reset brushes in provided charts
-    charts.forEach( pc => {
-      pc.brushReset();
-    });
+    charts.forEach( pc => pc.brushReset() );
 
     // NOTE: if charts are linked and at least one is not reset, then none will be reset
 
@@ -14,9 +10,9 @@ const globalBrushReset = (config, ps, flags) => charts => {
     // currently need to force due to issue with ParCoords.selected() returning entire dataset if brush extents are empty
     config.brushed = [];
 
-    // if (grid) {
-    //   update with config.brushed
-    // }
+    if (flags.grid) {
+      ps.gridUpdate();
+    }
 
   }
 };

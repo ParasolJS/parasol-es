@@ -4,7 +4,7 @@
     <meta content="utf-8" http-equiv="encoding">
 </head>
 
-<title>SlickGrid Example</title>
+<title>Linked Grid Example</title>
 
 <link rel="stylesheet" type="text/css" href="style.css">
 <link rel="stylesheet" type="text/css" href="./parcoords.css">
@@ -31,20 +31,21 @@
 
 <script>
 d3.csv('data/cars.csv').then(function(data) {
+
   // initialize chart closures
   var ps = Parasol(data)('.parcoords')
-            .attachGrid('#grid')
+            .attachGrid({container: '#grid'})
             .linked();
 
   // update charts
-  ps.charts.forEach(
-    (pc) => {
-      pc
-        .hideAxis(['name'])
-        .render()
-        .updateAxes(0)
-    }
-  )
+  // ps.charts.forEach(
+  //   (pc) => {
+  //     pc
+  //       .hideAxis(['name'])
+  //       .render()
+  //       .updateAxes(0)
+  //   }
+  // )
 
   d3.select('#reset_brushes').on('click', function() {
     // reset first two plots

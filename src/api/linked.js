@@ -40,7 +40,6 @@ const linked = (config, ps, flags) =>
       config.grid.onSelectedRowsChanged.subscribe((e, args) =>  {
         // reset and update selected rows
         const selected_row_ids = config.grid.getSelectedRows();
-        // NOTE: want to remove row from grid when unselected if not in brush extents
         const d = config.dataView.getItems() || config.data;
         ps.linked.forEach(pc => {
           pc.unmark();
@@ -53,6 +52,11 @@ const linked = (config, ps, flags) =>
 
         // update marked data
         config.marked = ps.linked[0].marked();
+
+        // refresh grid if brushes are applied
+        if (config.brushed.length) {
+          ps.gridUpdate();
+        }
       });
 
     };

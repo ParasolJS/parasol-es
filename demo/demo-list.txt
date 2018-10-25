@@ -6,7 +6,6 @@ linked brushing
 marking
 clustering
 weighting
-utopia
 
 hide and show
 load and export
@@ -15,7 +14,7 @@ save image
 
 showcase
 
-Key examples from parcoords:
+One example to highlight parcoords features:
 marking
 reorderable axes
 scale

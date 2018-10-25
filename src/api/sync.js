@@ -8,10 +8,8 @@ const sync = (config, ps, flags) =>
     ps.linked.forEach(pc => {
       brush_extents.push(pc.selected());
     });
-    // console.log(brush_extents);
 
     //check edge case where all brushes individually clicked away
-    // console.log(union(...brush_extents));
     if (union(...brush_extents).length == 0) {
       ps.linked.forEach(pc => {
         pc.brushReset();
@@ -23,7 +21,6 @@ const sync = (config, ps, flags) =>
       }
     } else {
       const brushed = intersection(...brush_extents);
-      // console.log(brushed);
       ps.linked.forEach(pc => {
         pc.brushed(brushed).render();
       });
@@ -36,9 +33,9 @@ const sync = (config, ps, flags) =>
         config.brushed = [];
       }
       // update data in grid
-      // NOTE: again, once pc.selected fixed, change brushed to config.brushed
+      // NOTE: once pc.selected fixed, remove arg from gridUpdate
       if (flags.grid) {
-      	ps.gridUpdate(brushed);
+      	ps.gridUpdate({ data: brushed });
       }
     }
   };

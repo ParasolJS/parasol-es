@@ -7,7 +7,7 @@ const initState = (data, userConfig) => {
   const config = Object.assign({}, DefaultConfig, userConfig);
   // "private" keys -- values must be forced for consistent operation
   config.data = data;
-  config.vars = Object.keys(data[0]);
+  config.vars = Object.keys(data[0]); // does not contain 'id'
   config.partition = {}; // { chart id: [hidden vars]} built in init.js
 
   // assign each data element an ID for slickgrid and other analyses

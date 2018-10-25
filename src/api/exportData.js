@@ -4,33 +4,34 @@ import { saveAs } from 'file-saver/FileSaver';
 /**
  * Export selected data to new csv and download
  *
- * @param selection: {string} one of {'brushed', 'marked', 'both', 'all'}
+ * @param selection: {string} one of {'brushed', 'marked', 'both'}
  * @param filename: {string} name of csv file to be downloaded
+ * @param exportAll: {boolean} override selection param and export all data
  */
 const exportData = (config, ps, flags) =>
-  function(selection='all', filename=null) {
+  function({ selection='both', filename=null, exportAll=false }) {
     if (filename === null) {
       filename = 'parasol_data.csv';
     }
 
     // identify data
     let d = [];
-    if (selection == 'brushed') {
+    if (exportAll) {
+      d= config.data;
+    } else if (selection == 'brushed') {
       d = config.brushed;
     } else if (selection == 'marked') {
       d = config.marked;
     } else if (selection == 'both') {
       d = config.selections();
-    } else if (selection == 'all') {
-      d = config.data;
     } else {
-      // throw error
+      throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
     }
-    console.log(d);
+    // console.log(d);
 
     if (d.length > 0) {
       // format data as csv
-      // NOTE: want to include assigned data id number?
+      // NOTE: include assigned data id number?
       const csv = csvFormat(d, config.vars);
 
       // create url and download
@@ -38,9 +39,8 @@ const exportData = (config, ps, flags) =>
       saveAs(file, filename);
 
     } else {
-      console.log('Error: No data selected.');
+      throw 'Error: No data selected.';
     }
-
     return this;
   };
 

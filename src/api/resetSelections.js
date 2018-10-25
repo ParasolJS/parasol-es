@@ -6,18 +6,16 @@
  * NOTE: only linked charts are affected
  */
 const resetSelections = (config, ps, flags) => selection => {
-  console.log('config linked: ', config.linked);
   if (selection == 'brushed') {
-    ps.globalBrushReset(config.linked);
+    ps.globalBrushReset(ps.linked);
   } else if (selection == 'marked') {
-    ps.globalMarkReset(config.linked);
+    ps.globalMarkReset(ps.linked);
   } else if (selection == 'both') {
-    ps.globalBrushReset(config.linked);
-    ps.globalMarkReset(config.linked);
+    ps.globalBrushReset(ps.linked);
+    ps.globalMarkReset(ps.linked);
   } else {
-    // throw error
+    throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
   }
-  console.log(config.selections());
 };
 
 export default resetSelections;

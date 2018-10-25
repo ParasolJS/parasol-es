@@ -12,8 +12,8 @@ import cluster from './api/cluster';
 import aggregateScores from './api/aggregateScores';
 import hideAxes from './api/hideAxes';
 import showAxes from './api/showAxes';
-import keepSelection from './api/keepSelection';
-import removeSelection from './api/removeSelection';
+import keepData from './api/keepData';
+import removeData from './api/removeData';
 import exportData from './api/exportData';
 
 import globalBrushReset from './api/globalBrushReset';
@@ -46,8 +46,8 @@ const Parasol = (data, userConfig) => {
   ps.aggregateScores = aggregateScores(config, ps, flags);
   ps.hideAxes = hideAxes(config, ps, flags);
   ps.showAxes = showAxes(config, ps, flags);
-  ps.keepSelection = keepSelection(config, ps, flags);
-  ps.removeSelection = removeSelection(config, ps, flags);
+  ps.keepData = keepData(config, ps, flags);
+  ps.removeData = removeData(config, ps, flags);
   ps.exportData = exportData(config, ps, flags);
 
   ps.globalBrushReset = globalBrushReset(config, ps, flags);

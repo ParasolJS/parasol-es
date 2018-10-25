@@ -32,11 +32,11 @@
 d3.csv('data/cars.csv').then(function(data) {
   // initialize chart closures
   var ps = Parasol(data)('.parcoords')
-            .attachGrid('#grid');
+            .attachGrid({container: '#grid'});
 
   // update the grid with new data
   d3.select('#grid_update').on('click', function() {
-    ps.gridUpdate(data.slice(1,10))
+    ps.gridUpdate({data: data.slice(1,10)})
   });
 
 });

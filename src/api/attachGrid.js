@@ -7,11 +7,12 @@ import as_float from '../util/as_float';
    * Creates a new instance of the grid.
    * @class SlickGrid
    * @constructor
-   * @param {Array}             columns     An array of column definitions.
-   * @param {Object}            options     Grid options.
+   * @param {String} container   DOM element in which grid will be placed.
+   * @param {Array}  columns     An array of column definitions (objects).
+   * @param {Object} options     SlickGrid options.
 **/
 const attachGrid = (config, ps, flags) =>
-  function(container, columns = null, options = null) {
+  function({ container, columns = null, options = null }) {
     flags.grid = true;
 
     const checkboxSelector = new SlickGrid.Plugins.CheckboxSelectColumn({

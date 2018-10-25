@@ -1,6 +1,7 @@
 import normalize from '../util/normalize';
 import format_data from '../util/format_data';
 import arr from '../util/arr_stats';
+import add_column from '../util/add_column';
 
 /**
  * Compute individual aggregate scores for each solution based on
@@ -11,11 +12,11 @@ import arr from '../util/arr_stats';
  * @param norm normalize values (0-1) to obtain fair weighting
  */
 const aggregateScores = (config, ps, flags) =>
-  function(
+  function({
     weights,
     chartIDs = [],
     norm = true
-  ) {
+  }) {
     // NOTE: if data is re-scored, old score will not affect new score unless it is given a weight itself in the 'weights' object
 
     if(chartIDs.length == 0) {
@@ -76,11 +77,11 @@ const aggregateScores = (config, ps, flags) =>
     });
     // NOTE: need to maintain current state of charts somehow
 
-    // if (flags.grid) {
-    //   // rebuild the grid
-    //   ps.attachGrid();
-    //   ps.gridUpdate();
-    // }
+    if (flags.grid) {
+      // add column
+      const cols = add_column(config.grid.getColumns(), 'aggregate score');
+      ps.gridUpdate({ columns: cols });
+    }
 
     return this;
   };

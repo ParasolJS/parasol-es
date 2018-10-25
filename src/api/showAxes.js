@@ -27,7 +27,7 @@ const showAxes = (config, ps, flags) =>
         }
       });
     } else {
-      console.log('Error: please provide an object or array as argument.');
+      throw 'Error: please provide an object or array as argument.';
     }
 
     // iterate over partition keys and hide only remaining variables in value array

@@ -3,46 +3,43 @@ import { difference } from 'lodash-es';
 /**
  * Remove selected data and components
  *
- * @param selection: One of {'brushed', 'marked', 'both'} keywords as string
+ * @param data: One of {'brushed', 'marked', 'both'} keywords as string
  *
  * NOTE: Any existing brushes or marks will be overwritten
  */
-const removeSelection = (config, ps, flags) =>
-  function(selection) {
+const removeData = (config, ps, flags) =>
+  function(data) {
     console.log('before:', config.data.length);
 
     // identify data
     let d = [];
-    if (selection == 'brushed') {
+    if (data == 'brushed') {
       d = config.brushed;
-    } else if (selection == 'marked') {
+    } else if (data == 'marked') {
       d = config.marked;
-    } else if (selection == 'both') {
+    } else if (data == 'both') {
       d = config.selections();
     } else {
-      // throw error
+      throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
     }
     d = difference(config.data, d);
     console.log(d);
 
     if (d.length > 0 && d.length < config.data.length) {
       // reset selections and update config
-      ps.resetSelections();
+      ps.resetSelections('both');
 
-      // update charts and grid
+      // update data, charts, and grid
+      config.data = d;
       ps.charts.forEach( pc => {
         pc.data(d).render.default();
         pc.brushReset();
       });
-      if (config.grid) {
-        console.log('here');
-        // gridUpdate()
+      if (flags.grid) {
+        ps.gridUpdate();
       }
-
-      // update data
-      config.data = d;
     } else {
-      console.log('Error: No data selected.');
+      throw 'Error: No data selected.';
     }
 
     console.log('after:', config.data.length);
@@ -50,4 +47,4 @@ const removeSelection = (config, ps, flags) =>
 
   };
 
-export default removeSelection;
+export default removeData;
