@@ -1,5 +1,4 @@
 import kmeans from 'ml-kmeans';
-// import { difference } from 'lodash-es';
 import { scaleOrdinal, schemeCategory10 } from 'd3';
 
 import standardize from '../util/standardize';
