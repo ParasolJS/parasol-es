@@ -4,26 +4,23 @@ import arr from '../util/arr_stats';
 import add_column from '../util/add_column';
 
 /**
- * Compute individual aggregate scores for each solution based on
+ * Compute individual weighted sums for each solution based on
  * user specified weights
  *
  * @param weights object specififying weight of each variable, unspecified variables will be assigned weight 0
- * @param chartIDs charts that will display 'aggregate score' variable
+ * @param displayIDs charts that will display 'weighted sum' variable
  * @param norm normalize values (0-1) to obtain fair weighting
  */
-const aggregateScores = (config, ps, flags) =>
+const weightedSums = (config, ps, flags) =>
   function({
     weights,
-    chartIDs = [],
+    displayIDs = [...Array(ps.charts.length).keys()],
     norm = true
   }) {
     // NOTE: if data is re-scored, old score will not affect new score unless it is given a weight itself in the 'weights' object
 
-    if(chartIDs.length == 0) {
-      chartIDs = Object.keys(config.partition);
-    }
     // force numeric type for indexing
-    chartIDs = chartIDs.map(Number);
+    displayIDs = displayIDs.map(Number);
 
     let data = [];
     if (norm === true) {
@@ -51,7 +48,7 @@ const aggregateScores = (config, ps, flags) =>
     // normalize all values against total weight and assign values
     const extents = arr.extents(row_totals);
     data.forEach((d, i) => {
-      config.data[i]['aggregate score'] = (
+      config.data[i]['weighted sum'] = (
         (d.score - extents[0]) /
         (extents[1] - extents[0])
       ).toString();
@@ -59,13 +56,15 @@ const aggregateScores = (config, ps, flags) =>
 
     // partition scores var on charts
     Object.keys(config.partition).forEach( i => {
-      if (!chartIDs.includes(Number(i))) {
-        // chart not in chartIDs, hidden on this chart
-        config.partition[Number(i)].push('aggregate score');
+      if (!displayIDs.includes(Number(i))) {
+        // chart not in displayIDs, hidden on this chart
+        config.partition[Number(i)].push('weighted sum');
       }
     });
 
-    // aggregate scores are ready, update data and charts
+    // weighted sums are ready, update data and charts
+    config.vars.push('weighted sum')
+    console.log(config.vars);
     config.data = format_data(config.data);
     ps.charts.forEach( (pc, i) => {
       pc
@@ -79,11 +78,11 @@ const aggregateScores = (config, ps, flags) =>
 
     if (flags.grid) {
       // add column
-      const cols = add_column(config.grid.getColumns(), 'aggregate score');
+      const cols = add_column(config.grid.getColumns(), 'weighted sum');
       ps.gridUpdate({ columns: cols });
     }
 
     return this;
   };
 
-export default aggregateScores;
+export default weightedSums;

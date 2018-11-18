@@ -28,12 +28,8 @@ const init = config => {
         .mode('queue')
         .brushMode('1D-axes'); //1D-axes must be used with linking
 
-      config.partition[i] = [];
-    });
-
-    // add "id" to partition globally
-    Object.keys(config.partition).forEach(function(id) {
-      config.partition[id] = config.partition[id].concat('id');
+      // add "id" to partition globally
+      config.partition[i] = ['id'];
     });
 
     // for chained api

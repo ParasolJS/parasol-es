@@ -10664,12 +10664,8 @@
         selection$$1.each(function (d, i) {
           ps.charts[i] = ParCoords(config.chartOptions)(this).data(config.data).hideAxis(['id']).alpha(0.4).render().mode('queue').brushMode('1D-axes'); //1D-axes must be used with linking
 
-          config.partition[i] = [];
-        });
-
-        // add "id" to partition globally
-        Object.keys(config.partition).forEach(function (id) {
-          config.partition[id] = config.partition[id].concat('id');
+          // add "id" to partition globally
+          config.partition[i] = ['id'];
         });
 
         // for chained api
@@ -44653,7 +44649,7 @@
      * the cluster with the nearest mean.
      *
      * @param k number of clusters
-     * @param chartIDs charts that will display cluster colors
+     * @param displayIDs charts that will display cluster colors
      * @param palette d3 palette or function mapping cluster ids to color
      * @param vars variables used for clustering. NOTE: associated data must be numeric
      * @param std convert values to zscores to obtain unbiased clusters
@@ -44665,10 +44661,10 @@
         var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
             _ref$k = _ref.k,
             k = _ref$k === undefined ? 3 : _ref$k,
-            _ref$chartIDs = _ref.chartIDs,
-            chartIDs = _ref$chartIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$chartIDs,
             _ref$vars = _ref.vars,
             vars = _ref$vars === undefined ? config.vars : _ref$vars,
+            _ref$displayIDs = _ref.displayIDs,
+            displayIDs = _ref$displayIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$displayIDs,
             _ref$palette = _ref.palette,
             palette = _ref$palette === undefined ? schemeCategory10 : _ref$palette,
             _ref$options = _ref.options,
@@ -44735,6 +44731,7 @@
         }
 
         // format data, update charts
+        config.vars.push('cluster');
         config.data = format_data(config.data);
         ps.charts.forEach(function (pc) {
           pc.data(config.data).render().createAxes();
@@ -44742,8 +44739,8 @@
         });
 
         ps.charts.forEach(function (pc, i) {
-          // only color charts in chartIDs
-          if (chartIDs.includes(i)) {
+          // only color charts in displayIDs
+          if (displayIDs.includes(i)) {
             pc.color(palette);
           }
           pc.hideAxis(config.partition[i]).render().updateAxes(0);
@@ -44778,28 +44775,25 @@
     };
 
     /**
-     * Compute individual aggregate scores for each solution based on
+     * Compute individual weighted sums for each solution based on
      * user specified weights
      *
      * @param weights object specififying weight of each variable, unspecified variables will be assigned weight 0
-     * @param chartIDs charts that will display 'aggregate score' variable
+     * @param displayIDs charts that will display 'weighted sum' variable
      * @param norm normalize values (0-1) to obtain fair weighting
      */
-    var aggregateScores = function aggregateScores(config, ps, flags) {
+    var weightedSums = function weightedSums(config, ps, flags) {
       return function (_ref) {
         var weights = _ref.weights,
-            _ref$chartIDs = _ref.chartIDs,
-            chartIDs = _ref$chartIDs === undefined ? [] : _ref$chartIDs,
+            _ref$displayIDs = _ref.displayIDs,
+            displayIDs = _ref$displayIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$displayIDs,
             _ref$norm = _ref.norm,
             norm = _ref$norm === undefined ? true : _ref$norm;
 
         // NOTE: if data is re-scored, old score will not affect new score unless it is given a weight itself in the 'weights' object
 
-        if (chartIDs.length == 0) {
-          chartIDs = Object.keys(config.partition);
-        }
         // force numeric type for indexing
-        chartIDs = chartIDs.map(Number);
+        displayIDs = displayIDs.map(Number);
 
         var data = [];
         if (norm === true) {
@@ -44830,18 +44824,20 @@
         // normalize all values against total weight and assign values
         var extents = arr.extents(row_totals);
         data.forEach(function (d, i) {
-          config.data[i]['aggregate score'] = ((d.score - extents[0]) / (extents[1] - extents[0])).toString();
+          config.data[i]['weighted sum'] = ((d.score - extents[0]) / (extents[1] - extents[0])).toString();
         });
 
         // partition scores var on charts
         Object.keys(config.partition).forEach(function (i) {
-          if (!chartIDs.includes(Number(i))) {
-            // chart not in chartIDs, hidden on this chart
-            config.partition[Number(i)].push('aggregate score');
+          if (!displayIDs.includes(Number(i))) {
+            // chart not in displayIDs, hidden on this chart
+            config.partition[Number(i)].push('weighted sum');
           }
         });
 
-        // aggregate scores are ready, update data and charts
+        // weighted sums are ready, update data and charts
+        config.vars.push('weighted sum');
+        console.log(config.vars);
         config.data = format_data(config.data);
         ps.charts.forEach(function (pc, i) {
           pc.data(config.data).hideAxis(config.partition[i]).render().createAxes();
@@ -44851,7 +44847,7 @@
 
         if (flags.grid) {
           // add column
-          var cols = add_column(config.grid.getColumns(), 'aggregate score');
+          var cols = add_column(config.grid.getColumns(), 'weighted sum');
           ps.gridUpdate({ columns: cols });
         }
 
@@ -44943,6 +44939,44 @@
 
           ps.charts[chartID].hideAxis(vars);
           ps.charts[chartID].render().updateAxes(500);
+        });
+
+        return this;
+      };
+    };
+
+    /**
+     * Specify the axes that will appear in each chart. Default for unspecified charts is to display all axes.
+     *
+     * @param layout: object idenifying a list of axes to be shown on each chart; format as { chart id: [vars to show]}
+     */
+    var setAxesLayout = function setAxesLayout(config, ps, flags) {
+      return function (layout) {
+
+        if (isPlainObject(layout)) {
+          // take difference of all variables and layout variables
+          // i.e. show only those which appear in both data and layout
+          Object.entries(layout).forEach(function (_ref) {
+            var _ref2 = slicedToArray(_ref, 2),
+                key = _ref2[0],
+                values = _ref2[1];
+
+            if (config.partition[key]) {
+              config.partition[key] = difference(config.vars.concat('id'), layout[key]);
+            }
+          });
+        } else {
+          throw 'Error: please provide layout as a plain object.';
+        }
+
+        // iterate over partition keys and hide only remaining variables in value array
+        Object.entries(config.partition).forEach(function (_ref3) {
+          var _ref4 = slicedToArray(_ref3, 2),
+              chartID = _ref4[0],
+              vars = _ref4[1];
+
+          ps.charts[chartID].hideAxis(vars);
+          ps.charts[chartID].render().updateAxes(0);
         });
 
         return this;
@@ -45424,9 +45458,10 @@
       ps.gridUpdate = gridUpdate(config, ps, flags);
       ps.linked = linked(config, ps, flags);
       ps.cluster = cluster$1(config, ps, flags);
-      ps.aggregateScores = aggregateScores(config, ps, flags);
+      ps.weightedSums = weightedSums(config, ps, flags);
       ps.hideAxes = hideAxes(config, ps, flags);
       ps.showAxes = showAxes(config, ps, flags);
+      ps.setAxesLayout = setAxesLayout(config, ps, flags);
       ps.keepData = keepData(config, ps, flags);
       ps.removeData = removeData(config, ps, flags);
       ps.exportData = exportData(config, ps, flags);

@@ -4,7 +4,7 @@
     <meta content="utf-8" http-equiv="encoding">
 </head>
 
-<title>Visible Axes</title>
+<title>Axes Layout</title>
 
 <link rel="stylesheet" type="text/css" href="./parcoords.css">
 <link rel="stylesheet" type="text/css" href="style.css">
@@ -13,7 +13,7 @@
 <script src="./parasol.standalone.js"></script>
 
 <body>
-<p>This example demonstrates the abiltiy to hide and show an axis or set of axes, either across all charts or partitioned to specific charts.</p>
+<p>This example demonstrates how to setup axes and then hide and show an axis or set of axes interactively, either across all charts or partitioned to specific charts.</p>
 
 <p>
     <button id="hide_name">Hide 'Name'</button>
@@ -31,7 +31,13 @@
 <script>
 d3.csv('data/cars.csv').then(function(data) {
   // initialize chart closures
-  var ps = Parasol(data)('.parcoords');
+  var ps = Parasol(data)('.parcoords')
+            .setAxesLayout({
+              1: ['displacement (cc)', 'power (hp)',
+                  'weight (lb)', '0-60 mph (s)'],
+              2: ['economy (mpg)', 'cylinders',
+                  'displacement (cc)']
+            })
 
   var partition = {
     // 0: ['weight (lb)', '0-60 mph (s)'], // for some reason this breaks...

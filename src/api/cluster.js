@@ -10,7 +10,7 @@ import add_column from '../util/add_column';
  * the cluster with the nearest mean.
  *
  * @param k number of clusters
- * @param chartIDs charts that will display cluster colors
+ * @param displayIDs charts that will display cluster colors
  * @param palette d3 palette or function mapping cluster ids to color
  * @param vars variables used for clustering. NOTE: associated data must be numeric
  * @param std convert values to zscores to obtain unbiased clusters
@@ -20,8 +20,8 @@ import add_column from '../util/add_column';
 const cluster = (config, ps, flags) =>
   function ({
     k = 3,
-    chartIDs = [...Array(ps.charts.length).keys()],
     vars = config.vars,
+    displayIDs = [...Array(ps.charts.length).keys()],
     palette = schemeCategory10,
     options = {},
     std = true,
@@ -79,6 +79,7 @@ const cluster = (config, ps, flags) =>
     }
 
     // format data, update charts
+    config.vars.push('cluster');
     config.data = format_data(config.data);
     ps.charts.forEach(pc => {
       pc
@@ -89,8 +90,8 @@ const cluster = (config, ps, flags) =>
     });
 
     ps.charts.forEach( (pc, i) => {
-      // only color charts in chartIDs
-      if (chartIDs.includes(i)) {
+      // only color charts in displayIDs
+      if (displayIDs.includes(i)) {
         pc.color(palette);
       }
       pc

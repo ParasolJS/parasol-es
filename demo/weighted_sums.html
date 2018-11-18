@@ -4,7 +4,7 @@
     <meta content="utf-8" http-equiv="encoding">
 </head>
 
-<title>Aggregate Scores</title>
+<title>Weighted Sums</title>
 
 <link rel="stylesheet" type="text/css" href="style.css">
 <link rel="stylesheet" type="text/css" href="./parcoords.css">
@@ -29,9 +29,9 @@ d3.csv('data/cars.csv').then(function(data) {
   };
 
   var ps = Parasol(data)('.parcoords')
-            .aggregateScores({ weights: weights });
+            .weightedSums({ weights: weights });
 
-  // update charts
+  // update charts (this overwrites the partition)
   ps.charts.forEach(
     (pc) => {
       pc
