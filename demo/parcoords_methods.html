@@ -1,0 +1,52 @@
+<!doctype html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+</head>
+
+<title>Demo Parcoords Methods</title>
+
+<link rel="stylesheet" type="text/css" href="parasol.css">
+
+<script src="./lib/d3.v5.min.js"></script>
+<script src="./parasol.standalone.js"></script>
+
+<body>
+<p>Parcoords methods implemented for streamlined use in Parasol.</p>
+<p>
+    <button id="reset_brushes">Reset Brushes</button>
+</p>
+
+<div id="plot01" class="parcoords" style="height:200px; width:800px;"></div>
+<div id="plot02" class="parcoords" style="height:200px; width:800px;"></div>
+<div id="grid" style="width:100%;height:500px;" class="slickgrid-container"></div>
+</body>
+
+<script>
+d3.csv('data/cars.csv').then(function(data) {
+
+  // initialize chart closures
+  var ps = Parasol(data)('.parcoords')
+            // .hideAxes(['name'])
+            .attachGrid({container: '#grid'})
+            .linked();
+
+  // update charts with parcoords methods
+  ps
+    .alpha({color: 0.5})
+    .color({color: '#03719c'})
+    .shadows()
+    .alphaOnBrushed({chartIDs: [0], alpha: 0.2}) //this is a bit redundant
+    .brushedColor({chartIDs: [1], color: '#fc5a50'})
+    .reorderable()
+    .composite({mode: 'darker'})
+    .scale({chartIDs: [1], axis: 'year', domain: [30, 90]});
+    // .flipAxes({axes: ['economy (mpg)', 'power (hp)']}) // currently broken
+
+  d3.select('#reset_brushes').on('click', function() {
+    // reset first two plots
+    ps.globalBrushReset([0,1])
+  });
+
+});
+</script>

@@ -21,6 +21,16 @@ import globalBrushReset from './api/globalBrushReset';
 import globalMarkReset from './api/globalMarkReset';
 import resetSelections from './api/resetSelections';
 
+import alpha from './api/alpha';
+import color from './api/color';
+import alphaOnBrushed from './api/alphaOnBrushed';
+import brushedColor from './api/brushedColor';
+import reorderable from './api/reorderable';
+import composite from './api/composite';
+import shadows from './api/shadows';
+import flipAxes from './api/flipAxes';
+import scale from './api/scale';
+
 import initState from './state/initState';
 // import bindEvents from './bindEvents';
 import { version } from '../package.json';
@@ -55,6 +65,20 @@ const Parasol = (data, userConfig) => {
   ps.globalBrushReset = globalBrushReset(config, ps, flags);
   ps.globalMarkReset = globalMarkReset(config, ps, flags);
   ps.resetSelections = resetSelections(config, ps, flags);
+
+  // parcoords methods
+  ps.alpha = alpha(config, ps, flags);
+  ps.color = color(config, ps, flags);
+  ps.brushedColor = brushedColor(config, ps, flags);
+  ps.shadows = shadows(config, ps, flags);
+  ps.alphaOnBrushed = alphaOnBrushed(config, ps, flags);
+  ps.reorderable = reorderable(config, ps, flags);
+  ps.composite = composite(config, ps, flags);
+  ps.scale = scale(config, ps, flags);
+  ps.flipAxes = flipAxes(config, ps, flags);
+  // ps.bundlingStrength
+  // ps.smoothness
+  // ps.bundleDimension
 
   return ps;
 };
