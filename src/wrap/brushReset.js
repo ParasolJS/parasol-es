@@ -1,8 +1,6 @@
-// reset listed brushes and preform necessary updates
-const globalBrushReset = (config, ps, flags) => charts => {
-  if (Array.isArray(charts)) {
-    // reset brushes in provided charts
-    charts.forEach( pc => pc.brushReset() );
+// parcoords wrapper: reset all brushes and preform necessary updates
+const brushReset = (config, ps, flags) => () => {
+    ps.charts.forEach( pc => pc.brushReset() );
 
     // NOTE: if charts are linked and at least one is not reset, then none will be reset
 
@@ -13,8 +11,6 @@ const globalBrushReset = (config, ps, flags) => charts => {
     if (flags.grid) {
       ps.gridUpdate();
     }
-
-  }
 };
 
-export default globalBrushReset;
+export default brushReset;

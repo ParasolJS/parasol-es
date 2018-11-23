@@ -5,11 +5,11 @@ import add_column from '../util/add_column';
 
 /**
  * Compute individual weighted sums for each solution based on
- * user specified weights
+ * user specified weights.
  *
- * @param weights object specififying weight of each variable, unspecified variables will be assigned weight 0
- * @param displayIDs charts that will display 'weighted sum' variable
- * @param norm normalize values (0-1) to obtain fair weighting
+ * @param {object} weights: specify weight of each variable, unspecified variables will be assigned weight 0
+ * @param {array} displayIDs: charts that will display 'weighted sum' variable; defaults to all charts
+ * @param {bool} norm: normalize values (0-1) to obtain fair weighting
  */
 const weightedSums = (config, ps, flags) =>
   function({

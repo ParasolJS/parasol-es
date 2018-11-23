@@ -4,9 +4,9 @@ import { saveAs } from 'file-saver/FileSaver';
 /**
  * Export selected data to new csv and download
  *
- * @param selection: {string} one of {'brushed', 'marked', 'both'}
- * @param filename: {string} name of csv file to be downloaded
- * @param exportAll: {boolean} override selection param and export all data
+ * @param {string} selection: one of {'brushed', 'marked', 'both'}
+ * @param {string} filename:  name of csv file to be downloaded
+ * @param {boolean} exportAll:  override selection param and export all data
  */
 const exportData = (config, ps, flags) =>
   function({ selection='both', filename=null, exportAll=false }) {
@@ -27,7 +27,6 @@ const exportData = (config, ps, flags) =>
     } else {
       throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
     }
-    // console.log(d);
 
     if (d.length > 0) {
       // format data as csv

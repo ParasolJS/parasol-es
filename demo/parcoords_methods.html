@@ -27,25 +27,55 @@ d3.csv('data/cars.csv').then(function(data) {
 
   // initialize chart closures
   var ps = Parasol(data)('.parcoords')
-            // .hideAxes(['name'])
-            .attachGrid({container: '#grid'})
-            .linked();
+          // .attachGrid({container: '#grid'})
+          // .linked();
+
+  var range = ps.charts[0].height() - ps.charts[0].margin().top - ps.charts[0].margin().bottom;
+  var min = d3.min(data, function(d) {
+      return parseInt(d['displacement (cc)']);
+  });
+  var max = d3.max(data, function(d) {
+      return parseInt(d['displacement (cc)']);
+  });
+  var log = d3.scaleLog().domain([min, max]).range([range, 1]);
+  var dimensions = {
+      'displacement (cc)': {
+          title: "Displacement (cc)",
+          yscale: log,
+          tickFormat: function(d){
+              return log.tickFormat(4,d3.format(",d"))(d);
+          }
+      },
+      'power (hp)': {
+          title: "MMhhm Power",
+          innerTickSize: 10,
+          outerTickSize: 20
+      },
+      'year': {
+          orient: 'right'
+      }
+  };
 
   // update charts with parcoords methods
   ps
-    .alpha({color: 0.5})
-    .color({color: '#03719c'})
+    .color('#03719c')
+    .alpha(0.4)
     .shadows()
-    .alphaOnBrushed({chartIDs: [0], alpha: 0.2}) //this is a bit redundant
-    .brushedColor({chartIDs: [1], color: '#fc5a50'})
+    .alphaOnBrushed(0.2) //this is redundant with shadows
+    .brushedColor('#fc5a50')
     .reorderable()
-    .composite({mode: 'darker'})
-    .scale({chartIDs: [1], axis: 'year', domain: [30, 90]});
-    // .flipAxes({axes: ['economy (mpg)', 'power (hp)']}) // currently broken
+    .composite('darker')
+    // .dimensions(dimensions) // broken
+    // .scale('year', [30, 90])
+    // .flipAxes(['economy (mpg)', 'power (hp)']) // broken (parcoords bug)
+    // .bundleDimension('cylinders') // broken
+    // .bundlingStrength(0.4) 
+    // .smoothness(0.2)
+    .render();
 
   d3.select('#reset_brushes').on('click', function() {
     // reset first two plots
-    ps.globalBrushReset([0,1])
+    ps.brushReset()
   });
 
 });

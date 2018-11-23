@@ -7,9 +7,9 @@ import as_float from '../util/as_float';
    * Creates a new instance of the grid.
    * @class SlickGrid
    * @constructor
-   * @param {String} container   DOM element in which grid will be placed.
-   * @param {Array}  columns     An array of column definitions (objects).
-   * @param {Object} options     SlickGrid options.
+   * @param {string} container:   DOM element in which grid will be placed.
+   * @param {array}  columns:    An array of column definitions (objects).
+   * @param {object} options:     SlickGrid options.
 **/
 const attachGrid = (config, ps, flags) =>
   function({ container, columns = null, options = null }) {

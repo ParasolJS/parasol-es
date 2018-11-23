@@ -1,11 +1,12 @@
 import sync from './sync';
 
-// link brush activity between user specified charts, and grid if it exists
+/**
+   * Link brush activity between specified charts, and grid if it exists.
+   *
+   * @param {array} chartIDs:   charts to be linked (defaults to all).
+**/
 const linked = (config, ps, flags) =>
-  function(chartIDs = []) {
-    if(chartIDs.length == 0) {
-      chartIDs = Object.keys(config.partition);
-    }
+  function(chartIDs = [...Array(ps.charts.length).keys()]) {
     // force numeric type for indexing
     chartIDs = chartIDs.map(Number);
 

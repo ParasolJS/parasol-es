@@ -41,15 +41,15 @@ d3.csv('data/cars.csv').then(function(data) {
             .attachGrid({container: '#grid'})
             .linked();
 
-  ps.charts.forEach(
-    (pc) => {
-      pc
-        .hideAxis(['name'])
-        .reorderable()
-        .render()
-        .updateAxes(0);
-    }
-  )
+  // ps.charts.forEach(
+  //   (pc) => {
+  //     pc
+  //       .hideAxis(['name'])
+  //       .reorderable()
+  //       .render()
+  //       .updateAxes(0);
+  //   }
+  // )
 
   // wire-up buttons
   d3.select('#reset_brushes').on('click', function() {

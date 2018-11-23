@@ -1,18 +1,18 @@
 /**
- * Selections are the collection of all brushed and marked data; reset all or just a subset -- brushed or marked
+ * Selections are the collection of all brushed and marked data; reset all or just a subset (brushed or marked)
  *
- * @param selection: One of {'brushed', 'marked', 'both'} keywords as string
+ * @param {string} selection: One of {'brushed', 'marked', 'both'} keywords as string
  *
- * NOTE: only linked charts are affected
+ * NOTE: if linked charts exist, only those are affected
  */
 const resetSelections = (config, ps, flags) => selection => {
   if (selection == 'brushed') {
-    ps.globalBrushReset(ps.linked);
+    ps.brushReset();
   } else if (selection == 'marked') {
-    ps.globalMarkReset(ps.linked);
+    ps.unmark();
   } else if (selection == 'both') {
-    ps.globalBrushReset(ps.linked);
-    ps.globalMarkReset(ps.linked);
+    ps.brushReset();
+    ps.unmark();
   } else {
     throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
   }

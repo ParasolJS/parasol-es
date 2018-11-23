@@ -1,7 +1,7 @@
 import { isPlainObject, union } from 'lodash-es';
 
 /**
- * Hide a set of axes globally or from specific charts
+ * Hide a set of axes globally or from specific charts.
  *
  * @param partition: array or object idenifying axes to be hidden; if object, format as { chart id: [hidden vars]}
  */

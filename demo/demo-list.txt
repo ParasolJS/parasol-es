@@ -18,4 +18,6 @@ One example to highlight parcoords features:
 marking
 reorderable axes
 scale
+dimensions
+bundling
 coloring datasets, etc.

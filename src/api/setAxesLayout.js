@@ -3,7 +3,7 @@ import { isPlainObject, difference } from 'lodash-es';
 /**
  * Specify the axes that will appear in each chart. Default for unspecified charts is to display all axes.
  *
- * @param layout: object idenifying a list of axes to be shown on each chart; format as { chart id: [vars to show]}
+ * @param {object} layout:  indentify a list of axes to be shown on each chart; format as { chart id: [vars to show]}
  */
 const setAxesLayout = (config, ps, flags) =>
   function(layout) {

@@ -9,13 +9,13 @@ import add_column from '../util/add_column';
  * Partition data into k clusters in which each data element belongs to
  * the cluster with the nearest mean.
  *
- * @param k number of clusters
- * @param displayIDs charts that will display cluster colors
- * @param palette d3 palette or function mapping cluster ids to color
- * @param vars variables used for clustering. NOTE: associated data must be numeric
- * @param std convert values to zscores to obtain unbiased clusters
- * @param options ml-kmeans options
- * @param hidden determines whether cluster axis will be displayed on charts (can be individually updated later)
+ * @param {int} k: number of clusters
+ * @param {array} displayIDs: charts that will display cluster colors
+ * @param {} palette: d3 palette or function mapping cluster ids to color
+ * @param {array} vars: variables used for clustering. NOTE: associated data must be numeric
+ * @param {object} options: ml-kmeans options
+ * @param {bool} std: convert values to zscores to obtain unbiased clusters
+ * @param {bool} hidden: determines whether cluster axis will be displayed on charts (can be individually updated with hideAxis later)
  */
 const cluster = (config, ps, flags) =>
   function ({

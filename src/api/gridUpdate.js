@@ -1,7 +1,11 @@
 import { union } from 'lodash-es';
 import as_float from '../util/as_float';
 
-//update data displayed in grid
+/**
+   * Update data displayed in grid.
+   * @param {array}  data:    array of objects.
+   * @param {array} columns:  column definitions.
+**/
 const gridUpdate = (config, ps, flags) => function({
   data = null,
   columns = null

@@ -5556,6 +5556,7 @@
         return (end - start) / k;
       });
     };
+    var milliseconds = millisecond.range;
 
     var durationSecond = 1e3;
     var durationMinute = 6e4;
@@ -5572,6 +5573,7 @@
     }, function(date) {
       return date.getUTCSeconds();
     });
+    var seconds = second.range;
 
     var minute = newInterval(function(date) {
       date.setTime(Math.floor(date / durationMinute) * durationMinute);
@@ -5582,6 +5584,7 @@
     }, function(date) {
       return date.getMinutes();
     });
+    var minutes = minute.range;
 
     var hour = newInterval(function(date) {
       var offset = date.getTimezoneOffset() * durationMinute % durationHour;
@@ -5594,6 +5597,7 @@
     }, function(date) {
       return date.getHours();
     });
+    var hours = hour.range;
 
     var day = newInterval(function(date) {
       date.setHours(0, 0, 0, 0);
@@ -5604,6 +5608,7 @@
     }, function(date) {
       return date.getDate() - 1;
     });
+    var days = day.range;
 
     function weekday(i) {
       return newInterval(function(date) {
@@ -5624,6 +5629,8 @@
     var friday = weekday(5);
     var saturday = weekday(6);
 
+    var sundays = sunday.range;
+
     var month = newInterval(function(date) {
       date.setDate(1);
       date.setHours(0, 0, 0, 0);
@@ -5634,6 +5641,7 @@
     }, function(date) {
       return date.getMonth();
     });
+    var months = month.range;
 
     var year = newInterval(function(date) {
       date.setMonth(0, 1);
@@ -5656,6 +5664,7 @@
         date.setFullYear(date.getFullYear() + step * k);
       });
     };
+    var years = year.range;
 
     var utcMinute = newInterval(function(date) {
       date.setUTCSeconds(0, 0);
@@ -5666,6 +5675,7 @@
     }, function(date) {
       return date.getUTCMinutes();
     });
+    var utcMinutes = utcMinute.range;
 
     var utcHour = newInterval(function(date) {
       date.setUTCMinutes(0, 0, 0);
@@ -5676,6 +5686,7 @@
     }, function(date) {
       return date.getUTCHours();
     });
+    var utcHours = utcHour.range;
 
     var utcDay = newInterval(function(date) {
       date.setUTCHours(0, 0, 0, 0);
@@ -5686,6 +5697,7 @@
     }, function(date) {
       return date.getUTCDate() - 1;
     });
+    var utcDays = utcDay.range;
 
     function utcWeekday(i) {
       return newInterval(function(date) {
@@ -5706,6 +5718,8 @@
     var utcFriday = utcWeekday(5);
     var utcSaturday = utcWeekday(6);
 
+    var utcSundays = utcSunday.range;
+
     var utcMonth = newInterval(function(date) {
       date.setUTCDate(1);
       date.setUTCHours(0, 0, 0, 0);
@@ -5716,6 +5730,7 @@
     }, function(date) {
       return date.getUTCMonth();
     });
+    var utcMonths = utcMonth.range;
 
     var utcYear = newInterval(function(date) {
       date.setUTCMonth(0, 1);
@@ -5738,6 +5753,7 @@
         date.setUTCFullYear(date.getUTCFullYear() + step * k);
       });
     };
+    var utcYears = utcYear.range;
 
     function localDate(d) {
       if (0 <= d.y && d.y < 100) {
@@ -40286,9 +40302,9 @@
        * Creates a new instance of the grid.
        * @class SlickGrid
        * @constructor
-       * @param {String} container   DOM element in which grid will be placed.
-       * @param {Array}  columns     An array of column definitions (objects).
-       * @param {Object} options     SlickGrid options.
+       * @param {string} container:   DOM element in which grid will be placed.
+       * @param {array}  columns:    An array of column definitions (objects).
+       * @param {object} options:     SlickGrid options.
     **/
     var attachGrid = function attachGrid(config, ps, flags) {
       return function (_ref) {
@@ -40380,7 +40396,11 @@
       };
     };
 
-    //update data displayed in grid
+    /**
+       * Update data displayed in grid.
+       * @param {array}  data:    array of objects.
+       * @param {array} columns:  column definitions.
+    **/
     var gridUpdate = function gridUpdate(config, ps, flags) {
       return function () {
         var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
@@ -40461,14 +40481,63 @@
       };
     };
 
-    // link brush activity between user specified charts, and grid if it exists
+    var slicedToArray = function () {
+      function sliceIterator(arr, i) {
+        var _arr = [];
+        var _n = true;
+        var _d = false;
+        var _e = undefined;
+
+        try {
+          for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+            _arr.push(_s.value);
+
+            if (i && _arr.length === i) break;
+          }
+        } catch (err) {
+          _d = true;
+          _e = err;
+        } finally {
+          try {
+            if (!_n && _i["return"]) _i["return"]();
+          } finally {
+            if (_d) throw _e;
+          }
+        }
+
+        return _arr;
+      }
+
+      return function (arr, i) {
+        if (Array.isArray(arr)) {
+          return arr;
+        } else if (Symbol.iterator in Object(arr)) {
+          return sliceIterator(arr, i);
+        } else {
+          throw new TypeError("Invalid attempt to destructure non-iterable instance");
+        }
+      };
+    }();
+
+    var toConsumableArray = function (arr) {
+      if (Array.isArray(arr)) {
+        for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+        return arr2;
+      } else {
+        return Array.from(arr);
+      }
+    };
+
+    /**
+       * Link brush activity between specified charts, and grid if it exists.
+       *
+       * @param {array} chartIDs:   charts to be linked (defaults to all).
+    **/
     var linked = function linked(config, ps, flags) {
       return function () {
-        var chartIDs = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+        var chartIDs = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [].concat(toConsumableArray(Array(ps.charts.length).keys()));
 
-        if (chartIDs.length == 0) {
-          chartIDs = Object.keys(config.partition);
-        }
         // force numeric type for indexing
         chartIDs = chartIDs.map(Number);
 
@@ -44507,54 +44576,6 @@
       }
     }
 
-    var slicedToArray = function () {
-      function sliceIterator(arr, i) {
-        var _arr = [];
-        var _n = true;
-        var _d = false;
-        var _e = undefined;
-
-        try {
-          for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
-            _arr.push(_s.value);
-
-            if (i && _arr.length === i) break;
-          }
-        } catch (err) {
-          _d = true;
-          _e = err;
-        } finally {
-          try {
-            if (!_n && _i["return"]) _i["return"]();
-          } finally {
-            if (_d) throw _e;
-          }
-        }
-
-        return _arr;
-      }
-
-      return function (arr, i) {
-        if (Array.isArray(arr)) {
-          return arr;
-        } else if (Symbol.iterator in Object(arr)) {
-          return sliceIterator(arr, i);
-        } else {
-          throw new TypeError("Invalid attempt to destructure non-iterable instance");
-        }
-      };
-    }();
-
-    var toConsumableArray = function (arr) {
-      if (Array.isArray(arr)) {
-        for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-        return arr2;
-      } else {
-        return Array.from(arr);
-      }
-    };
-
     // wrangling tools to manipulate data for processing values
 
     // d3 data is formatted as array of objects, each row is an object
@@ -44691,13 +44712,13 @@
      * Partition data into k clusters in which each data element belongs to
      * the cluster with the nearest mean.
      *
-     * @param k number of clusters
-     * @param displayIDs charts that will display cluster colors
-     * @param palette d3 palette or function mapping cluster ids to color
-     * @param vars variables used for clustering. NOTE: associated data must be numeric
-     * @param std convert values to zscores to obtain unbiased clusters
-     * @param options ml-kmeans options
-     * @param hidden determines whether cluster axis will be displayed on charts (can be individually updated later)
+     * @param {int} k: number of clusters
+     * @param {array} displayIDs: charts that will display cluster colors
+     * @param {} palette: d3 palette or function mapping cluster ids to color
+     * @param {array} vars: variables used for clustering. NOTE: associated data must be numeric
+     * @param {object} options: ml-kmeans options
+     * @param {bool} std: convert values to zscores to obtain unbiased clusters
+     * @param {bool} hidden: determines whether cluster axis will be displayed on charts (can be individually updated with hideAxis later)
      */
     var cluster$1 = function cluster$$1(config, ps, flags) {
       return function () {
@@ -44819,11 +44840,11 @@
 
     /**
      * Compute individual weighted sums for each solution based on
-     * user specified weights
+     * user specified weights.
      *
-     * @param weights object specififying weight of each variable, unspecified variables will be assigned weight 0
-     * @param displayIDs charts that will display 'weighted sum' variable
-     * @param norm normalize values (0-1) to obtain fair weighting
+     * @param {object} weights: specify weight of each variable, unspecified variables will be assigned weight 0
+     * @param {array} displayIDs: charts that will display 'weighted sum' variable; defaults to all charts
+     * @param {bool} norm: normalize values (0-1) to obtain fair weighting
      */
     var weightedSums = function weightedSums(config, ps, flags) {
       return function (_ref) {
@@ -44899,7 +44920,7 @@
     };
 
     /**
-     * Hide a set of axes globally or from specific charts
+     * Hide a set of axes globally or from specific charts.
      *
      * @param partition: array or object idenifying axes to be hidden; if object, format as { chart id: [hidden vars]}
      */
@@ -44991,7 +45012,7 @@
     /**
      * Specify the axes that will appear in each chart. Default for unspecified charts is to display all axes.
      *
-     * @param layout: object idenifying a list of axes to be shown on each chart; format as { chart id: [vars to show]}
+     * @param {object} layout:  indentify a list of axes to be shown on each chart; format as { chart id: [vars to show]}
      */
     var setAxesLayout = function setAxesLayout(config, ps, flags) {
       return function (layout) {
@@ -45309,9 +45330,9 @@
     /**
      * Export selected data to new csv and download
      *
-     * @param selection: {string} one of {'brushed', 'marked', 'both'}
-     * @param filename: {string} name of csv file to be downloaded
-     * @param exportAll: {boolean} override selection param and export all data
+     * @param {string} selection: one of {'brushed', 'marked', 'both'}
+     * @param {string} filename:  name of csv file to be downloaded
+     * @param {boolean} exportAll:  override selection param and export all data
      */
     var exportData = function exportData(config, ps, flags) {
       return function (_ref) {
@@ -45339,7 +45360,6 @@
         } else {
           throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
         }
-        // console.log(d);
 
         if (d.length > 0) {
           // format data as csv
@@ -45356,223 +45376,228 @@
       };
     };
 
-    // reset listed brushes and preform necessary updates
-    var globalBrushReset = function globalBrushReset(config, ps, flags) {
-      return function (charts) {
-        if (Array.isArray(charts)) {
-          // reset brushes in provided charts
-          charts.forEach(function (pc) {
-            return pc.brushReset();
-          });
-
-          // NOTE: if charts are linked and at least one is not reset, then none will be reset
-
-          // NOTE: brushed data in config is updated by sync() as consequence of pc.brushReset()
-          // currently need to force due to issue with ParCoords.selected() returning entire dataset if brush extents are empty
-          config.brushed = [];
-
-          if (flags.grid) {
-            ps.gridUpdate();
-          }
-        }
-      };
-    };
-
-    // reset marks and preform necessary updates
-    var globalMarkReset = function globalMarkReset(config, ps, flags) {
-      return function (charts) {
-        if (flags.grid) {
-          config.grid.setSelectedRows([]);
-          ps.gridUpdate();
-        }
-        if (Array.isArray(charts)) {
-          // reset marks in provided charts
-          charts.forEach(function (pc) {
-            return pc.unmark();
-          });
-          config.marked = [];
-        }
-      };
-    };
-
     /**
-     * Selections are the collection of all brushed and marked data; reset all or just a subset -- brushed or marked
+     * Selections are the collection of all brushed and marked data; reset all or just a subset (brushed or marked)
      *
-     * @param selection: One of {'brushed', 'marked', 'both'} keywords as string
+     * @param {string} selection: One of {'brushed', 'marked', 'both'} keywords as string
      *
-     * NOTE: only linked charts are affected
+     * NOTE: if linked charts exist, only those are affected
      */
     var resetSelections = function resetSelections(config, ps, flags) {
       return function (selection) {
         if (selection == 'brushed') {
-          ps.globalBrushReset(ps.linked);
+          ps.brushReset();
         } else if (selection == 'marked') {
-          ps.globalMarkReset(ps.linked);
+          ps.unmark();
         } else if (selection == 'both') {
-          ps.globalBrushReset(ps.linked);
-          ps.globalMarkReset(ps.linked);
+          ps.brushReset();
+          ps.unmark();
         } else {
           throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
         }
       };
     };
 
-    // wrapper function: set foreground alpha on specified charts
-    // default is to implement on all charts
+    // parcoords wrapper: set foreground alpha on all charts
     var alpha = function alpha(config, ps, flags) {
-      return function (_ref) {
-        var _ref$chartIDs = _ref.chartIDs,
-            chartIDs = _ref$chartIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$chartIDs,
-            alpha = _ref.alpha;
-
-        ps.charts.forEach(function (pc, i) {
-          if (chartIDs.includes(i)) {
-            pc.alpha(alpha).hideAxis(config.partition[i]).render().updateAxes(0);
-          }
+      return function (d) {
+        ps.charts.forEach(function (pc) {
+          return pc.alpha(d);
         });
         return this;
       };
     };
 
-    // wrapper function: set polyline hex color on specified charts
-    // default is to implement on all charts
+    // parcoords wrapper: set polyline hex color on all charts
     var color$1 = function color(config, ps, flags) {
-      return function (_ref) {
-        var _ref$chartIDs = _ref.chartIDs,
-            chartIDs = _ref$chartIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$chartIDs,
-            color = _ref.color;
-
-        ps.charts.forEach(function (pc, i) {
-          if (chartIDs.includes(i)) {
-            pc.color(color).hideAxis(config.partition[i]).render().updateAxes(0);
-          }
+      return function (d) {
+        ps.charts.forEach(function (pc) {
+          return pc.color(d);
         });
         return this;
       };
     };
 
-    // wrapper function: set foreground alpha when brushes exist on specified charts
-    // default is to implement on all charts
+    // parcoords wrapper: set foreground alpha when brushes exist
     var alphaOnBrushed = function alphaOnBrushed(config, ps, flags) {
-      return function (_ref) {
-        var _ref$chartIDs = _ref.chartIDs,
-            chartIDs = _ref$chartIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$chartIDs,
-            alpha = _ref.alpha;
-
-        ps.charts.forEach(function (pc, i) {
-          if (chartIDs.includes(i)) {
-            pc.alphaOnBrushed(alpha).hideAxis(config.partition[i]).render().updateAxes(0);
-          }
+      return function (d) {
+        ps.charts.forEach(function (pc) {
+          return pc.alphaOnBrushed(d);
         });
         return this;
       };
     };
 
-    // wrapper function: set hex color of polylines within brush extents on specified charts
-    // default is to implement on all charts
+    // parcoords wrapper: set hex color of polylines within brush extents
     var brushedColor = function brushedColor(config, ps, flags) {
-      return function (_ref) {
-        var _ref$chartIDs = _ref.chartIDs,
-            chartIDs = _ref$chartIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$chartIDs,
-            color = _ref.color;
-
-        ps.charts.forEach(function (pc, i) {
-          if (chartIDs.includes(i)) {
-            pc.brushedColor(color).hideAxis(config.partition[i]).render().updateAxes(0);
-          }
+      return function (d) {
+        ps.charts.forEach(function (pc) {
+          return pc.brushedColor(d);
         });
         return this;
       };
     };
 
-    // wrapper function: enable reordering on specified charts
-    // default is to implement on all charts
+    // parcoords wrapper: enable reordering on all charts
+
+    // const reorderable = (config, ps, flags) =>
+    //   function({ chartIDs=[...Array(ps.charts.length).keys()] }={}) {
+    //     ps.charts.forEach( (pc, i) => {
+    //       if (chartIDs.includes(i)) {
+    //         pc
+    //           .reorderable()
+    //           .hideAxis(config.partition[i])
+    //           .render()
+    //           .updateAxes(0);
+    //       }
+    //     });
+    //     return this;
+    //   }
+    // export default reorderable;
+
     var reorderable$1 = function reorderable(config, ps, flags) {
       return function () {
-        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            _ref$chartIDs = _ref.chartIDs,
-            chartIDs = _ref$chartIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$chartIDs;
-
-        ps.charts.forEach(function (pc, i) {
-          if (chartIDs.includes(i)) {
-            pc.reorderable().hideAxis(config.partition[i]).render().updateAxes(0);
-          }
+        ps.charts.forEach(function (pc) {
+          return pc.reorderable();
         });
         return this;
       };
     };
 
-    // wrapper function: set composite mode on specified charts
-    // default is to implement on all charts
+    // parcoords wrapper: set composite mode on all charts
     var composite = function composite(config, ps, flags) {
-      return function (_ref) {
-        var _ref$chartIDs = _ref.chartIDs,
-            chartIDs = _ref$chartIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$chartIDs,
-            mode = _ref.mode;
-
-        ps.charts.forEach(function (pc, i) {
-          if (chartIDs.includes(i)) {
-            pc.composite(mode).hideAxis(config.partition[i]).render().updateAxes(0);
-          }
+      return function (d) {
+        ps.charts.forEach(function (pc) {
+          return pc.composite(d);
         });
         return this;
       };
     };
 
-    // wrapper function: enable shadows on specified charts
-    // default is to implement on all charts
+    // parcoords wrapper: enable shadows on all charts
     var shadows$1 = function shadows(config, ps, flags) {
-      return function () {
-        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            _ref$chartIDs = _ref.chartIDs,
-            chartIDs = _ref$chartIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$chartIDs;
-
-        ps.charts.forEach(function (pc, i) {
-          if (chartIDs.includes(i)) {
-            pc.shadows().hideAxis(config.partition[i]).render().updateAxes(0);
-          }
+      return function (d) {
+        ps.charts.forEach(function (pc) {
+          return pc.shadows(d);
         });
         return this;
       };
     };
 
-    // wrapper function: flip listed axes on specified charts
-    // default is to implement on all charts
+    // parcoords wrapper: format dimensions (applies to all charts)
+    var dimensions = function dimensions(config, ps, flags) {
+      return function (d) {
+        ps.charts.forEach(function (pc) {
+          return pc.dimensions(d);
+        });
+        return this;
+      };
+    };
+
+    // parcoords wrapper: flip listed axes on all charts
     var flipAxes = function flipAxes(config, ps, flags) {
-      return function (_ref) {
-        var _ref$chartIDs = _ref.chartIDs,
-            chartIDs = _ref$chartIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$chartIDs,
-            axes = _ref.axes;
-
-        ps.charts.forEach(function (pc, i) {
-          if (chartIDs.includes(i)) {
-            pc.flip(axes).hideAxis(config.partition[i]).render().updateAxes(0);
-          }
+      return function (axes) {
+        ps.charts.forEach(function (pc) {
+          return pc.flipAxes(axes);
         });
         return this;
       };
     };
 
-    // wrapper function: set the domain (and scale?) of a single axis on specified charts
-    // default is to implement on all charts
+    // parcoords wrapper: set the domain (and scale?) of a single axis on all charts
     var scale$1 = function scale(config, ps, flags) {
-      return function (_ref) {
-        var _ref$chartIDs = _ref.chartIDs,
-            chartIDs = _ref$chartIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$chartIDs,
-            axis = _ref.axis,
-            domain = _ref.domain;
-
+      return function (axis, domain) {
         var range = ps.charts[0].dimensions()[axis].yscale.domain();
         if (range[0] >= domain[0] && range[1] <= domain[1]) {
-          ps.charts.forEach(function (pc, i) {
-            if (chartIDs.includes(i)) {
-              pc.scale(axis, domain).hideAxis(config.partition[i]).render().updateAxes(0);
-            }
+          ps.charts.forEach(function (pc) {
+            return pc.scale(axis, domain);
           });
         } else {
-          throw Error('Domain Error: specified domain must be exceed axis domain.');
+          throw Error('Domain Error: specified domain must be exceed axis extrema.');
         }
         return this;
+      };
+    };
+
+    // parcoords wrapper: set bundle dimension on all charts
+    var bundleDimension = function bundleDimension(config, ps, flags) {
+      return function (d) {
+        ps.charts.forEach(function (pc) {
+          return pc.bundleDimension(d);
+        });
+        return this;
+      };
+    };
+
+    // parcoords wrapper: set bundling strength on all charts
+    var bundlingStrength = function bundlingStrength(config, ps, flags) {
+      return function (d) {
+        ps.charts.forEach(function (pc) {
+          return pc.bundlingStrength(d);
+        });
+        return this;
+      };
+    };
+
+    // parcoords wrapper: set bundling smoothness on all charts
+    var smoothness = function smoothness(config, ps, flags) {
+      return function (d) {
+        ps.charts.forEach(function (pc) {
+          return pc.smoothness(d);
+        });
+        return this;
+      };
+    };
+
+    // parcoords wrapper: render and update charts, maintain config
+    var render$1 = function render(config, ps, flags) {
+      return function () {
+        ps.charts.forEach(function (pc, i) {
+          pc.hideAxis(config.partition[i]).render().updateAxes(0);
+        });
+        return this;
+      };
+    };
+
+    // parcoords wrapper: reset all brushes and preform necessary updates
+    var brushReset$5 = function brushReset(config, ps, flags) {
+        return function () {
+            ps.charts.forEach(function (pc) {
+                return pc.brushReset();
+            });
+
+            // NOTE: if charts are linked and at least one is not reset, then none will be reset
+
+            // NOTE: brushed data in config is updated by sync() as consequence of pc.brushReset()
+            // currently need to force due to issue with ParCoords.selected() returning entire dataset if brush extents are empty
+            config.brushed = [];
+
+            if (flags.grid) {
+                ps.gridUpdate();
+            }
+        };
+    };
+
+    // parcoords wrapper: reset all marks and preform necessary updates
+    var unmark$1 = function unmark(config, ps, flags) {
+      return function () {
+        ps.charts.forEach(function (pc) {
+          return pc.unmark();
+        });
+        config.marked = [];
+        if (flags.grid) {
+          config.grid.setSelectedRows([]);
+          ps.gridUpdate();
+        }
+      };
+    };
+
+    // parcoords wrapper: reset all highlights 
+    var unhighlight$1 = function unhighlight(config, ps, flags) {
+      return function () {
+        ps.charts.forEach(function (pc) {
+          return pc.unhighlight();
+        });
       };
     };
 
@@ -45667,24 +45692,28 @@
       ps.keepData = keepData(config, ps, flags);
       ps.removeData = removeData(config, ps, flags);
       ps.exportData = exportData(config, ps, flags);
-
-      ps.globalBrushReset = globalBrushReset(config, ps, flags);
-      ps.globalMarkReset = globalMarkReset(config, ps, flags);
       ps.resetSelections = resetSelections(config, ps, flags);
 
-      // parcoords methods
+      // parcoords methods (global)
       ps.alpha = alpha(config, ps, flags);
       ps.color = color$1(config, ps, flags);
-      ps.brushedColor = brushedColor(config, ps, flags);
-      ps.shadows = shadows$1(config, ps, flags);
       ps.alphaOnBrushed = alphaOnBrushed(config, ps, flags);
+      ps.brushedColor = brushedColor(config, ps, flags);
       ps.reorderable = reorderable$1(config, ps, flags);
       ps.composite = composite(config, ps, flags);
+      ps.shadows = shadows$1(config, ps, flags);
+      // ps.mark = mark(config, ps, flags);
+      // ps.highlight = highlight(config, ps, flags);
+      ps.dimensions = dimensions(config, ps, flags);
       ps.scale = scale$1(config, ps, flags);
       ps.flipAxes = flipAxes(config, ps, flags);
-      // ps.bundlingStrength
-      // ps.smoothness
-      // ps.bundleDimension
+      ps.bundleDimension = bundleDimension(config, ps, flags);
+      ps.bundlingStrength = bundlingStrength(config, ps, flags);
+      ps.smoothness = smoothness(config, ps, flags);
+      ps.render = render$1(config, ps, flags);
+      ps.brushReset = brushReset$5(config, ps, flags);
+      ps.unmark = unmark$1(config, ps, flags);
+      ps.unhighlight = unhighlight$1(config, ps, flags);
 
       return ps;
     };
