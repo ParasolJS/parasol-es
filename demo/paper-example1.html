@@ -1,0 +1,86 @@
+<!doctype html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+</head>
+
+<title>Example 1</title>
+
+<link rel="stylesheet" type="text/css" href="parasol.css">
+
+<script src="./lib/d3.v5.min.js"></script>
+<script src="./parasol.standalone.js"></script>
+
+<body>
+<h1> Linked plots with buttons for filtering and exporting data</h1>
+
+Fuel Economy (mpg): 9 to 50 <br>
+<svg height="20" width="400">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:rgb(229,245,249);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgb(44,162,95);stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect height="20" width="400"fill="url(#grad1)" />
+</svg>
+
+<p>
+    <button id="reset_brushes">Reset Brushes</button>
+    <button id="keep_brushed">Keep Brushed Data</button>
+    <button id="remove_brushed">Remove Brushed Data</button>
+    <button id="export_brushed">Export Brushed Data</button>
+</p>
+
+<div id="plot01" class="parcoords" style="height:200px; width:800px;"></div>
+<div id="plot02" class="parcoords" style="height:200px; width:800px;"></div>
+
+</body>
+
+<script>
+// linear color scale
+var green_gradient = d3.scaleLinear()
+  .domain([9, 50])  // range of fuel economy data
+  .range([d3.rgb(229,245,249), d3.rgb(44,162,95)])  //
+  .interpolate(d3.interpolateLab);
+
+d3.csv('data/cars.csv').then(function(data) {
+
+  // initialize chart closures
+  var ps = Parasol(data)('.parcoords');
+
+  // initially, all data is shown on both plots. determine which data to hide on each plot
+  var axes_to_hide = {
+      0: ['economy (mpg)', 'cylinders', 'displacement (cc)'],  // hidden from first plot
+      1: ['name', 'power (hp)']   // hidden from second plot
+    }
+  // var layout = {
+  //     0: ['power (hp)', 'weight (lb)', '0-60 mph (s)'],
+  //     1: ['economy (mpg)', 'cylinders']
+  //   }
+
+  // apply Parasol API
+  ps.linked()
+    .hideAxes(axes_to_hide)
+    // .setAxesLayout(layout)  // TODO: replace hideAxes() with setAxesLayout()
+    .alpha(0.5)
+    .reorderable()
+    .color(function(data) { return green_gradient(data['economy (mpg)']); })  // quantitative color scale
+    .render()
+
+  // activate buttons
+  d3.select('#reset_brushes').on('click', function() {
+    ps.resetSelections('brushed')
+  });
+  d3.select('#keep_brushed').on('click', function() {
+    ps.keepData('brushed')
+  });
+  d3.select('#remove_brushed').on('click', function() {
+    ps.removeData('brushed')
+  });
+  d3.select('#export_brushed').on('click', function() {
+    ps.exportData('brushed')  // will export as 'parasol_data.csv' as default
+  });
+
+});
+</script>

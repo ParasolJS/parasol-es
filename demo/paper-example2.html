@@ -1,0 +1,96 @@
+<!doctype html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+</head>
+
+<title>Example 2</title>
+
+<link rel="stylesheet" type="text/css" href="parasol.css">
+
+<script src="./lib/d3.v5.min.js"></script>
+<script src="./parasol.standalone.js"></script>
+
+<body>
+<h1> k-Means clustering and linked grid</h1>
+<p>
+  <p> Variables to include in clustering: <br>
+  <input type="checkbox" id="econ_box" checked> economy (mpg) <br>
+  <input type="checkbox" id="cyl_box" checked> cylinders <br>
+  <input type="checkbox" id="disp_box" checked> displacement (cc) <br>
+  <input type="checkbox" id="pow_box" checked> power (hp) <br>
+  <input type="checkbox" id="wgt_box" checked> weight (lb) <br>
+  <input type="checkbox" id="accel_box" checked> 0-60 mph (s) <br>
+  <input type="checkbox" id="year_box" checked> year <br>
+  </p>
+  <label for="nClust" style="display: inline-block; text-align: left;">
+     Clusters: <span id="nClust-value">
+  </label>
+  <input type="range" min="2" max="10" id="nClust">
+  <p> <i>Note: clustering is updated every time slider changes</i>. </p>
+</p>
+
+<div id="plot01" class="parcoords" style="height:150px; width:800px;"></div>
+<div id="plot02" class="parcoords" style="height:150px; width:800px;"></div>
+<div id="grid" style="width:100%;height:500px;" class="slickgrid-container"></div>
+</body>
+
+<script>
+// read in data and create visualization
+d3.csv('data/cars.csv').then(function(data) {
+  // specify initial number of clusters (k)
+  k=3;
+  update_cluster_slider(k);
+  var cluster_vars = d3.keys(data[0]).filter(function(key) {
+    return key !== 'name';
+  });
+
+  // divide data into two plots
+  // TODO: change these partitions so there is no redundant data between plots
+  var partition = {
+    0: ['name', 'displacement (cc)'],
+    1: ['name', 'cylinders', 'power (hp)']
+  }
+
+  // create Parasol object, add grid, link, and perform clustering
+  var ps = Parasol(data)('.parcoords')
+            .attachGrid({container: '#grid'})
+            .linked()
+            .cluster({k: k, vars: cluster_vars, hidden: true})
+            .hideAxes(partition)
+            .alpha(0.2)  // change transparency
+            .reorderable()  // make axes dynamically reorderable
+            .render()
+
+  // update clusters and slider text when slider changes
+  d3.select('#nClust').on('input', function() {
+    update_cluster_slider(+this.value);  // update slider text
+    var checked_vars = get_checked_vars();  // get checked variables for clustering
+    ps.cluster({k: parseInt(this.value), vars: checked_vars, hidden: true});
+  });
+});
+
+// update clustering
+function update_cluster_slider(nClust) {
+  // adjust the text on the range slider
+  d3.select("#nClust-value").text(nClust);
+  d3.select("#nClust").property("value", nClust);
+}
+
+function get_checked_vars() {
+  // create an array of variables that are checked for clustering
+  var checked_vars = [];
+  var checkbox_ids = ["#econ_box", "#cyl_box", "#disp_box", "#pow_box",
+  "#wgt_box", "#accel_box", "#year_box"];
+  var var_names = ["economy (mpg)", "cylinders", "displacement (cc)",
+  "power (hp)", "weight (lb)", "0-60 mph (s)", "year"];
+
+  // get whether each checkbox is checked, if so, add var to cluster_vars
+  for (var i=0; i < checkbox_ids.length; i++) {
+    if (d3.select(checkbox_ids[i]).property("checked") === true) {
+      checked_vars.push(var_names[i]);
+    }
+  }
+  return checked_vars;
+}
+</script>

@@ -1,0 +1,148 @@
+<!doctype html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+</head>
+
+<title>LRGV Exploratory Analysis</title>
+
+<link rel="stylesheet" type="text/css" href="parasol.css">
+
+<script src="./lib/d3.v5.min.js"></script>
+<script src="./lib/slyvester.js"></script>
+<script src="./parasol.standalone.js"></script>
+
+<body>
+  <h1> Lower Rio Grande Valley case study </h1>
+  <div style="width: 200px; float: left;">
+    <i>Clustering variables:</i> <br>
+    <input type="checkbox" id="obj_box" checked> Objectives <br>
+    <input type="checkbox" id="dec_box" checked> Decisions <br>
+    <button id="cluster_button">Perform clustering</button>
+  </div>
+  <div>
+    <i>Data to export:</i> <br>
+    <!-- <form onSubmit="export_selected_data(); return false;"> -->
+    <input type="radio" name="export_selection" value="brushed" checked> Brushed <br>
+    <input type="radio" name="export_selection" value="marked"> Marked <br>
+    <button id="export_button">Export data<br>
+    <!-- </form> -->
+  </div>
+  <h2> Objectives </h2>
+  <div id="plot01" class="parcoords" style="height:200px; width:800px;">
+      <img src="arrow.jpg" alt="Arrow" width="50" height="200">
+   </div>
+  <h2> Decisions </h2>
+  <div id="plot02" class="parcoords" style="height:200px; width:850px;"></div>
+  <div id="grid" style="width:100%;height:700px;" class="slickgrid-container"></div>
+</body>
+
+<script>
+// read in data and create visualization
+d3.csv('data/lrgv.csv')
+  // return {  // TODO: find more efficient way to convert strings to numbers
+  //   rel: +data.rel,
+  //   crit_rel: +data.crit_rel,
+  //   num_leases: +data.num_leases,
+  //   surplus: +data.surplus,
+  //   drop: +data.drop,
+  //   cost: +data.cost,
+  //   cost_var: +data.cost_var,
+  //   dr_trans: +data.dr_trans,
+  //   rights: +data.rights,
+  //   options_low: +data.options_low,
+  //   options_high: +data.options_high,
+  //   xi: +data.xi,
+  //   alpha: +data.alpha,
+  //   beta: +data.beta,
+  //   alpha2: +data.alpha2,
+  //   beta2: +data.beta2
+  // };
+// }).then(function(data) {
+.then(function(data) {
+
+  // var axes_to_hide = {
+  //     0: ['rights', 'options_lo', 'options_high', 'xi', 'alpha', 'beta', 'alpha2', 'beta2'],  // hidden from first plot
+  //     1: ['rel', 'crit_rel', 'num_leases', 'surplus', 'drop', 'cost', 'cost_var', 'dr_trans']   // hidden from second plot
+  //   }
+
+  // specify layout
+  var axes_to_hide = {
+      0: ['rights (af)', 'opt. low (af)', 'opt. high (af)', 'xi (-)', 'alpha 1-4 (-)', 'beta 1-4 (-)', 'alpha 5-12 (-)', 'beta 5-12 (-)'],  // hidden from first plot
+      // 1: ['rel', 'crit_rel', 'num_leases', 'surplus']   // hidden from second plot
+      1: ['rel. (-)', 'crit. rel. (-)', 'leases (#)', 'surplus (af)']
+    }
+
+  // create Parasol object, add grid, link, and perform clustering
+  var ps = Parasol(data)('.parcoords')
+            .attachGrid({container: '#grid'})
+            .linked()
+            .hideAxes(axes_to_hide)
+            .cluster({k: 3, hidden: true})
+            .alpha(0.45)  // change transparency
+            .reorderable()  // make axes dynamically reorderable
+            // .flipAxes('rel. (-)')
+            // .flip('crit. rel. (-)')
+            .render()
+
+  // scale decisions appropriately
+  // TODO: don't hardcode these scales - calculate maximum value
+  ps.charts[1].scale('opt. low (af)', [0, 20533])
+    .scale('opt. high (af)', [0, 20533])
+    .scale('alpha 1-4 (-)', [0.97, 2.043])
+    .scale('beta 1-4 (-)', [0.97, 2.043])
+    .scale('alpha 5-12 (-)', [0.97, 2.043])
+    .scale('beta 5-12 (-)', [0.97, 2.043])
+
+   // update clusters and slider text when slider changes
+   d3.select('#cluster_button').on('click', function() {
+     var cluster_vars = get_cluster_vars();  // get variables for clustering from checkboxes
+     ps.cluster({k: 3, vars: cluster_vars, hidden: true});
+   });
+
+   // export data
+   d3.select('#export_button').on('click', function() {
+       var selection = document.querySelector('input[name="export_selection"]:checked').value
+
+       if (selection === "brushed") {
+         ps.exportData(type=selection);
+       } else if (selection === "marked") {
+         ps.exportData(type=selection);
+       }
+   });
+});
+
+function get_cluster_vars() {
+  // create an array of variables that are checked for clustering
+  var checked_vars = [];
+  var checkbox_ids = ["#obj_box", "#dec_box"];
+  var obj_names = ["rel. (-)", "crit. rel. (-)", "leases (#)", "surplus (af)",
+  "dropped (af)", "cost ($)", "cost var. (-)", "dr. trans. ($)"];
+  var dec_names = ["rights (af)", "opt. low (af)", "opt. high (af)", "xi (-)",
+  "alpha 1-4 (-)", "beta 1-4 (-)", "alpha 5-12 (-)", "beta 5-12 (-)"];
+
+  // get whether each checkbox is checked, if so, add variables to cluster_vars
+  // include objectives, if checked
+  if (d3.select(checkbox_ids[0]).property("checked") === true) {
+    for (i = 0; i < obj_names.length; i++) {
+      checked_vars.push(obj_names[i]);
+    }
+  }
+  // include decisions, if checked
+  if (d3.select(checkbox_ids[1]).property("checked") === true) {
+    for (i = 0; i < dec_names.length; i++) {
+      checked_vars.push(dec_names[i]);
+    }
+  }
+
+  return checked_vars;
+}
+
+// // update clustering
+// function update_cluster_slider(nClust) {
+//   // adjust the text on the range slider
+//   d3.select("#nClust-value").text(nClust);
+//   d3.select("#nClust").property("value", nClust);
+// }
+
+</script>

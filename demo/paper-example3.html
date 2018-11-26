@@ -1,0 +1,144 @@
+<!doctype html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+</head>
+
+<title>Example 3</title>
+
+<link rel="stylesheet" type="text/css" href="parasol.css">
+
+<script src="./lib/d3.v5.min.js"></script>
+<script src="./lib/slyvester.js"></script>
+<script src="./parasol.standalone.js"></script>
+
+<body>
+
+<h1> Weighted sum method and bundling using clusters </h1>
+  <div style="width: 100%; overflow: hidden;">
+    <div style="width: 400px; float: left;">
+        <form onSubmit="return false;">
+          Fuel Economy - weight: <br>
+          <input type="number" id="econ_weight_text" step="0.01" min="0" max="1"
+            value="0.5" onchange="updateEconSlider(this.value);">
+          <input type="range" id="econ_weight_slider" step="0.01" min="0" max="1"
+            value="0.5" onchange="updateEconText(this.value);">
+        </form>
+        <form onSubmit="return false;">
+          # of Cylinders - weight: <br>
+          <input type="number" id="cyl_weight_text" step="0.01" min="0" max="1"
+            value="0.5" onchange="updateCylSlider(this.value);">
+          <input type="range" id="cyl_weight_slider" step="0.01" min="0" max="1"
+            value="0.5" onchange="updateCylText(this.value);">
+        </form>
+        <form onSubmit="return false;">
+          Displacement - weight: <br>
+          <input type="number" id="displ_weight_text" step="0.01" min="0" max="1"
+            value="0.5" onchange="updateDisplSlider(this.value);">
+          <input type="range" id="displ_weight_slider" step="0.01" min="0" max="1"
+            value="0.5" onchange="updateDisplText(this.value);">
+        </form>
+        <form onSubmit="return false;">
+          Horsepower - weight: <br>
+          <input type="number" id="power_weight_text" step="0.01" min="0" max="1"
+            value="0.5" onchange="updatePowerSlider(this.value);">
+          <input type="range" id="power_weight_slider" step="0.01" min="0" max="1"
+            value="0.5" onchange="updatePowerText(this.value);">
+        </form>
+        <br> <button id="apply_weights"> <b> Apply Weights </b> </button>
+    </div>
+    <div style="margin-left: 250px;">
+    Curve smoothness: <br> <input type="range" min="0" max="25" value="0" id="smoothness"> <br>
+    Bundling strength for clusters: <br> <input type="range" min="0" max="100" value="0" id="bundling"> <br>
+    </div>
+  </div> <br>
+  <div id="plot01" class="parcoords" style="height:300px; width:800px;"></div>
+  <div id="grid" style="width:100%;height:500px;" class="slickgrid-container"></div>
+</body>
+
+<script>
+// read in data and create visualization
+d3.csv('data/cars.csv').then(function(data) {
+
+  // remove non-numeric 'name' variable from clustering
+  var cluster_vars = d3.keys(data[0]).filter(function(key) {
+    return key !== 'name';
+  });
+
+  // create Parasol object, add grid, link, and perform clustering
+  var ps = Parasol(data)('.parcoords')
+            .attachGrid({container: '#grid'})
+            .linked()
+            .cluster({k: 4, vars: cluster_vars, hidden: false})
+            .hideAxes(['name'])
+            // .hideAxes(['economy (mpg)'])
+            // .hideAxes(['cylinders'])
+            // .hideAxes(['displacement (cc)'])
+            // .hideAxes(['power (hp)'])
+            .hideAxes(['weight (lb)'])
+            .hideAxes(['0-60 mph (s)'])
+            // .hideAxes(['year'])
+            .alpha(0.05)  // update transparency
+            .reorderable()  // make axes dynamically reorderable
+            .render()
+
+  // apply weights
+  d3.select('#apply_weights').on('click', function() {
+    // setup weights (unspecified vars given weight = 0)
+    var weights = {
+      'economy (mpg)': d3.select("#econ_weight_slider").property("value"),
+      'cylinders': d3.select("#cyl_weight_slider").property("value"),
+      'displacement (cc)': d3.select("#displ_weight_slider").property("value"),
+      'power (hp)': d3.select("#power_weight_slider").property("value")
+    };
+
+    ps.weightedSums({ weights: weights })
+  });
+
+  // bundling strength slider
+  d3.select('#bundling').on('input', function() {
+    ps.charts[0]
+      .bundlingStrength(this.value/100)
+      .bundleDimension('cluster')
+      .render();  // divide by a hundred to get decimals
+  });
+
+  // smoothness
+  d3.select("#smoothness").on('input', function() {
+    ps.charts[0].smoothness(this.value/100).render();  // divide by a hundred to get decimals
+  });
+});
+
+// update fuel economy slider and textbox
+function updateEconText(value) {
+  d3.select("#econ_weight_text").property("value", value)  // adjust textbox value to reflect slider input
+}
+function updateEconSlider(value) {
+    d3.select("#econ_weight_slider").property("value", value)  // adjust slider value to reflect textbox input
+}
+
+// update number of cylinders slider and textbox
+function updateCylText(value) {
+  d3.select("#cyl_weight_text").property("value", value)  // adjust textbox value to reflect slider input
+}
+function updateCylSlider(value) {
+    d3.select("#cyl_weight_slider").property("value", value)  // adjust slider value to reflect textbox input
+}
+
+// update displacement slider and textbox
+function updateDisplText(value) {
+  d3.select("#displ_weight_text").property("value", value)  // adjust textbox value to reflect slider input
+}
+function updateDisplSlider(value) {
+    d3.select("#displ_weight_slider").property("value", value)  // adjust slider value to reflect textbox input
+}
+
+// update horsepower slider and textbox
+function updatePowerText(value) {
+  d3.select("#power_weight_text").property("value", value)  // adjust textbox value to reflect slider input
+}
+function updatePowerSlider(value) {
+    d3.select("#power_weight_slider").property("value", value)  // adjust slider value to reflect textbox input
+}
+
+</script>
