@@ -28,17 +28,9 @@ d3.csv('data/cars.csv').then(function(data) {
   };
 
   var ps = Parasol(data)('.parcoords')
-            .weightedSums({ weights: weights });
-
-  // update charts (this overwrites the partition)
-  ps.charts.forEach(
-    (pc) => {
-      pc
-        .hideAxis(['name'])
-        .reorderable()
-        .render()
-        .updateAxes(0)
-    }
-  )
+            .weightedSums({ weights: weights })
+            // .hideAxis(['name'])
+            .reorderable()
+            .render()
 });
 </script>

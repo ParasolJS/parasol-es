@@ -28,7 +28,7 @@ d3.csv('data/cars.csv').then(function(data) {
 
   // cluster variable hidden by default, cluster colors shown on charts in chartIDs
   var ps = Parasol(data)('.parcoords')
-            .cluster({k: 4, chartIDs: [0,2], vars: cluster_vars});
+            .cluster({k: 4, displayIDs: [0,2], vars: cluster_vars});
 
   // update charts
   // NOTE: this currently overrides hide(partition)...
