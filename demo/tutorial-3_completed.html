@@ -1,0 +1,72 @@
+<!-- Add title and metadata -->
+<!doctype html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>Tutorial #3</title>
+</head>
+
+<!-- Give it some style -->
+<link rel="stylesheet" type="text/css" href="parasol.css">
+
+<!-- Load dependencies -->
+<script src="./lib/d3.v5.min.js"></script>
+<script src="./parasol.standalone.js"></script>
+
+<!-- Add content -->
+<body>
+  <button id="reset_brushes">Reset Brushes</button>
+  <button id="keep_brushed">Keep Brushed Data</button>
+  <button id="remove_brushed">Remove Brushed Data</button>
+
+  <p>
+    Adjust this slider to alter the transparency of the polylines for the first plot.
+  </p>
+  <input type="range" min="0" max="100" value="10" id="alpha">
+
+  <div id="plot0" class="parcoords" style="height:200px; width:800px;"></div>
+  <div id="plot1" class="parcoords" style="height:200px; width:800px;"></div>
+  <div id="grid" class="slickgrid-container" style="height:500px; width:100%;"></div>
+</body>
+
+<!-- Create interactive plots and table -->
+<script>
+// create function to create visualize PC and data table
+function visualize(data) {
+
+  var cluster_vars = d3.keys(data[0]).filter(function(key) {
+    return key !== 'name';
+  });
+
+  var ps = Parasol(data)('.parcoords')  // create Parasol object
+            .attachGrid({container: '#grid'})  // attach data table
+            .linked()  // link PC plots and data table together
+            .cluster({k: 3, vars: cluster_vars, hidden: false})  // BUG: can't interact with clustering axis
+            .reorderable()  // dynamically reorderable axes
+
+  ps.charts[0].alpha(0.1)  // adjust the opacity of the first plot
+
+  // 1. Button: reset brushes
+  d3.select('#reset_brushes').on('click', function() {
+    ps.resetSelections('brushed')
+  });
+
+  // 2a. Button: keep brushed data
+  d3.select('#keep_brushed').on('click', function() {
+    ps.keepData('brushed')
+  });
+
+  // 2b. Button: remove brushed data
+  d3.select('#remove_brushed').on('click', function() {
+    ps.removeData('brushed')
+  });
+
+  // 3. Slider: adjust alpha (opacity)
+  d3.select('#alpha').on('change', function() {
+    ps.charts[0].alpha(this.value/100).render();  // update slider value
+  });
+}
+
+var data = d3.csv('data/cars.csv')  // read in data
+data.then(visualize)  // pass data into visualize() function
+</script>

@@ -1,0 +1,41 @@
+<!-- Add title and metadata -->
+<!doctype html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>Tutorial #2</title>
+</head>
+
+<!-- Give it some style -->
+<link rel="stylesheet" type="text/css" href="parasol.css">
+
+<!-- Load dependencies -->
+<script src="./lib/d3.v5.min.js"></script>
+<script src="./parasol.standalone.js"></script>
+
+<!-- Add content -->
+<body>
+  <div id="plot0" class="parcoords" style="height:200px; width:800px;"></div>
+  <div id="plot1" class="parcoords" style="height:200px; width:800px;"></div>
+  <div id="grid" class="slickgrid-container" style="height:500px; width:100%;"></div>
+</body>
+
+<!-- Create interactive plots and table -->
+<script>
+// create function to create visualize PC and data table
+function visualize(data) {
+
+  // 1a. Clustering: define clustering variables
+
+  var ps = Parasol(data)('.parcoords')  // create Parasol object
+            .attachGrid({container: '#grid'})  // attach data table
+            .linked()  // link PC plots and data table together
+            // 1b. Clustering: apply k-means algorithm
+            // 2. Reorderable axes
+
+  // 3. Transparency: set alpha of first plot to 0.1
+}
+
+var data = d3.csv('data/cars.csv')  // read in data
+data.then(visualize)  // pass data into visualize() function
+</script>

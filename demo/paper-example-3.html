@@ -97,15 +97,14 @@ d3.csv('data/cars.csv').then(function(data) {
 
   // bundling strength slider
   d3.select('#bundling').on('input', function() {
-    ps.charts[0]
-      .bundlingStrength(this.value/100)
+    ps.bundlingStrength(this.value/100)
       .bundleDimension('cluster')
       .render();  // divide by a hundred to get decimals
   });
 
   // smoothness
   d3.select("#smoothness").on('input', function() {
-    ps.charts[0].smoothness(this.value/100).render();  // divide by a hundred to get decimals
+    ps.smoothness(this.value/100).render();  // divide by a hundred to get decimals
   });
 });
 

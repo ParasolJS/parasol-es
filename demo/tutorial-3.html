@@ -1,0 +1,57 @@
+<!-- Add title and metadata -->
+<!doctype html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>Tutorial #3</title>
+</head>
+
+<!-- Give it some style -->
+<link rel="stylesheet" type="text/css" href="parasol.css">
+
+<!-- Load dependencies -->
+<script src="./lib/d3.v5.min.js"></script>
+<script src="./parasol.standalone.js"></script>
+
+<!-- Add content -->
+<body>
+  <!-- 1. Add reset brushes button -->
+  <!-- 2a. Add keep brushed data button -->
+  <!-- 2b. Add remove brushed data button -->
+
+  <!-- 3. Add slider and description -->
+
+  <div id="plot0" class="parcoords" style="height:200px; width:800px;"></div>
+  <div id="plot1" class="parcoords" style="height:200px; width:800px;"></div>
+  <div id="grid" class="slickgrid-container" style="height:500px; width:100%;"></div>
+</body>
+
+<!-- Create interactive plots and table -->
+<script>
+// create function to create visualize PC and data table
+function visualize(data) {
+
+  var cluster_vars = d3.keys(data[0]).filter(function(key) {
+    return key !== 'name';
+  });
+
+  var ps = Parasol(data)('.parcoords')  // create Parasol object
+            .attachGrid({container: '#grid'})  // attach data table
+            .linked()  // link PC plots and data table together
+            .cluster({k: 3, vars: cluster_vars, hidden: false})  // BUG: can't interact with clustering axis
+            .reorderable()  // dynamically reorderable axes
+
+  ps.charts[0].alpha(0.1)  // adjust the transparency of the first plot
+
+  // 1. Button: reset brushes
+
+  // 2a. Button: keep brushed data
+
+  // 2b. Button: remove brushed data
+
+  // 3. Slider: adjust alpha (opacity)
+}
+
+var data = d3.csv('data/cars.csv')  // read in data
+data.then(visualize)  // pass data into visualize() function
+</script>
