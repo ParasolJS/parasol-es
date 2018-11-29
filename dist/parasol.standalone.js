@@ -40307,93 +40307,93 @@
        * @param {object} options:     SlickGrid options.
     **/
     var attachGrid = function attachGrid(config, ps, flags) {
-      return function (_ref) {
-        var container = _ref.container,
-            _ref$columns = _ref.columns,
-            columns = _ref$columns === undefined ? null : _ref$columns,
-            _ref$options = _ref.options,
-            options = _ref$options === undefined ? null : _ref$options;
+        return function (_ref) {
+            var container = _ref.container,
+                _ref$columns = _ref.columns,
+                columns = _ref$columns === undefined ? null : _ref$columns,
+                _ref$options = _ref.options,
+                options = _ref$options === undefined ? null : _ref$options;
 
-        flags.grid = true;
+            flags.grid = true;
 
-        var checkboxSelector = new SlickGrid.Plugins.CheckboxSelectColumn({
-          cssClass: 'slick-cell-checkboxsel'
-        });
+            var checkboxSelector = new SlickGrid.Plugins.CheckboxSelectColumn({
+                cssClass: 'slick-cell-checkboxsel'
+            });
 
-        if (columns === null) {
-          // place id col on left
-          var column_keys = config.vars;
-          column_keys = difference(column_keys, ['id']);
-          // NOTE: remove line below to remove id col from grid
-          column_keys.unshift('id');
+            if (columns === null) {
+                // place id col on left
+                var column_keys = config.vars;
+                column_keys = difference(column_keys, ['id']);
+                // NOTE: remove line below to remove id col from grid
+                column_keys.unshift('id');
 
-          columns = column_keys.map(function (key, i) {
-            return {
-              id: key,
-              name: key,
-              field: key,
-              sortable: true
+                columns = column_keys.map(function (key, i) {
+                    return {
+                        id: key,
+                        name: key,
+                        field: key,
+                        sortable: true
+                    };
+                });
+                columns.unshift(checkboxSelector.getColumnDefinition());
+            }
+
+            if (options === null) {
+                options = {
+                    enableCellNavigation: true,
+                    enableColumnReorder: true,
+                    multiColumnSort: false,
+                    editable: true,
+                    asyncEditorLoading: false,
+                    autoEdit: false
+                };
+            }
+
+            // initialize
+            config.dataView = new SlickGrid.Data.DataView();
+            config.dataView.setItems(config.data);
+            config.grid = new SlickGrid.Grid(container, config.dataView, columns, options);
+
+            config.grid.setSelectionModel(new SlickGrid.Plugins.RowSelectionModel({ selectActiveRow: false }));
+            config.grid.registerPlugin(checkboxSelector);
+
+            // wire up model events to drive the grid
+            config.dataView.onRowCountChanged.subscribe(function (e, args) {
+                config.grid.updateRowCount();
+                config.grid.render();
+            });
+
+            config.dataView.onRowsChanged.subscribe(function (e, args) {
+                config.grid.invalidateRows(args.rows);
+                config.grid.render();
+            });
+
+            // keep checkboxes matched with row on update
+            config.dataView.syncGridSelection(config.grid);
+
+            // column sorting
+            var sortcol = columns.map(function (c) {
+                return c.name;
+            });
+            sortcol.shift();
+            var sortdir = 1;
+
+            var comparer = function comparer(a, b) {
+                var x = as_float(a[sortcol]);
+                var y = as_float(b[sortcol]);
+                return x == y ? 0 : x > y ? 1 : -1;
             };
-          });
-          columns.unshift(checkboxSelector.getColumnDefinition());
-        }
 
-        if (options === null) {
-          options = {
-            enableCellNavigation: true,
-            enableColumnReorder: true,
-            multiColumnSort: false,
-            editable: true,
-            asyncEditorLoading: false,
-            autoEdit: false
-          };
-        }
+            // click header to sort grid column
+            config.grid.onSort.subscribe(function (e, args) {
+                sortdir = args.sortAsc ? 1 : -1;
+                sortcol = args.sortCol.field;
 
-        // initialize
-        config.dataView = new SlickGrid.Data.DataView();
-        config.dataView.setItems(config.data);
-        config.grid = new SlickGrid.Grid(container, config.dataView, columns, options);
+                config.dataView.sort(comparer, args.sortAsc);
+            });
 
-        config.grid.setSelectionModel(new SlickGrid.Plugins.RowSelectionModel({ selectActiveRow: false }));
-        config.grid.registerPlugin(checkboxSelector);
-
-        // wire up model events to drive the grid
-        config.dataView.onRowCountChanged.subscribe(function (e, args) {
-          config.grid.updateRowCount();
-          config.grid.render();
-        });
-
-        config.dataView.onRowsChanged.subscribe(function (e, args) {
-          config.grid.invalidateRows(args.rows);
-          config.grid.render();
-        });
-
-        // keep checkboxes matched with row on update
-        config.dataView.syncGridSelection(config.grid);
-
-        // column sorting
-        var sortcol = columns.map(function (c) {
-          return c.name;
-        });
-        sortcol.shift();
-        var sortdir = 1;
-
-        var comparer = function comparer(a, b) {
-          var x = as_float(a[sortcol]);
-          var y = as_float(b[sortcol]);
-          return x == y ? 0 : x > y ? 1 : -1;
+            return this;
         };
-
-        // click header to sort grid column
-        config.grid.onSort.subscribe(function (e, args) {
-          sortdir = args.sortAsc ? 1 : -1;
-          sortcol = args.sortCol.field;
-
-          config.dataView.sort(comparer, args.sortAsc);
-        });
-
-        return this;
-      };
     };
 
     /**
@@ -40402,42 +40402,42 @@
        * @param {array} columns:  column definitions.
     **/
     var gridUpdate = function gridUpdate(config, ps, flags) {
-      return function () {
-        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            _ref$data = _ref.data,
-            data = _ref$data === undefined ? null : _ref$data,
-            _ref$columns = _ref.columns,
-            columns = _ref$columns === undefined ? null : _ref$columns;
+        return function () {
+            var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+                _ref$data = _ref.data,
+                data = _ref$data === undefined ? null : _ref$data,
+                _ref$columns = _ref.columns,
+                columns = _ref$columns === undefined ? null : _ref$columns;
 
-        if (columns !== null) {
-          config.grid.setColumns(columns);
-          config.grid.render();
-        }
-        if (data === null) {
-          data = config.selections();
-          if (data.length === 0) {
-            // if selections empty, use full dataset
-            data = config.data;
-          }
-        }
-        // if marked data exists, keep in grid
-        if (config.marked.length) {
-          data = union(data, config.marked);
-        }
+            if (columns !== null) {
+                config.grid.setColumns(columns);
+                config.grid.render();
+            }
+            if (data === null) {
+                data = config.selections();
+                if (data.length === 0) {
+                    // if selections empty, use full dataset
+                    data = config.data;
+                }
+            }
+            // if marked data exists, keep in grid
+            if (config.marked.length) {
+                data = union(data, config.marked);
+            }
 
-        var comparer = function comparer(a, b) {
-          var x = as_float(a['id']);
-          var y = as_float(b['id']);
-          return x == y ? 0 : x > y ? 1 : -1;
+            var comparer = function comparer(a, b) {
+                var x = as_float(a['id']);
+                var y = as_float(b['id']);
+                return x == y ? 0 : x > y ? 1 : -1;
+            };
+
+            config.dataView.beginUpdate();
+            config.dataView.setItems(data);
+            config.dataView.sort(comparer, true);
+            config.dataView.endUpdate();
+
+            return this;
         };
-
-        config.dataView.beginUpdate();
-        config.dataView.setItems(data);
-        config.dataView.sort(comparer, true);
-        config.dataView.endUpdate();
-
-        return this;
-      };
     };
 
     // synchronize data between linked components
