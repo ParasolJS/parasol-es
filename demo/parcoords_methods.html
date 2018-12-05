@@ -69,7 +69,7 @@ d3.csv('data/cars.csv').then(function(data) {
     // .dimensions(dimensions) // broken
     // .scale('year', [30, 90])
     // .flipAxes(['economy (mpg)', 'power (hp)']) // broken (parcoords bug)
-    .bundleDimension('cylinders') // broken
+    .bundleDimension('cylinders')
     .bundlingStrength(0.4)
     .smoothness(0.2)
     .render();

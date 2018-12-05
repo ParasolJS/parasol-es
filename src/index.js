@@ -9,7 +9,7 @@ import attachGrid from './api/attachGrid';
 import gridUpdate from './api/gridUpdate';
 import linked from './api/linked';
 import cluster from './api/cluster';
-import weightedSums from './api/weightedSums';
+import weightedSum from './api/weightedSum';
 import hideAxes from './api/hideAxes';
 import showAxes from './api/showAxes';
 import setAxesLayout from './api/setAxesLayout';
@@ -62,7 +62,7 @@ const Parasol = (data, userConfig) => {
   ps.gridUpdate = gridUpdate(config, ps, flags);
   ps.linked = linked(config, ps, flags);
   ps.cluster = cluster(config, ps, flags);
-  ps.weightedSums = weightedSums(config, ps, flags);
+  ps.weightedSum = weightedSum(config, ps, flags);
   ps.hideAxes = hideAxes(config, ps, flags);
   ps.showAxes = showAxes(config, ps, flags);
   ps.setAxesLayout = setAxesLayout(config, ps, flags);

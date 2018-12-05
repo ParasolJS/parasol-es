@@ -1,9 +1,9 @@
 (function(l, i, v, e) { v = l.createElement(i); v.async = 1; v.src = '//' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; e = l.getElementsByTagName(i)[0]; e.parentNode.insertBefore(v, e)})(document, 'script');
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-    typeof define === 'function' && define.amd ? define(factory) :
-    (global.Parasol = factory());
-}(this, (function () { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('sylvester')) :
+    typeof define === 'function' && define.amd ? define(['sylvester'], factory) :
+    (global.Parasol = factory(global.sylvester));
+}(this, (function (sylvester) { 'use strict';
 
     function ascending(a, b) {
       return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
@@ -82,7 +82,7 @@
       return [min, max];
     }
 
-    function sequence(start, stop, step) {
+    function range(start, stop, step) {
       start = +start, stop = +stop, step = (n = arguments.length) < 2 ? (stop = start, start = 0, 1) : n < 3 ? 1 : +step;
 
       var i = -1,
@@ -5160,7 +5160,7 @@
         start += (stop - start - step * (n - paddingInner)) * align;
         bandwidth = step * (1 - paddingInner);
         if (round) start = Math.round(start), bandwidth = Math.round(bandwidth);
-        var values = sequence(n).map(function(i) { return start + step * i; });
+        var values = range(n).map(function(i) { return start + step * i; });
         return ordinalRange(reverse ? values.reverse() : values);
       }
 
@@ -5267,15 +5267,15 @@
       };
     }
 
-    function bimap(domain, range, deinterpolate, reinterpolate) {
-      var d0 = domain[0], d1 = domain[1], r0 = range[0], r1 = range[1];
+    function bimap(domain, range$$1, deinterpolate, reinterpolate) {
+      var d0 = domain[0], d1 = domain[1], r0 = range$$1[0], r1 = range$$1[1];
       if (d1 < d0) d0 = deinterpolate(d1, d0), r0 = reinterpolate(r1, r0);
       else d0 = deinterpolate(d0, d1), r0 = reinterpolate(r0, r1);
       return function(x) { return r0(d0(x)); };
     }
 
-    function polymap(domain, range, deinterpolate, reinterpolate) {
-      var j = Math.min(domain.length, range.length) - 1,
+    function polymap(domain, range$$1, deinterpolate, reinterpolate) {
+      var j = Math.min(domain.length, range$$1.length) - 1,
           d = new Array(j),
           r = new Array(j),
           i = -1;
@@ -5283,12 +5283,12 @@
       // Reverse descending domains.
       if (domain[j] < domain[0]) {
         domain = domain.slice().reverse();
-        range = range.slice().reverse();
+        range$$1 = range$$1.slice().reverse();
       }
 
       while (++i < j) {
         d[i] = deinterpolate(domain[i], domain[i + 1]);
-        r[i] = reinterpolate(range[i], range[i + 1]);
+        r[i] = reinterpolate(range$$1[i], range$$1[i + 1]);
       }
 
       return function(x) {
@@ -5309,7 +5309,7 @@
     // reinterpolate(a, b)(t) takes a parameter t in [0,1] and returns the corresponding domain value x in [a,b].
     function continuous(deinterpolate, reinterpolate) {
       var domain = unit,
-          range = unit,
+          range$$1 = unit,
           interpolate$$1 = interpolateValue,
           clamp = false,
           piecewise$$1,
@@ -5317,17 +5317,17 @@
           input;
 
       function rescale() {
-        piecewise$$1 = Math.min(domain.length, range.length) > 2 ? polymap : bimap;
+        piecewise$$1 = Math.min(domain.length, range$$1.length) > 2 ? polymap : bimap;
         output = input = null;
         return scale;
       }
 
       function scale(x) {
-        return (output || (output = piecewise$$1(domain, range, clamp ? deinterpolateClamp(deinterpolate) : deinterpolate, interpolate$$1)))(+x);
+        return (output || (output = piecewise$$1(domain, range$$1, clamp ? deinterpolateClamp(deinterpolate) : deinterpolate, interpolate$$1)))(+x);
       }
 
       scale.invert = function(y) {
-        return (input || (input = piecewise$$1(range, domain, deinterpolateLinear, clamp ? reinterpolateClamp(reinterpolate) : reinterpolate)))(+y);
+        return (input || (input = piecewise$$1(range$$1, domain, deinterpolateLinear, clamp ? reinterpolateClamp(reinterpolate) : reinterpolate)))(+y);
       };
 
       scale.domain = function(_) {
@@ -5335,11 +5335,11 @@
       };
 
       scale.range = function(_) {
-        return arguments.length ? (range = slice$5.call(_), rescale()) : range.slice();
+        return arguments.length ? (range$$1 = slice$5.call(_), rescale()) : range$$1.slice();
       };
 
       scale.rangeRound = function(_) {
-        return range = slice$5.call(_), interpolate$$1 = interpolateRound, rescale();
+        return range$$1 = slice$5.call(_), interpolate$$1 = interpolateRound, rescale();
       };
 
       scale.clamp = function(_) {
@@ -5556,7 +5556,6 @@
         return (end - start) / k;
       });
     };
-    var milliseconds = millisecond.range;
 
     var durationSecond = 1e3;
     var durationMinute = 6e4;
@@ -5573,7 +5572,6 @@
     }, function(date) {
       return date.getUTCSeconds();
     });
-    var seconds = second.range;
 
     var minute = newInterval(function(date) {
       date.setTime(Math.floor(date / durationMinute) * durationMinute);
@@ -5584,7 +5582,6 @@
     }, function(date) {
       return date.getMinutes();
     });
-    var minutes = minute.range;
 
     var hour = newInterval(function(date) {
       var offset = date.getTimezoneOffset() * durationMinute % durationHour;
@@ -5597,7 +5594,6 @@
     }, function(date) {
       return date.getHours();
     });
-    var hours = hour.range;
 
     var day = newInterval(function(date) {
       date.setHours(0, 0, 0, 0);
@@ -5608,7 +5604,6 @@
     }, function(date) {
       return date.getDate() - 1;
     });
-    var days = day.range;
 
     function weekday(i) {
       return newInterval(function(date) {
@@ -5629,8 +5624,6 @@
     var friday = weekday(5);
     var saturday = weekday(6);
 
-    var sundays = sunday.range;
-
     var month = newInterval(function(date) {
       date.setDate(1);
       date.setHours(0, 0, 0, 0);
@@ -5641,7 +5634,6 @@
     }, function(date) {
       return date.getMonth();
     });
-    var months = month.range;
 
     var year = newInterval(function(date) {
       date.setMonth(0, 1);
@@ -5664,7 +5656,6 @@
         date.setFullYear(date.getFullYear() + step * k);
       });
     };
-    var years = year.range;
 
     var utcMinute = newInterval(function(date) {
       date.setUTCSeconds(0, 0);
@@ -5675,7 +5666,6 @@
     }, function(date) {
       return date.getUTCMinutes();
     });
-    var utcMinutes = utcMinute.range;
 
     var utcHour = newInterval(function(date) {
       date.setUTCMinutes(0, 0, 0);
@@ -5686,7 +5676,6 @@
     }, function(date) {
       return date.getUTCHours();
     });
-    var utcHours = utcHour.range;
 
     var utcDay = newInterval(function(date) {
       date.setUTCHours(0, 0, 0, 0);
@@ -5697,7 +5686,6 @@
     }, function(date) {
       return date.getUTCDate() - 1;
     });
-    var utcDays = utcDay.range;
 
     function utcWeekday(i) {
       return newInterval(function(date) {
@@ -5718,8 +5706,6 @@
     var utcFriday = utcWeekday(5);
     var utcSaturday = utcWeekday(6);
 
-    var utcSundays = utcSunday.range;
-
     var utcMonth = newInterval(function(date) {
       date.setUTCDate(1);
       date.setUTCHours(0, 0, 0, 0);
@@ -5730,7 +5716,6 @@
     }, function(date) {
       return date.getUTCMonth();
     });
-    var utcMonths = utcMonth.range;
 
     var utcYear = newInterval(function(date) {
       date.setUTCMonth(0, 1);
@@ -5753,7 +5738,6 @@
         date.setUTCFullYear(date.getUTCFullYear() + step * k);
       });
     };
-    var utcYears = utcYear.range;
 
     function localDate(d) {
       if (0 <= d.y && d.y < 100) {
@@ -7655,9 +7639,9 @@
             return [];
           }
           var domain = yscale.domain();
-          var range = yscale.range();
+          var range$$1 = yscale.range();
           var found = [];
-          range.forEach(function (d, i) {
+          range$$1.forEach(function (d, i) {
             if (d >= selection$$1[0] && d <= selection$$1[1]) {
               found.push(domain[i]);
             }
@@ -8121,9 +8105,9 @@
               acc[cur] = [];
             } else {
               acc[cur] = axisBrushes.reduce(function (d, p, i) {
-                var range = brushSelection(document.getElementById('brush-' + pos + '-' + i));
-                if (range !== null) {
-                  d = d.push(range);
+                var range$$1 = brushSelection(document.getElementById('brush-' + pos + '-' + i));
+                if (range$$1 !== null) {
+                  d = d.push(range$$1);
                 }
 
                 return d;
@@ -35864,7 +35848,7 @@
      * _.range(0);
      * // => []
      */
-    var range$1 = createRange();
+    var range$2 = createRange();
 
     /**
      * This method is like `_.range` except that it populates values in
@@ -39538,7 +39522,7 @@
       defaultTo, flow, flowRight, identity: identity$9, iteratee,
       matches, matchesProperty, method, methodOf, mixin,
       noop: noop$4, nthArg, over, overEvery, overSome,
-      property, propertyOf, range: range$1, rangeRight, stubArray,
+      property, propertyOf, range: range$2, rangeRight, stubArray,
       stubFalse, stubObject, stubString, stubTrue, times,
       toPath, uniqueId
     };
@@ -40307,93 +40291,93 @@
        * @param {object} options:     SlickGrid options.
     **/
     var attachGrid = function attachGrid(config, ps, flags) {
-        return function (_ref) {
-            var container = _ref.container,
-                _ref$columns = _ref.columns,
-                columns = _ref$columns === undefined ? null : _ref$columns,
-                _ref$options = _ref.options,
-                options = _ref$options === undefined ? null : _ref$options;
+      return function (_ref) {
+        var container = _ref.container,
+            _ref$columns = _ref.columns,
+            columns = _ref$columns === undefined ? null : _ref$columns,
+            _ref$options = _ref.options,
+            options = _ref$options === undefined ? null : _ref$options;
 
-            flags.grid = true;
+        flags.grid = true;
 
-            var checkboxSelector = new SlickGrid.Plugins.CheckboxSelectColumn({
-                cssClass: 'slick-cell-checkboxsel'
-            });
+        var checkboxSelector = new SlickGrid.Plugins.CheckboxSelectColumn({
+          cssClass: 'slick-cell-checkboxsel'
+        });
 
-            if (columns === null) {
-                // place id col on left
-                var column_keys = config.vars;
-                column_keys = difference(column_keys, ['id']);
-                // NOTE: remove line below to remove id col from grid
-                column_keys.unshift('id');
+        if (columns === null) {
+          // place id col on left
+          var column_keys = config.vars;
+          column_keys = difference(column_keys, ['id']);
+          // NOTE: remove line below to remove id col from grid
+          column_keys.unshift('id');
 
-                columns = column_keys.map(function (key, i) {
-                    return {
-                        id: key,
-                        name: key,
-                        field: key,
-                        sortable: true
-                    };
-                });
-                columns.unshift(checkboxSelector.getColumnDefinition());
-            }
-
-            if (options === null) {
-                options = {
-                    enableCellNavigation: true,
-                    enableColumnReorder: true,
-                    multiColumnSort: false,
-                    editable: true,
-                    asyncEditorLoading: false,
-                    autoEdit: false
-                };
-            }
-
-            // initialize
-            config.dataView = new SlickGrid.Data.DataView();
-            config.dataView.setItems(config.data);
-            config.grid = new SlickGrid.Grid(container, config.dataView, columns, options);
-
-            config.grid.setSelectionModel(new SlickGrid.Plugins.RowSelectionModel({ selectActiveRow: false }));
-            config.grid.registerPlugin(checkboxSelector);
-
-            // wire up model events to drive the grid
-            config.dataView.onRowCountChanged.subscribe(function (e, args) {
-                config.grid.updateRowCount();
-                config.grid.render();
-            });
-
-            config.dataView.onRowsChanged.subscribe(function (e, args) {
-                config.grid.invalidateRows(args.rows);
-                config.grid.render();
-            });
-
-            // keep checkboxes matched with row on update
-            config.dataView.syncGridSelection(config.grid);
-
-            // column sorting
-            var sortcol = columns.map(function (c) {
-                return c.name;
-            });
-            sortcol.shift();
-            var sortdir = 1;
-
-            var comparer = function comparer(a, b) {
-                var x = as_float(a[sortcol]);
-                var y = as_float(b[sortcol]);
-                return x == y ? 0 : x > y ? 1 : -1;
+          columns = column_keys.map(function (key, i) {
+            return {
+              id: key,
+              name: key,
+              field: key,
+              sortable: true
             };
+          });
+          columns.unshift(checkboxSelector.getColumnDefinition());
+        }
 
-            // click header to sort grid column
-            config.grid.onSort.subscribe(function (e, args) {
-                sortdir = args.sortAsc ? 1 : -1;
-                sortcol = args.sortCol.field;
+        if (options === null) {
+          options = {
+            enableCellNavigation: true,
+            enableColumnReorder: true,
+            multiColumnSort: false,
+            editable: true,
+            asyncEditorLoading: false,
+            autoEdit: false
+          };
+        }
 
-                config.dataView.sort(comparer, args.sortAsc);
-            });
+        // initialize
+        config.dataView = new SlickGrid.Data.DataView();
+        config.dataView.setItems(config.data);
+        config.grid = new SlickGrid.Grid(container, config.dataView, columns, options);
 
-            return this;
+        config.grid.setSelectionModel(new SlickGrid.Plugins.RowSelectionModel({ selectActiveRow: false }));
+        config.grid.registerPlugin(checkboxSelector);
+
+        // wire up model events to drive the grid
+        config.dataView.onRowCountChanged.subscribe(function (e, args) {
+          config.grid.updateRowCount();
+          config.grid.render();
+        });
+
+        config.dataView.onRowsChanged.subscribe(function (e, args) {
+          config.grid.invalidateRows(args.rows);
+          config.grid.render();
+        });
+
+        // keep checkboxes matched with row on update
+        config.dataView.syncGridSelection(config.grid);
+
+        // column sorting
+        var sortcol = columns.map(function (c) {
+          return c.name;
+        });
+        sortcol.shift();
+        var sortdir = 1;
+
+        var comparer = function comparer(a, b) {
+          var x = as_float(a[sortcol]);
+          var y = as_float(b[sortcol]);
+          return x == y ? 0 : x > y ? 1 : -1;
         };
+
+        // click header to sort grid column
+        config.grid.onSort.subscribe(function (e, args) {
+          sortdir = args.sortAsc ? 1 : -1;
+          sortcol = args.sortCol.field;
+
+          config.dataView.sort(comparer, args.sortAsc);
+        });
+
+        return this;
+      };
     };
 
     /**
@@ -40402,42 +40386,42 @@
        * @param {array} columns:  column definitions.
     **/
     var gridUpdate = function gridUpdate(config, ps, flags) {
-        return function () {
-            var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-                _ref$data = _ref.data,
-                data = _ref$data === undefined ? null : _ref$data,
-                _ref$columns = _ref.columns,
-                columns = _ref$columns === undefined ? null : _ref$columns;
+      return function () {
+        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            _ref$data = _ref.data,
+            data = _ref$data === undefined ? null : _ref$data,
+            _ref$columns = _ref.columns,
+            columns = _ref$columns === undefined ? null : _ref$columns;
 
-            if (columns !== null) {
-                config.grid.setColumns(columns);
-                config.grid.render();
-            }
-            if (data === null) {
-                data = config.selections();
-                if (data.length === 0) {
-                    // if selections empty, use full dataset
-                    data = config.data;
-                }
-            }
-            // if marked data exists, keep in grid
-            if (config.marked.length) {
-                data = union(data, config.marked);
-            }
+        if (columns !== null) {
+          config.grid.setColumns(columns);
+          config.grid.render();
+        }
+        if (data === null) {
+          data = config.selections();
+          if (data.length === 0) {
+            // if selections empty, use full dataset
+            data = config.data;
+          }
+        }
+        // if marked data exists, keep in grid
+        if (config.marked.length) {
+          data = union(data, config.marked);
+        }
 
-            var comparer = function comparer(a, b) {
-                var x = as_float(a['id']);
-                var y = as_float(b['id']);
-                return x == y ? 0 : x > y ? 1 : -1;
-            };
-
-            config.dataView.beginUpdate();
-            config.dataView.setItems(data);
-            config.dataView.sort(comparer, true);
-            config.dataView.endUpdate();
-
-            return this;
+        var comparer = function comparer(a, b) {
+          var x = as_float(a['id']);
+          var y = as_float(b['id']);
+          return x == y ? 0 : x > y ? 1 : -1;
         };
+
+        config.dataView.beginUpdate();
+        config.dataView.setItems(data);
+        config.dataView.sort(comparer, true);
+        config.dataView.endUpdate();
+
+        return this;
+      };
     };
 
     // synchronize data between linked components
@@ -44306,7 +44290,7 @@
           probabilities: probabilities[0]
         });
 
-        const candidates = X.selection(candidateIdx, range$2(X[0].length));
+        const candidates = X.selection(candidateIdx, range$3(X[0].length));
         const distanceToCandidates = euclidianDistances(candidates, X);
 
         let bestCandidate;
@@ -44343,7 +44327,7 @@
       return result;
     }
 
-    function range$2(l) {
+    function range$3(l) {
       let r = [];
       for (let i = 0; i < l; i++) {
         r.push(i);
@@ -44846,7 +44830,7 @@
      * @param {array} displayIDs: charts that will display 'weighted sum' variable; defaults to all charts
      * @param {bool} norm: normalize values (0-1) to obtain fair weighting
      */
-    var weightedSums = function weightedSums(config, ps, flags) {
+    var weightedSum = function weightedSum(config, ps, flags) {
       return function (_ref) {
         var weights = _ref.weights,
             _ref$displayIDs = _ref.displayIDs,
@@ -44901,7 +44885,6 @@
 
         // weighted sums are ready, update data and charts
         config.vars.push('weighted sum');
-        console.log(config.vars);
         config.data = format_data(config.data);
         ps.charts.forEach(function (pc, i) {
           pc.data(config.data).hideAxis(config.partition[i]).render().createAxes();
@@ -45659,7 +45642,7 @@
       };
     };
 
-    var version$2 = "0.0.0";
+    var version$2 = "0.0.1";
 
     //css
 
@@ -45685,7 +45668,7 @@
       ps.gridUpdate = gridUpdate(config, ps, flags);
       ps.linked = linked(config, ps, flags);
       ps.cluster = cluster$1(config, ps, flags);
-      ps.weightedSums = weightedSums(config, ps, flags);
+      ps.weightedSum = weightedSum(config, ps, flags);
       ps.hideAxes = hideAxes(config, ps, flags);
       ps.showAxes = showAxes(config, ps, flags);
       ps.setAxesLayout = setAxesLayout(config, ps, flags);

@@ -11,7 +11,7 @@ import add_column from '../util/add_column';
  * @param {array} displayIDs: charts that will display 'weighted sum' variable; defaults to all charts
  * @param {bool} norm: normalize values (0-1) to obtain fair weighting
  */
-const weightedSums = (config, ps, flags) =>
+const weightedSum = (config, ps, flags) =>
   function({
     weights,
     displayIDs = [...Array(ps.charts.length).keys()],
@@ -64,7 +64,6 @@ const weightedSums = (config, ps, flags) =>
 
     // weighted sums are ready, update data and charts
     config.vars.push('weighted sum')
-    console.log(config.vars);
     config.data = format_data(config.data);
     ps.charts.forEach( (pc, i) => {
       pc
@@ -85,4 +84,4 @@ const weightedSums = (config, ps, flags) =>
     return this;
   };
 
-export default weightedSums;
+export default weightedSum;
