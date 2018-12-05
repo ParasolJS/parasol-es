@@ -1,9 +1,9 @@
 (function(l, i, v, e) { v = l.createElement(i); v.async = 1; v.src = '//' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; e = l.getElementsByTagName(i)[0]; e.parentNode.insertBefore(v, e)})(document, 'script');
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('sylvester')) :
-    typeof define === 'function' && define.amd ? define(['sylvester'], factory) :
-    (global.Parasol = factory(global.sylvester));
-}(this, (function (sylvester) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+    typeof define === 'function' && define.amd ? define(factory) :
+    (global.Parasol = factory());
+}(this, (function () { 'use strict';
 
     function ascending(a, b) {
       return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
@@ -82,7 +82,7 @@
       return [min, max];
     }
 
-    function range(start, stop, step) {
+    function sequence(start, stop, step) {
       start = +start, stop = +stop, step = (n = arguments.length) < 2 ? (stop = start, start = 0, 1) : n < 3 ? 1 : +step;
 
       var i = -1,
@@ -5160,7 +5160,7 @@
         start += (stop - start - step * (n - paddingInner)) * align;
         bandwidth = step * (1 - paddingInner);
         if (round) start = Math.round(start), bandwidth = Math.round(bandwidth);
-        var values = range(n).map(function(i) { return start + step * i; });
+        var values = sequence(n).map(function(i) { return start + step * i; });
         return ordinalRange(reverse ? values.reverse() : values);
       }
 
@@ -5267,15 +5267,15 @@
       };
     }
 
-    function bimap(domain, range$$1, deinterpolate, reinterpolate) {
-      var d0 = domain[0], d1 = domain[1], r0 = range$$1[0], r1 = range$$1[1];
+    function bimap(domain, range, deinterpolate, reinterpolate) {
+      var d0 = domain[0], d1 = domain[1], r0 = range[0], r1 = range[1];
       if (d1 < d0) d0 = deinterpolate(d1, d0), r0 = reinterpolate(r1, r0);
       else d0 = deinterpolate(d0, d1), r0 = reinterpolate(r0, r1);
       return function(x) { return r0(d0(x)); };
     }
 
-    function polymap(domain, range$$1, deinterpolate, reinterpolate) {
-      var j = Math.min(domain.length, range$$1.length) - 1,
+    function polymap(domain, range, deinterpolate, reinterpolate) {
+      var j = Math.min(domain.length, range.length) - 1,
           d = new Array(j),
           r = new Array(j),
           i = -1;
@@ -5283,12 +5283,12 @@
       // Reverse descending domains.
       if (domain[j] < domain[0]) {
         domain = domain.slice().reverse();
-        range$$1 = range$$1.slice().reverse();
+        range = range.slice().reverse();
       }
 
       while (++i < j) {
         d[i] = deinterpolate(domain[i], domain[i + 1]);
-        r[i] = reinterpolate(range$$1[i], range$$1[i + 1]);
+        r[i] = reinterpolate(range[i], range[i + 1]);
       }
 
       return function(x) {
@@ -5309,7 +5309,7 @@
     // reinterpolate(a, b)(t) takes a parameter t in [0,1] and returns the corresponding domain value x in [a,b].
     function continuous(deinterpolate, reinterpolate) {
       var domain = unit,
-          range$$1 = unit,
+          range = unit,
           interpolate$$1 = interpolateValue,
           clamp = false,
           piecewise$$1,
@@ -5317,17 +5317,17 @@
           input;
 
       function rescale() {
-        piecewise$$1 = Math.min(domain.length, range$$1.length) > 2 ? polymap : bimap;
+        piecewise$$1 = Math.min(domain.length, range.length) > 2 ? polymap : bimap;
         output = input = null;
         return scale;
       }
 
       function scale(x) {
-        return (output || (output = piecewise$$1(domain, range$$1, clamp ? deinterpolateClamp(deinterpolate) : deinterpolate, interpolate$$1)))(+x);
+        return (output || (output = piecewise$$1(domain, range, clamp ? deinterpolateClamp(deinterpolate) : deinterpolate, interpolate$$1)))(+x);
       }
 
       scale.invert = function(y) {
-        return (input || (input = piecewise$$1(range$$1, domain, deinterpolateLinear, clamp ? reinterpolateClamp(reinterpolate) : reinterpolate)))(+y);
+        return (input || (input = piecewise$$1(range, domain, deinterpolateLinear, clamp ? reinterpolateClamp(reinterpolate) : reinterpolate)))(+y);
       };
 
       scale.domain = function(_) {
@@ -5335,11 +5335,11 @@
       };
 
       scale.range = function(_) {
-        return arguments.length ? (range$$1 = slice$5.call(_), rescale()) : range$$1.slice();
+        return arguments.length ? (range = slice$5.call(_), rescale()) : range.slice();
       };
 
       scale.rangeRound = function(_) {
-        return range$$1 = slice$5.call(_), interpolate$$1 = interpolateRound, rescale();
+        return range = slice$5.call(_), interpolate$$1 = interpolateRound, rescale();
       };
 
       scale.clamp = function(_) {
@@ -7639,9 +7639,9 @@
             return [];
           }
           var domain = yscale.domain();
-          var range$$1 = yscale.range();
+          var range = yscale.range();
           var found = [];
-          range$$1.forEach(function (d, i) {
+          range.forEach(function (d, i) {
             if (d >= selection$$1[0] && d <= selection$$1[1]) {
               found.push(domain[i]);
             }
@@ -8105,9 +8105,9 @@
               acc[cur] = [];
             } else {
               acc[cur] = axisBrushes.reduce(function (d, p, i) {
-                var range$$1 = brushSelection(document.getElementById('brush-' + pos + '-' + i));
-                if (range$$1 !== null) {
-                  d = d.push(range$$1);
+                var range = brushSelection(document.getElementById('brush-' + pos + '-' + i));
+                if (range !== null) {
+                  d = d.push(range);
                 }
 
                 return d;
@@ -35848,7 +35848,7 @@
      * _.range(0);
      * // => []
      */
-    var range$2 = createRange();
+    var range$1 = createRange();
 
     /**
      * This method is like `_.range` except that it populates values in
@@ -39522,7 +39522,7 @@
       defaultTo, flow, flowRight, identity: identity$9, iteratee,
       matches, matchesProperty, method, methodOf, mixin,
       noop: noop$4, nthArg, over, overEvery, overSome,
-      property, propertyOf, range: range$2, rangeRight, stubArray,
+      property, propertyOf, range: range$1, rangeRight, stubArray,
       stubFalse, stubObject, stubString, stubTrue, times,
       toPath, uniqueId
     };
@@ -44290,7 +44290,7 @@
           probabilities: probabilities[0]
         });
 
-        const candidates = X.selection(candidateIdx, range$3(X[0].length));
+        const candidates = X.selection(candidateIdx, range$2(X[0].length));
         const distanceToCandidates = euclidianDistances(candidates, X);
 
         let bestCandidate;
@@ -44327,7 +44327,7 @@
       return result;
     }
 
-    function range$3(l) {
+    function range$2(l) {
       let r = [];
       for (let i = 0; i < l; i++) {
         r.push(i);
