@@ -13,8 +13,8 @@
 
 <body>
 <p>Demonstrates creating a set of parallel coordinates charts from an example dataset and editing each chart indiviually. Note that user retains freedom to customize each plot div as well.</p>
-<div id="p0" class="parcoords" style="height:200px; width:600px;"></div>
-<div id="p1" class="parcoords" style="height:200px; width:800px;"></div>
+<div id="p0" class="parcoords" style="height:200px; width:750px;"></div>
+<div id="p1" class="parcoords" style="height:200px; width:850px;"></div>
 <div id="p2" class="parcoords" style="height:200px; width:100%;"></div>
 </body>
 
@@ -31,9 +31,12 @@ d3.csv('data/cars.csv').then(function(data) {
         .updateAxes(0);
     }
   )
+
   // individual chart manipulation with parcoords-es methods
-  // NOTE: uncomment hideAxis once bug is fixed in parcoords
-  // ps.charts[0].hideAxis(['name', 'year']).render().updateAxes(0);
+
+  // ps.charts[0].flipAxes(['year']).render().updateAxes(0);
+  // ps.charts[0].flip(['cylinders']).render().updateAxes(0);
+
   ps.charts[0].reorderable().shadows().render();
   ps.charts[1].color("rgba(128,0,128,0.3)").render(); //transparent purple
   ps.charts[2].alpha(0.6).render();

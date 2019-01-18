@@ -9,7 +9,6 @@
 <link rel="stylesheet" type="text/css" href="parasol.css">
 
 <script src="./lib/d3.v5.min.js"></script>
-<script src="./lib/slyvester.js"></script>
 <script src="./parasol.standalone.js"></script>
 
 <body>
@@ -28,8 +27,8 @@ d3.csv('data/cars.csv').then(function(data) {
 
   // initialize chart closures
   var ps = Parasol(data)('.parcoords')
-          // .attachGrid({container: '#grid'})
-          // .linked();
+          .attachGrid({container: '#grid'})
+          .linked();
 
   var range = ps.charts[0].height() - ps.charts[0].margin().top - ps.charts[0].margin().bottom;
   var min = d3.min(data, function(d) {
@@ -68,7 +67,7 @@ d3.csv('data/cars.csv').then(function(data) {
     .composite('darker')
     // .dimensions(dimensions) // broken
     // .scale('year', [30, 90])
-    // .flipAxes(['economy (mpg)', 'power (hp)']) // broken (parcoords bug)
+    .flipAxes(['economy (mpg)', 'power (hp)'])
     .bundleDimension('cylinders')
     .bundlingStrength(0.4)
     .smoothness(0.2)

@@ -5556,6 +5556,7 @@
         return (end - start) / k;
       });
     };
+    var milliseconds = millisecond.range;
 
     var durationSecond = 1e3;
     var durationMinute = 6e4;
@@ -5572,6 +5573,7 @@
     }, function(date) {
       return date.getUTCSeconds();
     });
+    var seconds = second.range;
 
     var minute = newInterval(function(date) {
       date.setTime(Math.floor(date / durationMinute) * durationMinute);
@@ -5582,6 +5584,7 @@
     }, function(date) {
       return date.getMinutes();
     });
+    var minutes = minute.range;
 
     var hour = newInterval(function(date) {
       var offset = date.getTimezoneOffset() * durationMinute % durationHour;
@@ -5594,6 +5597,7 @@
     }, function(date) {
       return date.getHours();
     });
+    var hours = hour.range;
 
     var day = newInterval(function(date) {
       date.setHours(0, 0, 0, 0);
@@ -5604,6 +5608,7 @@
     }, function(date) {
       return date.getDate() - 1;
     });
+    var days = day.range;
 
     function weekday(i) {
       return newInterval(function(date) {
@@ -5624,6 +5629,8 @@
     var friday = weekday(5);
     var saturday = weekday(6);
 
+    var sundays = sunday.range;
+
     var month = newInterval(function(date) {
       date.setDate(1);
       date.setHours(0, 0, 0, 0);
@@ -5634,6 +5641,7 @@
     }, function(date) {
       return date.getMonth();
     });
+    var months = month.range;
 
     var year = newInterval(function(date) {
       date.setMonth(0, 1);
@@ -5656,6 +5664,7 @@
         date.setFullYear(date.getFullYear() + step * k);
       });
     };
+    var years = year.range;
 
     var utcMinute = newInterval(function(date) {
       date.setUTCSeconds(0, 0);
@@ -5666,6 +5675,7 @@
     }, function(date) {
       return date.getUTCMinutes();
     });
+    var utcMinutes = utcMinute.range;
 
     var utcHour = newInterval(function(date) {
       date.setUTCMinutes(0, 0, 0);
@@ -5676,6 +5686,7 @@
     }, function(date) {
       return date.getUTCHours();
     });
+    var utcHours = utcHour.range;
 
     var utcDay = newInterval(function(date) {
       date.setUTCHours(0, 0, 0, 0);
@@ -5686,6 +5697,7 @@
     }, function(date) {
       return date.getUTCDate() - 1;
     });
+    var utcDays = utcDay.range;
 
     function utcWeekday(i) {
       return newInterval(function(date) {
@@ -5706,6 +5718,8 @@
     var utcFriday = utcWeekday(5);
     var utcSaturday = utcWeekday(6);
 
+    var utcSundays = utcSunday.range;
+
     var utcMonth = newInterval(function(date) {
       date.setUTCDate(1);
       date.setUTCHours(0, 0, 0, 0);
@@ -5716,6 +5730,7 @@
     }, function(date) {
       return date.getUTCMonth();
     });
+    var utcMonths = utcMonth.range;
 
     var utcYear = newInterval(function(date) {
       date.setUTCMonth(0, 1);
@@ -5738,6 +5753,7 @@
         date.setUTCFullYear(date.getUTCFullYear() + step * k);
       });
     };
+    var utcYears = utcYear.range;
 
     function localDate(d) {
       if (0 <= d.y && d.y < 100) {
@@ -6546,7 +6562,7 @@
       return colors;
     }
 
-    var schemeCategory10 = colors("1f77b4ff7f0e2ca02cd627289467bd8c564be377c27f7f7fbcbd2217becf");
+    colors("1f77b4ff7f0e2ca02cd627289467bd8c564be377c27f7f7fbcbd2217becf");
 
     colors("7fc97fbeaed4fdc086ffff99386cb0f0027fbf5b17666666");
 
@@ -7463,6 +7479,28 @@
       return config.width - config.margin.right - config.margin.left;
     };
 
+    var invertCategorical = function invertCategorical(selection$$1, scale) {
+      if (selection$$1.length === 0) {
+        return [];
+      }
+      var domain = scale.domain();
+      var range = scale.range();
+      var found = [];
+      range.forEach(function (d, i) {
+        if (d >= selection$$1[0] && d <= selection$$1[1]) {
+          found.push(domain[i]);
+        }
+      });
+      return found;
+    };
+
+    var invertByScale = function invertByScale(selection$$1, scale) {
+      if (scale === null) return [];
+      return typeof scale.invert === 'undefined' ? invertCategorical(selection$$1, scale) : selection$$1.map(function (d) {
+        return scale.invert(d);
+      });
+    };
+
     var brushExtents = function brushExtents(state, config, pc) {
       return function (extents) {
         var brushes = state.brushes,
@@ -7474,7 +7512,17 @@
             var brush$$1 = brushes[cur];
             //todo: brush check
             if (brush$$1 !== undefined && brushSelection(brushNodes[cur]) !== null) {
-              acc[cur] = brush$$1.extent();
+              var raw = brushSelection(brushNodes[cur]);
+              var yScale = config.dimensions[cur].yscale;
+              var scaled = invertByScale(raw, yScale);
+
+              acc[cur] = {
+                extent: brush$$1.extent(),
+                selection: {
+                  raw: raw,
+                  scaled: scaled
+                }
+              };
             }
 
             return acc;
@@ -7499,7 +7547,10 @@
 
               //update the extent
               //sets the brushable extent to the specified array of points [[x0, y0], [x1, y1]]
-              brush$$1.extent([[-15, yExtent[1]], [15, yExtent[0]]]);
+              //we actually don't need this since we are using brush.move below
+              //extents set the limits of the brush which means a user will not be able
+              //to move or drag the brush beyond the limits set by brush.extent
+              //brush.extent([[-15, yExtent[1]], [15, yExtent[0]]]);
 
               //redraw the brush
               //https://github.com/d3/d3-brush#brush_move
@@ -7634,42 +7685,27 @@
 
         var _brush = brushY(_selector).extent([[-15, 0], [15, brushRangeMax]]);
 
-        var invertCategorical = function invertCategorical(selection$$1, yscale) {
-          if (selection$$1.length === 0) {
-            return [];
-          }
-          var domain = yscale.domain();
-          var range = yscale.range();
-          var found = [];
-          range.forEach(function (d, i) {
-            if (d >= selection$$1[0] && d <= selection$$1[1]) {
-              found.push(domain[i]);
-            }
-          });
-          return found;
-        };
-
         var convertBrushArguments = function convertBrushArguments(args) {
           var args_array = Array.prototype.slice.call(args);
           var axis = args_array[0];
-          var selection_raw = brushSelection(args_array[2][0]) || [];
-          // ordinal scales do not have invert
-          var selection_scaled = [];
-          var yscale = config.dimensions[axis].yscale;
-          if (typeof yscale.invert === 'undefined') {
-            selection_scaled = invertCategorical(selection_raw, yscale);
-          } else {
-            selection_scaled = selection_raw.map(function (d) {
-              return config.dimensions[axis].yscale.invert(d);
-            });
+
+          var raw = brushSelection(args_array[2][0]) || [];
+
+          // handle hidden axes which will not have a yscale
+          var yscale = null;
+          if (config.dimensions.hasOwnProperty(axis)) {
+            yscale = config.dimensions[axis].yscale;
           }
+
+          // ordinal scales do not have invert
+          var scaled = invertByScale(raw, yscale);
 
           return {
             axis: args_array[0],
             node: args_array[2][0],
             selection: {
-              raw: selection_raw,
-              scaled: selection_scaled
+              raw: raw,
+              scaled: scaled
             }
           };
         };
@@ -9251,7 +9287,11 @@
       return function (dimension) {
         pc.flip(dimension);
         pc.brushReset(dimension);
-        select(this.parentElement).transition().duration(config.animationTime).call(axis.scale(config.dimensions[dimension].yscale));
+
+        // select(this.parentElement)
+        pc.selection.select('svg').selectAll('g.axis').filter(function (d) {
+          return d === dimension;
+        }).transition().duration(config.animationTime).call(axis.scale(config.dimensions[dimension].yscale));
         pc.render();
       };
     };
@@ -9414,7 +9454,9 @@
         });
 
         // xscale
-        xscale.range([0, w(config)], 1);
+        // add padding for d3 >= v4 default 0.2
+        xscale.range([0, w(config)]).padding(0.2);
+
         // Retina display, etc.
         var devicePixelRatio = window.devicePixelRatio || 1;
 
@@ -9552,6 +9594,30 @@
         });
       };
     };
+
+    var classCallCheck = function (instance, Constructor) {
+      if (!(instance instanceof Constructor)) {
+        throw new TypeError("Cannot call a class as a function");
+      }
+    };
+
+    var createClass = function () {
+      function defineProperties(target, props) {
+        for (var i = 0; i < props.length; i++) {
+          var descriptor = props[i];
+          descriptor.enumerable = descriptor.enumerable || false;
+          descriptor.configurable = true;
+          if ("value" in descriptor) descriptor.writable = true;
+          Object.defineProperty(target, descriptor.key, descriptor);
+        }
+      }
+
+      return function (Constructor, protoProps, staticProps) {
+        if (protoProps) defineProperties(Constructor.prototype, protoProps);
+        if (staticProps) defineProperties(Constructor, staticProps);
+        return Constructor;
+      };
+    }();
 
     var _extends = Object.assign || function (target) {
       for (var i = 1; i < arguments.length; i++) {
@@ -9840,6 +9906,1111 @@
       };
     };
 
+    var PRECISION = 1e-6;
+
+    var Matrix = function () {
+        function Matrix(elements) {
+            classCallCheck(this, Matrix);
+
+            this.setElements(elements);
+        }
+
+        createClass(Matrix, [{
+            key: "e",
+            value: function e(i, j) {
+                if (i < 1 || i > this.elements.length || j < 1 || j > this.elements[0].length) {
+                    return null;
+                }
+                return this.elements[i - 1][j - 1];
+            }
+        }, {
+            key: "row",
+            value: function row(i) {
+                if (i > this.elements.length) {
+                    return null;
+                }
+                return new Vector(this.elements[i - 1]);
+            }
+        }, {
+            key: "col",
+            value: function col(j) {
+                if (this.elements.length === 0) {
+                    return null;
+                }
+                if (j > this.elements[0].length) {
+                    return null;
+                }
+                var col = [],
+                    n = this.elements.length;
+                for (var i = 0; i < n; i++) {
+                    col.push(this.elements[i][j - 1]);
+                }
+                return new Vector(col);
+            }
+        }, {
+            key: "dimensions",
+            value: function dimensions() {
+                var cols = this.elements.length === 0 ? 0 : this.elements[0].length;
+                return { rows: this.elements.length, cols: cols };
+            }
+        }, {
+            key: "rows",
+            value: function rows() {
+                return this.elements.length;
+            }
+        }, {
+            key: "cols",
+            value: function cols() {
+                if (this.elements.length === 0) {
+                    return 0;
+                }
+                return this.elements[0].length;
+            }
+        }, {
+            key: "eql",
+            value: function eql(matrix) {
+                var M = matrix.elements || matrix;
+                if (!M[0] || typeof M[0][0] === 'undefined') {
+                    M = new Matrix(M).elements;
+                }
+                if (this.elements.length === 0 || M.length === 0) {
+                    return this.elements.length === M.length;
+                }
+                if (this.elements.length !== M.length) {
+                    return false;
+                }
+                if (this.elements[0].length !== M[0].length) {
+                    return false;
+                }
+                var i = this.elements.length,
+                    nj = this.elements[0].length,
+                    j;
+                while (i--) {
+                    j = nj;
+                    while (j--) {
+                        if (Math.abs(this.elements[i][j] - M[i][j]) > PRECISION) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+        }, {
+            key: "dup",
+            value: function dup() {
+                return new Matrix(this.elements);
+            }
+        }, {
+            key: "map",
+            value: function map(fn, context) {
+                if (this.elements.length === 0) {
+                    return new Matrix([]);
+                }
+                var els = [],
+                    i = this.elements.length,
+                    nj = this.elements[0].length,
+                    j;
+                while (i--) {
+                    j = nj;
+                    els[i] = [];
+                    while (j--) {
+                        els[i][j] = fn.call(context, this.elements[i][j], i + 1, j + 1);
+                    }
+                }
+                return new Matrix(els);
+            }
+        }, {
+            key: "isSameSizeAs",
+            value: function isSameSizeAs(matrix) {
+                var M = matrix.elements || matrix;
+                if (typeof M[0][0] === 'undefined') {
+                    M = new Matrix(M).elements;
+                }
+                if (this.elements.length === 0) {
+                    return M.length === 0;
+                }
+                return this.elements.length === M.length && this.elements[0].length === M[0].length;
+            }
+        }, {
+            key: "add",
+            value: function add(matrix) {
+                if (this.elements.length === 0) {
+                    return this.map(function (x) {
+                        return x;
+                    });
+                }
+                var M = matrix.elements || matrix;
+                if (typeof M[0][0] === 'undefined') {
+                    M = new Matrix(M).elements;
+                }
+                if (!this.isSameSizeAs(M)) {
+                    return null;
+                }
+                return this.map(function (x, i, j) {
+                    return x + M[i - 1][j - 1];
+                });
+            }
+        }, {
+            key: "subtract",
+            value: function subtract(matrix) {
+                if (this.elements.length === 0) {
+                    return this.map(function (x) {
+                        return x;
+                    });
+                }
+                var M = matrix.elements || matrix;
+                if (typeof M[0][0] === 'undefined') {
+                    M = new Matrix(M).elements;
+                }
+                if (!this.isSameSizeAs(M)) {
+                    return null;
+                }
+                return this.map(function (x, i, j) {
+                    return x - M[i - 1][j - 1];
+                });
+            }
+        }, {
+            key: "canMultiplyFromLeft",
+            value: function canMultiplyFromLeft(matrix) {
+                if (this.elements.length === 0) {
+                    return false;
+                }
+                var M = matrix.elements || matrix;
+                if (typeof M[0][0] === 'undefined') {
+                    M = new Matrix(M).elements;
+                }
+                // this.columns should equal matrix.rows
+                return this.elements[0].length === M.length;
+            }
+        }, {
+            key: "multiply",
+            value: function multiply(matrix) {
+                if (this.elements.length === 0) {
+                    return null;
+                }
+                if (!matrix.elements) {
+                    return this.map(function (x) {
+                        return x * matrix;
+                    });
+                }
+                var returnVector = matrix.modulus ? true : false;
+                var M = matrix.elements || matrix;
+                if (typeof M[0][0] === 'undefined') {
+                    M = new Matrix(M).elements;
+                }
+                if (!this.canMultiplyFromLeft(M)) {
+                    return null;
+                }
+                var i = this.elements.length,
+                    nj = M[0].length,
+                    j;
+                var cols = this.elements[0].length,
+                    c,
+                    elements = [],
+                    sum$$1;
+                while (i--) {
+                    j = nj;
+                    elements[i] = [];
+                    while (j--) {
+                        c = cols;
+                        sum$$1 = 0;
+                        while (c--) {
+                            sum$$1 += this.elements[i][c] * M[c][j];
+                        }
+                        elements[i][j] = sum$$1;
+                    }
+                }
+                var M = new Matrix(elements);
+                return returnVector ? M.col(1) : M;
+            }
+        }, {
+            key: "minor",
+            value: function minor(a, b, c, d) {
+                if (this.elements.length === 0) {
+                    return null;
+                }
+                var elements = [],
+                    ni = c,
+                    i,
+                    nj,
+                    j;
+                var rows = this.elements.length,
+                    cols = this.elements[0].length;
+                while (ni--) {
+                    i = c - ni - 1;
+                    elements[i] = [];
+                    nj = d;
+                    while (nj--) {
+                        j = d - nj - 1;
+                        elements[i][j] = this.elements[(a + i - 1) % rows][(b + j - 1) % cols];
+                    }
+                }
+                return new Matrix(elements);
+            }
+        }, {
+            key: "transpose",
+            value: function transpose$$1() {
+                if (this.elements.length === 0) {
+                    return new Matrix([]);
+                }
+                var rows = this.elements.length,
+                    i,
+                    cols = this.elements[0].length,
+                    j;
+                var elements = [],
+                    i = cols;
+                while (i--) {
+                    j = rows;
+                    elements[i] = [];
+                    while (j--) {
+                        elements[i][j] = this.elements[j][i];
+                    }
+                }
+                return new Matrix(elements);
+            }
+        }, {
+            key: "isSquare",
+            value: function isSquare() {
+                var cols = this.elements.length === 0 ? 0 : this.elements[0].length;
+                return this.elements.length === cols;
+            }
+        }, {
+            key: "max",
+            value: function max$$1() {
+                if (this.elements.length === 0) {
+                    return null;
+                }
+                var m = 0,
+                    i = this.elements.length,
+                    nj = this.elements[0].length,
+                    j;
+                while (i--) {
+                    j = nj;
+                    while (j--) {
+                        if (Math.abs(this.elements[i][j]) > Math.abs(m)) {
+                            m = this.elements[i][j];
+                        }
+                    }
+                }
+                return m;
+            }
+        }, {
+            key: "indexOf",
+            value: function indexOf(x) {
+                if (this.elements.length === 0) {
+                    return null;
+                }
+                var ni = this.elements.length,
+                    i,
+                    nj = this.elements[0].length,
+                    j;
+                for (i = 0; i < ni; i++) {
+                    for (j = 0; j < nj; j++) {
+                        if (this.elements[i][j] === x) {
+                            return {
+                                i: i + 1,
+                                j: j + 1
+                            };
+                        }
+                    }
+                }
+                return null;
+            }
+        }, {
+            key: "diagonal",
+            value: function diagonal() {
+                if (!this.isSquare) {
+                    return null;
+                }
+                var els = [],
+                    n = this.elements.length;
+                for (var i = 0; i < n; i++) {
+                    els.push(this.elements[i][i]);
+                }
+                return new Vector(els);
+            }
+        }, {
+            key: "toRightTriangular",
+            value: function toRightTriangular() {
+                if (this.elements.length === 0) {
+                    return new Matrix([]);
+                }
+                var M = this.dup(),
+                    els;
+                var n = this.elements.length,
+                    i,
+                    j,
+                    np = this.elements[0].length,
+                    p;
+                for (i = 0; i < n; i++) {
+                    if (M.elements[i][i] === 0) {
+                        for (j = i + 1; j < n; j++) {
+                            if (M.elements[j][i] !== 0) {
+                                els = [];
+                                for (p = 0; p < np; p++) {
+                                    els.push(M.elements[i][p] + M.elements[j][p]);
+                                }
+                                M.elements[i] = els;
+                                break;
+                            }
+                        }
+                    }
+                    if (M.elements[i][i] !== 0) {
+                        for (j = i + 1; j < n; j++) {
+                            var multiplier = M.elements[j][i] / M.elements[i][i];
+                            els = [];
+                            for (p = 0; p < np; p++) {
+                                // Elements with column numbers up to an including the number of the
+                                // row that we're subtracting can safely be set straight to zero,
+                                // since that's the point of this routine and it avoids having to
+                                // loop over and correct rounding errors later
+                                els.push(p <= i ? 0 : M.elements[j][p] - M.elements[i][p] * multiplier);
+                            }
+                            M.elements[j] = els;
+                        }
+                    }
+                }
+                return M;
+            }
+        }, {
+            key: "determinant",
+            value: function determinant() {
+                if (this.elements.length === 0) {
+                    return 1;
+                }
+                if (!this.isSquare()) {
+                    return null;
+                }
+                var M = this.toRightTriangular();
+                var det = M.elements[0][0],
+                    n = M.elements.length;
+                for (var i = 1; i < n; i++) {
+                    det = det * M.elements[i][i];
+                }
+                return det;
+            }
+        }, {
+            key: "isSingular",
+            value: function isSingular() {
+                return this.isSquare() && this.determinant() === 0;
+            }
+        }, {
+            key: "trace",
+            value: function trace() {
+                if (this.elements.length === 0) {
+                    return 0;
+                }
+                if (!this.isSquare()) {
+                    return null;
+                }
+                var tr = this.elements[0][0],
+                    n = this.elements.length;
+                for (var i = 1; i < n; i++) {
+                    tr += this.elements[i][i];
+                }
+                return tr;
+            }
+        }, {
+            key: "rank",
+            value: function rank() {
+                if (this.elements.length === 0) {
+                    return 0;
+                }
+                var M = this.toRightTriangular(),
+                    rank = 0;
+                var i = this.elements.length,
+                    nj = this.elements[0].length,
+                    j;
+                while (i--) {
+                    j = nj;
+                    while (j--) {
+                        if (Math.abs(M.elements[i][j]) > PRECISION) {
+                            rank++;
+                            break;
+                        }
+                    }
+                }
+                return rank;
+            }
+        }, {
+            key: "augment",
+            value: function augment(matrix) {
+                if (this.elements.length === 0) {
+                    return this.dup();
+                }
+                var M = matrix.elements || matrix;
+                if (typeof M[0][0] === 'undefined') {
+                    M = new Matrix(M).elements;
+                }
+                var T = this.dup(),
+                    cols = T.elements[0].length;
+                var i = T.elements.length,
+                    nj = M[0].length,
+                    j;
+                if (i !== M.length) {
+                    return null;
+                }
+                while (i--) {
+                    j = nj;
+                    while (j--) {
+                        T.elements[i][cols + j] = M[i][j];
+                    }
+                }
+                return T;
+            }
+        }, {
+            key: "inverse",
+            value: function inverse() {
+                if (this.elements.length === 0) {
+                    return null;
+                }
+                if (!this.isSquare() || this.isSingular()) {
+                    return null;
+                }
+                var n = this.elements.length,
+                    i = n,
+                    j;
+                var M = this.augment(Matrix.I(n)).toRightTriangular();
+                var np = M.elements[0].length,
+                    p,
+                    els,
+                    divisor;
+                var inverse_elements = [],
+                    new_element;
+                // Matrix is non-singular so there will be no zeros on the
+                // diagonal. Cycle through rows from last to first.
+                while (i--) {
+                    // First, normalise diagonal elements to 1
+                    els = [];
+                    inverse_elements[i] = [];
+                    divisor = M.elements[i][i];
+                    for (p = 0; p < np; p++) {
+                        new_element = M.elements[i][p] / divisor;
+                        els.push(new_element);
+                        // Shuffle off the current row of the right hand side into the results
+                        // array as it will not be modified by later runs through this loop
+                        if (p >= n) {
+                            inverse_elements[i].push(new_element);
+                        }
+                    }
+                    M.elements[i] = els;
+                    // Then, subtract this row from those above it to give the identity matrix
+                    // on the left hand side
+                    j = i;
+                    while (j--) {
+                        els = [];
+                        for (p = 0; p < np; p++) {
+                            els.push(M.elements[j][p] - M.elements[i][p] * M.elements[j][i]);
+                        }
+                        M.elements[j] = els;
+                    }
+                }
+                return new Matrix(inverse_elements);
+            }
+        }, {
+            key: "round",
+            value: function round() {
+                return this.map(function (x) {
+                    return Math.round(x);
+                });
+            }
+        }, {
+            key: "snapTo",
+            value: function snapTo(x) {
+                return this.map(function (p) {
+                    return Math.abs(p - x) <= PRECISION ? x : p;
+                });
+            }
+        }, {
+            key: "inspect",
+            value: function inspect() {
+                var matrix_rows = [];
+                var n = this.elements.length;
+                if (n === 0) return '[]';
+                for (var i = 0; i < n; i++) {
+                    matrix_rows.push(new Vector(this.elements[i]).inspect());
+                }
+                return matrix_rows.join('\n');
+            }
+        }, {
+            key: "setElements",
+            value: function setElements(els) {
+                var i,
+                    j,
+                    elements = els.elements || els;
+                if (elements[0] && typeof elements[0][0] !== 'undefined') {
+                    i = elements.length;
+                    this.elements = [];
+                    while (i--) {
+                        j = elements[i].length;
+                        this.elements[i] = [];
+                        while (j--) {
+                            this.elements[i][j] = elements[i][j];
+                        }
+                    }
+                    return this;
+                }
+                var n = elements.length;
+                this.elements = [];
+                for (i = 0; i < n; i++) {
+                    this.elements.push([elements[i]]);
+                }
+                return this;
+            }
+
+            //From glUtils.js
+
+        }, {
+            key: "flatten",
+            value: function flatten() {
+                var result = [];
+                if (this.elements.length == 0) {
+                    return [];
+                }
+
+                for (var j = 0; j < this.elements[0].length; j++) {
+                    for (var i = 0; i < this.elements.length; i++) {
+                        result.push(this.elements[i][j]);
+                    }
+                }
+                return result;
+            }
+
+            //From glUtils.js
+
+        }, {
+            key: "ensure4x4",
+            value: function ensure4x4() {
+                if (this.elements.length == 4 && this.elements[0].length == 4) {
+                    return this;
+                }
+
+                if (this.elements.length > 4 || this.elements[0].length > 4) {
+                    return null;
+                }
+
+                for (var i = 0; i < this.elements.length; i++) {
+                    for (var j = this.elements[i].length; j < 4; j++) {
+                        if (i == j) {
+                            this.elements[i].push(1);
+                        } else {
+                            this.elements[i].push(0);
+                        }
+                    }
+                }
+
+                for (var i = this.elements.length; i < 4; i++) {
+                    if (i == 0) {
+                        this.elements.push([1, 0, 0, 0]);
+                    } else if (i == 1) {
+                        this.elements.push([0, 1, 0, 0]);
+                    } else if (i == 2) {
+                        this.elements.push([0, 0, 1, 0]);
+                    } else if (i == 3) {
+                        this.elements.push([0, 0, 0, 1]);
+                    }
+                }
+
+                return this;
+            }
+
+            //From glUtils.js
+
+        }, {
+            key: "make3x3",
+            value: function make3x3() {
+                if (this.elements.length != 4 || this.elements[0].length != 4) {
+                    return null;
+                }
+
+                return new Matrix([[this.elements[0][0], this.elements[0][1], this.elements[0][2]], [this.elements[1][0], this.elements[1][1], this.elements[1][2]], [this.elements[2][0], this.elements[2][1], this.elements[2][2]]]);
+            }
+        }]);
+        return Matrix;
+    }();
+
+    Matrix.I = function (n) {
+        var els = [],
+            i = n,
+            j;
+        while (i--) {
+            j = n;
+            els[i] = [];
+            while (j--) {
+                els[i][j] = i === j ? 1 : 0;
+            }
+        }
+        return new Matrix(els);
+    };
+
+    Matrix.Diagonal = function (elements) {
+        var i = elements.length;
+        var M = Matrix.I(i);
+        while (i--) {
+            M.elements[i][i] = elements[i];
+        }
+        return M;
+    };
+
+    Matrix.Rotation = function (theta, a) {
+        if (!a) {
+            return new Matrix([[Math.cos(theta), -Math.sin(theta)], [Math.sin(theta), Math.cos(theta)]]);
+        }
+        var axis = a.dup();
+        if (axis.elements.length !== 3) {
+            return null;
+        }
+        var mod = axis.modulus();
+        var x = axis.elements[0] / mod,
+            y = axis.elements[1] / mod,
+            z = axis.elements[2] / mod;
+        var s = Math.sin(theta),
+            c = Math.cos(theta),
+            t = 1 - c;
+        // Formula derived here: http://www.gamedev.net/reference/articles/article1199.asp
+        // That proof rotates the co-ordinate system so theta becomes -theta and sin
+        // becomes -sin here.
+        return new Matrix([[t * x * x + c, t * x * y - s * z, t * x * z + s * y], [t * x * y + s * z, t * y * y + c, t * y * z - s * x], [t * x * z - s * y, t * y * z + s * x, t * z * z + c]]);
+    };
+
+    Matrix.RotationX = function (t) {
+        var c = Math.cos(t),
+            s = Math.sin(t);
+        return new Matrix([[1, 0, 0], [0, c, -s], [0, s, c]]);
+    };
+    Matrix.RotationY = function (t) {
+        var c = Math.cos(t),
+            s = Math.sin(t);
+        return new Matrix([[c, 0, s], [0, 1, 0], [-s, 0, c]]);
+    };
+    Matrix.RotationZ = function (t) {
+        var c = Math.cos(t),
+            s = Math.sin(t);
+        return new Matrix([[c, -s, 0], [s, c, 0], [0, 0, 1]]);
+    };
+
+    Matrix.Random = function (n, m) {
+        return Matrix.Zero(n, m).map(function () {
+            return Math.random();
+        });
+    };
+
+    //From glUtils.js
+    Matrix.Translation = function (v) {
+        if (v.elements.length == 2) {
+            var r = Matrix.I(3);
+            r.elements[2][0] = v.elements[0];
+            r.elements[2][1] = v.elements[1];
+            return r;
+        }
+
+        if (v.elements.length == 3) {
+            var r = Matrix.I(4);
+            r.elements[0][3] = v.elements[0];
+            r.elements[1][3] = v.elements[1];
+            r.elements[2][3] = v.elements[2];
+            return r;
+        }
+
+        throw "Invalid length for Translation";
+    };
+
+    Matrix.Zero = function (n, m) {
+        var els = [],
+            i = n,
+            j;
+        while (i--) {
+            j = m;
+            els[i] = [];
+            while (j--) {
+                els[i][j] = 0;
+            }
+        }
+        return new Matrix(els);
+    };
+
+    Matrix.prototype.toUpperTriangular = Matrix.prototype.toRightTriangular;
+    Matrix.prototype.det = Matrix.prototype.determinant;
+    Matrix.prototype.tr = Matrix.prototype.trace;
+    Matrix.prototype.rk = Matrix.prototype.rank;
+    Matrix.prototype.inv = Matrix.prototype.inverse;
+    Matrix.prototype.x = Matrix.prototype.multiply;
+
+    var Vector = function () {
+        function Vector(elements) {
+            classCallCheck(this, Vector);
+
+            this.setElements(elements);
+        }
+
+        createClass(Vector, [{
+            key: "e",
+            value: function e(i) {
+                return i < 1 || i > this.elements.length ? null : this.elements[i - 1];
+            }
+        }, {
+            key: "dimensions",
+            value: function dimensions() {
+                return this.elements.length;
+            }
+        }, {
+            key: "modulus",
+            value: function modulus() {
+                return Math.sqrt(this.dot(this));
+            }
+        }, {
+            key: "eql",
+            value: function eql(vector) {
+                var n = this.elements.length;
+                var V = vector.elements || vector;
+                if (n !== V.length) {
+                    return false;
+                }
+                while (n--) {
+                    if (Math.abs(this.elements[n] - V[n]) > PRECISION) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }, {
+            key: "dup",
+            value: function dup() {
+                return new Vector(this.elements);
+            }
+        }, {
+            key: "map",
+            value: function map(fn, context) {
+                var elements = [];
+                this.each(function (x, i) {
+                    elements.push(fn.call(context, x, i));
+                });
+                return new Vector(elements);
+            }
+        }, {
+            key: "forEach",
+            value: function forEach(fn, context) {
+                var n = this.elements.length;
+                for (var i = 0; i < n; i++) {
+                    fn.call(context, this.elements[i], i + 1);
+                }
+            }
+        }, {
+            key: "toUnitVector",
+            value: function toUnitVector() {
+                var r = this.modulus();
+                if (r === 0) {
+                    return this.dup();
+                }
+                return this.map(function (x) {
+                    return x / r;
+                });
+            }
+        }, {
+            key: "angleFrom",
+            value: function angleFrom(vector) {
+                var V = vector.elements || vector;
+                var n = this.elements.length;
+                if (n !== V.length) {
+                    return null;
+                }
+                var dot = 0,
+                    mod1 = 0,
+                    mod2 = 0;
+                // Work things out in parallel to save time
+                this.each(function (x, i) {
+                    dot += x * V[i - 1];
+                    mod1 += x * x;
+                    mod2 += V[i - 1] * V[i - 1];
+                });
+                mod1 = Math.sqrt(mod1);mod2 = Math.sqrt(mod2);
+                if (mod1 * mod2 === 0) {
+                    return null;
+                }
+                var theta = dot / (mod1 * mod2);
+                if (theta < -1) {
+                    theta = -1;
+                }
+                if (theta > 1) {
+                    theta = 1;
+                }
+                return Math.acos(theta);
+            }
+        }, {
+            key: "isParallelTo",
+            value: function isParallelTo(vector) {
+                var angle = this.angleFrom(vector);
+                return angle === null ? null : angle <= PRECISION;
+            }
+        }, {
+            key: "isAntiparallelTo",
+            value: function isAntiparallelTo(vector) {
+                var angle = this.angleFrom(vector);
+                return angle === null ? null : Math.abs(angle - Math.PI) <= PRECISION;
+            }
+        }, {
+            key: "isPerpendicularTo",
+            value: function isPerpendicularTo(vector) {
+                var dot = this.dot(vector);
+                return dot === null ? null : Math.abs(dot) <= PRECISION;
+            }
+        }, {
+            key: "add",
+            value: function add(vector) {
+                var V = vector.elements || vector;
+                if (this.elements.length !== V.length) {
+                    return null;
+                }
+                return this.map(function (x, i) {
+                    return x + V[i - 1];
+                });
+            }
+        }, {
+            key: "subtract",
+            value: function subtract(vector) {
+                var V = vector.elements || vector;
+                if (this.elements.length !== V.length) {
+                    return null;
+                }
+                return this.map(function (x, i) {
+                    return x - V[i - 1];
+                });
+            }
+        }, {
+            key: "multiply",
+            value: function multiply(k) {
+                return this.map(function (x) {
+                    return x * k;
+                });
+            }
+        }, {
+            key: "dot",
+            value: function dot(vector) {
+                var V = vector.elements || vector;
+                var product = 0,
+                    n = this.elements.length;
+                if (n !== V.length) {
+                    return null;
+                }
+                while (n--) {
+                    product += this.elements[n] * V[n];
+                }
+                return product;
+            }
+        }, {
+            key: "cross",
+            value: function cross$$1(vector) {
+                var B = vector.elements || vector;
+                if (this.elements.length !== 3 || B.length !== 3) {
+                    return null;
+                }
+                var A = this.elements;
+                return new Vector([A[1] * B[2] - A[2] * B[1], A[2] * B[0] - A[0] * B[2], A[0] * B[1] - A[1] * B[0]]);
+            }
+        }, {
+            key: "max",
+            value: function max$$1() {
+                var m = 0,
+                    i = this.elements.length;
+                while (i--) {
+                    if (Math.abs(this.elements[i]) > Math.abs(m)) {
+                        m = this.elements[i];
+                    }
+                }
+                return m;
+            }
+        }, {
+            key: "indexOf",
+            value: function indexOf(x) {
+                var index = null,
+                    n = this.elements.length;
+                for (var i = 0; i < n; i++) {
+                    if (index === null && this.elements[i] === x) {
+                        index = i + 1;
+                    }
+                }
+                return index;
+            }
+        }, {
+            key: "toDiagonalMatrix",
+            value: function toDiagonalMatrix() {
+                return Matrix.Diagonal(this.elements);
+            }
+        }, {
+            key: "round",
+            value: function round() {
+                return this.map(function (x) {
+                    return Math.round(x);
+                });
+            }
+        }, {
+            key: "snapTo",
+            value: function snapTo(x) {
+                return this.map(function (y) {
+                    return Math.abs(y - x) <= PRECISION ? x : y;
+                });
+            }
+        }, {
+            key: "distanceFrom",
+            value: function distanceFrom(obj) {
+                if (obj.anchor || obj.start && obj.end) {
+                    return obj.distanceFrom(this);
+                }
+                var V = obj.elements || obj;
+                if (V.length !== this.elements.length) {
+                    return null;
+                }
+                var sum$$1 = 0,
+                    part;
+                this.each(function (x, i) {
+                    part = x - V[i - 1];
+                    sum$$1 += part * part;
+                });
+                return Math.sqrt(sum$$1);
+            }
+        }, {
+            key: "liesOn",
+            value: function liesOn(line$$1) {
+                return line$$1.contains(this);
+            }
+        }, {
+            key: "liesIn",
+            value: function liesIn(plane) {
+                return plane.contains(this);
+            }
+        }, {
+            key: "rotate",
+            value: function rotate(t, obj) {
+                var V,
+                    R = null,
+                    x,
+                    y,
+                    z;
+                if (t.determinant) {
+                    R = t.elements;
+                }
+                switch (this.elements.length) {
+                    case 2:
+                        {
+                            V = obj.elements || obj;
+                            if (V.length !== 2) {
+                                return null;
+                            }
+                            if (!R) {
+                                R = Matrix.Rotation(t).elements;
+                            }
+                            x = this.elements[0] - V[0];
+                            y = this.elements[1] - V[1];
+                            return new Vector([V[0] + R[0][0] * x + R[0][1] * y, V[1] + R[1][0] * x + R[1][1] * y]);
+                            break;
+                        }
+                    case 3:
+                        {
+                            if (!obj.direction) {
+                                return null;
+                            }
+                            var C = obj.pointClosestTo(this).elements;
+                            if (!R) {
+                                R = Matrix.Rotation(t, obj.direction).elements;
+                            }
+                            x = this.elements[0] - C[0];
+                            y = this.elements[1] - C[1];
+                            z = this.elements[2] - C[2];
+                            return new Vector([C[0] + R[0][0] * x + R[0][1] * y + R[0][2] * z, C[1] + R[1][0] * x + R[1][1] * y + R[1][2] * z, C[2] + R[2][0] * x + R[2][1] * y + R[2][2] * z]);
+                            break;
+                        }
+                    default:
+                        {
+                            return null;
+                        }
+                }
+            }
+        }, {
+            key: "reflectionIn",
+            value: function reflectionIn(obj) {
+                if (obj.anchor) {
+                    // obj is a plane or line
+                    var P = this.elements.slice();
+                    var C = obj.pointClosestTo(P).elements;
+                    return new Vector([C[0] + (C[0] - P[0]), C[1] + (C[1] - P[1]), C[2] + (C[2] - (P[2] || 0))]);
+                } else {
+                    // obj is a point
+                    var Q = obj.elements || obj;
+                    if (this.elements.length !== Q.length) {
+                        return null;
+                    }
+                    return this.map(function (x, i) {
+                        return Q[i - 1] + (Q[i - 1] - x);
+                    });
+                }
+            }
+        }, {
+            key: "to3D",
+            value: function to3D() {
+                var V = this.dup();
+                switch (V.elements.length) {
+                    case 3:
+                        {
+                            break;
+                        }
+                    case 2:
+                        {
+                            V.elements.push(0);
+                            break;
+                        }
+                    default:
+                        {
+                            return null;
+                        }
+                }
+                return V;
+            }
+        }, {
+            key: "inspect",
+            value: function inspect() {
+                return '[' + this.elements.join(', ') + ']';
+            }
+        }, {
+            key: "setElements",
+            value: function setElements(els) {
+                this.elements = (els.elements || els).slice();
+                return this;
+            }
+
+            //From glUtils.js
+
+        }, {
+            key: "flatten",
+            value: function flatten() {
+                return this.elements;
+            }
+        }]);
+        return Vector;
+    }();
+
+    Vector.Random = function (n) {
+        var elements = [];
+        while (n--) {
+            elements.push(Math.random());
+        }
+        return new Vector(elements);
+    };
+
+    Vector.Zero = function (n) {
+        var elements = [];
+        while (n--) {
+            elements.push(0);
+        }
+        return new Vector(elements);
+    };
+
+    Vector.prototype.x = Vector.prototype.multiply;
+    Vector.prototype.each = Vector.prototype.forEach;
+
+    Vector.i = new Vector([1, 0, 0]);
+    Vector.j = new Vector([0, 1, 0]);
+    Vector.k = new Vector([0, 0, 1]);
+
     var computeCentroids = function computeCentroids(config, position, row) {
       var centroids = [];
 
@@ -9850,7 +11021,7 @@
         // centroids on 'real' axes
         var x = position(p[i]);
         var y = config.dimensions[p[i]].yscale(row[p[i]]);
-        centroids.push($V([x, y]));
+        centroids.push(new Vector([x, y]));
 
         // centroids on 'virtual' axes
         if (i < cols - 1) {
@@ -9862,7 +11033,7 @@
             var centroid = 0.5 * (leftCentroid + rightCentroid);
             cy = centroid + (1 - config.bundlingStrength) * (cy - centroid);
           }
-          centroids.push($V([cx, cy]));
+          centroids.push(new Vector([cx, cy]));
         }
       }
 
@@ -9875,7 +11046,7 @@
       var cps = [];
 
       cps.push(centroids[0]);
-      cps.push($V([centroids[0].e(1) + a * 2 * (centroids[1].e(1) - centroids[0].e(1)), centroids[0].e(2)]));
+      cps.push(new Vector([centroids[0].e(1) + a * 2 * (centroids[1].e(1) - centroids[0].e(1)), centroids[0].e(2)]));
       for (var col = 1; col < cols - 1; ++col) {
         var mid = centroids[col];
         var left = centroids[col - 1];
@@ -9886,7 +11057,8 @@
         cps.push(mid);
         cps.push(mid.subtract(diff.x(a)));
       }
-      cps.push($V([centroids[cols - 1].e(1) + a * 2 * (centroids[cols - 2].e(1) - centroids[cols - 1].e(1)), centroids[cols - 1].e(2)]));
+
+      cps.push(new Vector([centroids[cols - 1].e(1) + a * 2 * (centroids[cols - 2].e(1) - centroids[cols - 1].e(1)), centroids[cols - 1].e(2)]));
       cps.push(centroids[cols - 1]);
 
       return cps;
@@ -10301,7 +11473,7 @@
       };
     };
 
-    var version$1 = "2.2.1";
+    var version$1 = "2.2.6";
 
     var DefaultConfig = {
       data: [],
@@ -10447,7 +11619,7 @@
       return arr;
     };
 
-    var sideEffects = function sideEffects(config, ctx, pc, xscale, flags, brushedQueue, markedQueue, foregroundQueue) {
+    var sideEffects = function sideEffects(config, ctx, pc, xscale, axis, flags, brushedQueue, markedQueue, foregroundQueue) {
       return dispatch.apply(_this$5, Object.keys(config)).on('composite', function (d) {
         ctx.foreground.globalCompositeOperation = d.value;
         ctx.brushed.globalCompositeOperation = d.value;
@@ -10495,7 +11667,8 @@
         pc.dimensions(without(config.dimensions, d.value));
       }).on('flipAxes', function (d) {
         if (d.value && d.value.length) {
-          d.value.forEach(function (axis) {
+          d.value.forEach(function (dimension) {
+            flipAxisAndUpdatePCP(config, pc, axis)(dimension);
           });
           pc.updateAxes(0);
         }
@@ -10536,7 +11709,7 @@
     };
 
     var bindEvents = function bindEvents(__, ctx, pc, xscale, flags, brushedQueue, markedQueue, foregroundQueue, events, axis) {
-      var side_effects = sideEffects(__, ctx, pc, xscale, flags, brushedQueue, markedQueue, foregroundQueue);
+      var side_effects = sideEffects(__, ctx, pc, xscale, axis, flags, brushedQueue, markedQueue, foregroundQueue);
 
       // create getter/setters
       getset(pc, __, events, side_effects);
@@ -10685,6 +11858,7 @@
 
       return pc;
     };
+    //# sourceMappingURL=parcoords.esm.js.map
 
     /**
      * Setup a new visualization.
@@ -22406,7 +23580,7 @@
     return t}function getSelectedRows(){if(!selectionModel)throw"Selection model is not set";return selectedRows}function setSelectedRows(e){if(!selectionModel)throw"Selection model is not set";selectionModel.setSelectedRanges(rowsToRanges(e));}var defaults={explicitInitialization:!1,rowHeight:25,defaultColumnWidth:80,enableAddRow:!1,leaveSpaceForNewRows:!1,editable:!1,autoEdit:!0,enableCellNavigation:!0,enableColumnReorder:!0,asyncEditorLoading:!1,asyncEditorLoadDelay:100,forceFitColumns:!1,enableAsyncPostRender:!1,asyncPostRenderDelay:50,autoHeight:!1,editorLock:_slick2.default.GlobalEditorLock,showHeaderRow:!1,headerRowHeight:25,showFooterRow:!1,footerRowHeight:25,showTopPanel:!1,topPanelHeight:25,formatterFactory:null,editorFactory:null,cellFlashingCssClass:"flashing",selectedCellCssClass:"selected",multiSelect:!0,enableTextSelectionOnCells:!1,dataItemColumnValueExtractor:null,frozenBottom:!1,frozenColumn:-1,frozenRow:-1,fullWidthRows:!1,multiColumnSort:!1,defaultFormatter:defaultFormatter,forceSyncScrolling:!1,addNewRowCssClass:"new-row"},columnDefaults={name:"",resizable:!0,sortable:!1,minWidth:30,rerenderOnResize:!1,headerCssClass:null,defaultSortAsc:!0,focusable:!0,selectable:!0},th,h,ph,n,cj,page=0,offset=0,vScrollDir=1,initialized=!1,$container,uid="slickgrid_"+Math.round(1e6*Math.random()),self=this,$focusSink,$focusSink2,$groupHeaders=(0, _jquery2.default)(),$headerScroller,$headers,$headerRow,$headerRowScroller,$headerRowSpacerL,$headerRowSpacerR,$footerRow,$footerRowScroller,$footerRowSpacerL,$footerRowSpacerR,$topPanelScroller,$topPanel,$viewport,$canvas,$style,$boundAncestors,treeColumns,stylesheet,columnCssRulesL,columnCssRulesR,viewportH,viewportW,canvasWidth,canvasWidthL,canvasWidthR,headersWidth,headersWidthL,headersWidthR,viewportHasHScroll,viewportHasVScroll,headerColumnWidthDiff=0,headerColumnHeightDiff=0,cellWidthDiff=0,cellHeightDiff=0,absoluteColumnMinWidth,hasFrozenRows=!1,frozenRowsHeight=0,actualFrozenRow=-1,paneTopH=0,paneBottomH=0,viewportTopH=0,topPanelH=0,headerRowH=0,footerRowH=0,tabbingDirection=1,$activeCanvasNode,$activeViewportNode,activePosX,activeRow,activeCell,activeCellNode=null,currentEditor=null,serializedEditorValue,editController,rowsCache={},renderedRows=0,numVisibleRows=0,prevScrollTop=0,scrollTop=0,lastRenderedScrollTop=0,lastRenderedScrollLeft=0,prevScrollLeft=0,scrollLeft=0,selectionModel,selectedRows=[],plugins=[],cellCssClasses={},columnsById={},sortColumns=[],columnPosLeft=[],columnPosRight=[],h_editorLoader=null,h_render=null,h_postrender=null,postProcessedRows={},postProcessToRow=null,postProcessFromRow=null,counter_rows_rendered=0,counter_rows_removed=0,rowNodeFromLastMouseWheelEvent,zombieRowNodeFromLastMouseWheelEvent,$paneHeaderL,$paneHeaderR,$paneTopL,$paneTopR,$paneBottomL,$paneBottomR,$headerScrollerL,$headerScrollerR,$headerL,$headerR,$groupHeadersL,$groupHeadersR,$headerRowScrollerL,$headerRowScrollerR,$footerRowScrollerL,$footerRowScrollerR,$headerRowL,$headerRowR,$footerRowL,$footerRowR,$topPanelScrollerL,$topPanelScrollerR,$topPanelL,$topPanelR,$viewportTopL,$viewportTopR,$viewportBottomL,$viewportBottomR,$canvasTopL,$canvasTopR,$canvasBottomL,$canvasBottomR,$viewportScrollContainerX,$viewportScrollContainerY,$headerScrollContainer,$headerRowScrollContainer,$footerRowScrollContainer;this.debug=function(){var e="";e+="\ncounter_rows_rendered:  "+counter_rows_rendered,e+="\ncounter_rows_removed:  "+counter_rows_removed,e+="\nrenderedRows:  "+renderedRows,e+="\nnumVisibleRows:  "+numVisibleRows,e+="\nmaxSupportedCssHeight:  "+maxSupportedCssHeight,e+="\nn(umber of pages):  "+n,e+="\n(current) page:  "+page,e+="\npage height (ph):  "+ph,e+="\nvScrollDir:  "+vScrollDir,alert(e);},this.eval=function(expr){return eval(expr)},_jquery2.default.extend(this,{slickGridVersion:"2.1",onScroll:new _slick2.default.Event,onSort:new _slick2.default.Event,onHeaderMouseEnter:new _slick2.default.Event,onHeaderMouseLeave:new _slick2.default.Event,onHeaderContextMenu:new _slick2.default.Event,onHeaderClick:new _slick2.default.Event,onHeaderCellRendered:new _slick2.default.Event,onBeforeHeaderCellDestroy:new _slick2.default.Event,onHeaderRowCellRendered:new _slick2.default.Event,onFooterRowCellRendered:new _slick2.default.Event,onBeforeHeaderRowCellDestroy:new _slick2.default.Event,onBeforeFooterRowCellDestroy:new _slick2.default.Event,onMouseEnter:new _slick2.default.Event,onMouseLeave:new _slick2.default.Event,onClick:new _slick2.default.Event,onDblClick:new _slick2.default.Event,onContextMenu:new _slick2.default.Event,onKeyDown:new _slick2.default.Event,onAddNewRow:new _slick2.default.Event,onValidationError:new _slick2.default.Event,onViewportChanged:new _slick2.default.Event,onColumnsReordered:new _slick2.default.Event,onColumnsResized:new _slick2.default.Event,onCellChange:new _slick2.default.Event,onBeforeEditCell:new _slick2.default.Event,onBeforeCellEditorDestroy:new _slick2.default.Event,onBeforeDestroy:new _slick2.default.Event,onActiveCellChanged:new _slick2.default.Event,onActiveCellPositionChanged:new _slick2.default.Event,onDragInit:new _slick2.default.Event,onDragStart:new _slick2.default.Event,onDrag:new _slick2.default.Event,onDragEnd:new _slick2.default.Event,onSelectedRowsChanged:new _slick2.default.Event,onCellCssStylesChanged:new _slick2.default.Event,registerPlugin:registerPlugin,unregisterPlugin:unregisterPlugin,getColumns:getColumns,setColumns:setColumns,getColumnIndex:getColumnIndex,updateColumnHeader:updateColumnHeader,setSortColumn:setSortColumn,setSortColumns:setSortColumns,getSortColumns:getSortColumns,autosizeColumns:autosizeColumns,getOptions:getOptions,setOptions:setOptions,getData:getData,getDataLength:getDataLength,getDataItem:getDataItem,setData:setData,getSelectionModel:getSelectionModel,setSelectionModel:setSelectionModel,getSelectedRows:getSelectedRows,setSelectedRows:setSelectedRows,getContainerNode:getContainerNode,render:render,invalidate:invalidate,invalidateRow:invalidateRow,invalidateRows:invalidateRows,invalidateAllRows:invalidateAllRows,updateCell:updateCell,updateRow:updateRow,getViewport:getVisibleRange,getRenderedRange:getRenderedRange,resizeCanvas:resizeCanvas,updateRowCount:updateRowCount,scrollRowIntoView:scrollRowIntoView,scrollRowToTop:scrollRowToTop,scrollCellIntoView:scrollCellIntoView,getCanvasNode:getCanvasNode,getCanvases:getCanvases,getActiveCanvasNode:getActiveCanvasNode,setActiveCanvasNode:setActiveCanvasNode,getViewportNode:getViewportNode,getActiveViewportNode:getActiveViewportNode,setActiveViewportNode:setActiveViewportNode,focus:setFocus,getCellFromPoint:getCellFromPoint,getCellFromEvent:getCellFromEvent,getActiveCell:getActiveCell,setActiveCell:setActiveCell,getActiveCellNode:getActiveCellNode,getActiveCellPosition:getActiveCellPosition,resetActiveCell:resetActiveCell,editActiveCell:makeActiveCellEditable,getCellEditor:getCellEditor,getCellNode:getCellNode,getCellNodeBox:getCellNodeBox,canCellBeSelected:canCellBeSelected,canCellBeActive:canCellBeActive,navigatePrev:navigatePrev,navigateNext:navigateNext,navigateUp:navigateUp,navigateDown:navigateDown,navigateLeft:navigateLeft,navigateRight:navigateRight,navigatePageUp:navigatePageUp,navigatePageDown:navigatePageDown,gotoCell:gotoCell,getTopPanel:getTopPanel,setTopPanelVisibility:setTopPanelVisibility,setHeaderRowVisibility:setHeaderRowVisibility,getHeaderRow:getHeaderRow,getHeaderRowColumn:getHeaderRowColumn,setFooterRowVisibility:setFooterRowVisibility,getFooterRow:getFooterRow,getFooterRowColumn:getFooterRowColumn,getGridPosition:getGridPosition,flashCell:flashCell,addCellCssStyles:addCellCssStyles,setCellCssStyles:setCellCssStyles,removeCellCssStyles:removeCellCssStyles,getCellCssStyles:getCellCssStyles,getFrozenRowOffset:getFrozenRowOffset,init:finishInitialization,destroy:destroy,getEditorLock:getEditorLock,getEditController:getEditController}),init();}Object.defineProperty(exports,"__esModule",{value:!0});var _jquery=__webpack_require__(2),_jquery2=_interopRequireDefault(_jquery),_interact=__webpack_require__(5),_interact2=_interopRequireDefault(_interact),_slick=__webpack_require__(1),_slick2=_interopRequireDefault(_slick);_slick2.default.FrozenGrid=SlickGrid,exports.default=SlickGrid;var scrollbarDimensions,maxSupportedCssHeight;},function(e,t,o){function n(e){return e&&e.__esModule?e:{default:e}}function r(e){function t(){fe=!0;}function o(){fe=!1,oe();}function n(e){we=e;}function r(e){Re=e;}function i(e){e=e||0;for(var t=void 0,o=e,n=ae.length;o<n;o++){if(t=ae[o][le],void 0===t)throw"Each data element must implement a unique 'id' property";de[t]=o;}}function s(){for(var e=void 0,t=0,o=ae.length;t<o;t++)if(e=ae[t][le],void 0===e||de[e]!==t)throw"Each data element must implement a unique 'id' property"}function l(){return ae}function a(e,t){void 0!==t&&(le=t),ae=ye=e,de={},i(),s(),oe();}function c(e){void 0!=e.pageSize&&(ke=e.pageSize,De=ke?Math.min(De,Math.max(0,Math.ceil(ze/ke)-1)):0),void 0!=e.pageNum&&(De=Math.min(e.pageNum,Math.max(0,Math.ceil(ze/ke)-1))),Me.notify(u(),null,ie),oe();}function u(){var e=ke?Math.max(1,Math.ceil(ze/ke)):1;return {pageSize:ke,pageNum:De,totalRows:ze,totalPages:e,dataView:ie}}function p(e,t){ge=t,me=e,ve=null,t===!1&&ae.reverse(),ae.sort(e),t===!1&&ae.reverse(),de={},i(),oe();}function f(e,t){ge=t,ve=e,me=null;var o=Object.prototype.toString;Object.prototype.toString="function"==typeof e?e:function(){return this[e]},t===!1&&ae.reverse(),ae.sort(),Object.prototype.toString=o,t===!1&&ae.reverse(),de={},i(),oe();}function g(){me?p(me,ge):ve&&f(ve,ge);}function v(t){he=t,e.inlineFilters&&(be=K(),Se=U()),oe();}function m(){return _e}function w(t){e.groupItemMetadataProvider||(e.groupItemMetadataProvider=GroupItemMetadataProvider()),$e=[],Pe=[],t=t||[],_e=t instanceof Array?t:[t];for(var o=0;o<_e.length;o++){var n=_e[o]=h.default.extend(!0,{},Ee,_e[o]);n.getterIsAFn="function"==typeof n.getter,n.compiledAccumulators=[];for(var r=n.aggregators.length;r--;)n.compiledAccumulators[r]=G(n.aggregators[r]);Pe[o]={};}oe();}function C(e,t,o){return null==e?void w([]):void w({getter:e,formatter:t,comparer:o})}function R(e,t){if(!_e.length)throw new Error("At least one grouping must be specified before calling setAggregators().");_e[0].aggregators=e,_e[0].aggregateCollapsed=t,w(_e);}function y(e){return ae[e]}function b(e){return de[e]}function S(){if(!ue){ue={};for(var e=0,t=ce.length;e<t;e++)ue[ce[e][le]]=e;}}function x(e){return S(),ue[e]}function E(e){return ae[de[e]]}function _(e){var t=[];S();for(var o=0,n=e.length;o<n;o++){var r=ue[e[o]];null!=r&&(t[t.length]=r);}return t}function $(e){for(var t=[],o=0,n=e.length;o<n;o++)e[o]<ce.length&&(t[t.length]=ce[e[o]][le]);return t}function P(e,t){if(void 0===de[e]||e!==t[le])throw"Invalid or non-matching id";ae[de[e]]=t,pe||(pe={}),pe[e]=!0,oe();}function T(e,t){ae.splice(e,0,t),i(e),oe();}function k(e){ae.push(e),i(ae.length-1),oe();}function D(e){var t=de[e];if(void 0===t)throw"Invalid id";delete de[e],ae.splice(t,1),i(t),oe();}function z(){return ce.length}function L(e){var t=ce[e];if(t&&t.__group&&t.totals&&!t.totals.initialized){var o=_e[t.level];o.displayTotalsRow||(B(t.totals),t.title=o.formatter?o.formatter(t):t.value);}else t&&t.__groupTotals&&!t.initialized&&B(t);return t}function F(t){var o=ce[t];return void 0===o?null:o.__group?e.groupItemMetadataProvider.getGroupRowMetadata(o):o.__groupTotals?e.groupItemMetadataProvider.getTotalsRowMetadata(o):null}function M(e,t){if(null==e)for(var o=0;o<_e.length;o++)Pe[o]={},_e[o].collapsed=t;else Pe[e]={},_e[e].collapsed=t;oe();}function H(e){M(e,!0);}function I(e){M(e,!1);}function A(e,t,o){Pe[e][t]=_e[e].collapsed^o,oe();}function N(e){var t=Array.prototype.slice.call(arguments),o=t[0];1==t.length&&o.indexOf(Te)!=-1?A(o.split(Te).length-1,o,!0):A(t.length-1,t.join(Te),!0);}function W(e){var t=Array.prototype.slice.call(arguments),o=t[0];1==t.length&&o.indexOf(Te)!=-1?A(o.split(Te).length-1,o,!1):A(t.length-1,t.join(Te),!1);}function j(){return $e}function q(e,t){for(var o=void 0,n=void 0,r=[],i={},s=void 0,l=t?t.level+1:0,a=_e[l],c=0,u=a.predefinedValues.length;c<u;c++)n=a.predefinedValues[c],o=i[n],o||(o=new d.default.Group,o.value=n,o.level=l,o.groupingKey=(t?t.groupingKey+Te:"")+n,r[r.length]=o,i[n]=o);for(var h=0,p=e.length;h<p;h++)s=e[h],n=a.getterIsAFn?a.getter(s):s[a.getter],o=i[n],o||(o=new d.default.Group,o.value=n,o.level=l,o.groupingKey=(t?t.groupingKey+Te:"")+n,r[r.length]=o,i[n]=o),o.rows[o.count++]=s;if(l<_e.length-1)for(var f=0;f<r.length;f++)o=r[f],o.groups=q(o.rows,o);return r.sort(_e[l].comparer),r}function B(e){var t=e.group,o=_e[t.level],n=t.level==_e.length,r=void 0,i=o.aggregators.length;if(!n&&o.aggregateChildGroups)for(var s=t.groups.length;s--;)t.groups[s].totals.initialized||B(t.groups[s].totals);for(;i--;)r=o.aggregators[i],r.init(),!n&&o.aggregateChildGroups?o.compiledAccumulators[i].call(r,t.groups):o.compiledAccumulators[i].call(r,t.rows),r.storeResult(e);e.initialized=!0;}function V(e){var t=_e[e.level],o=new d.default.GroupTotals;o.group=e,e.totals=o,t.lazyTotalsCalculation||B(o);}function O(e,t){t=t||0;for(var o=_e[t],n=o.collapsed,r=Pe[t],i=e.length,s=void 0;i--;)s=e[i],s.collapsed&&!o.aggregateCollapsed||(s.groups&&O(s.groups,t+1),o.aggregators.length&&(o.aggregateEmpty||s.rows.length||s.groups&&s.groups.length)&&V(s),s.collapsed=n^r[s.groupingKey],s.title=o.formatter?o.formatter(s):s.value);}function X(e,t){t=t||0;for(var o=_e[t],n=[],r=void 0,i=0,s=void 0,l=0,a=e.length;l<a;l++){if(s=e[l],n[i++]=s,!s.collapsed){r=s.groups?X(s.groups,t+1):s.rows;for(var c=0,d=r.length;c<d;c++)n[i++]=r[c];}s.totals&&o.displayTotalsRow&&(!s.collapsed||o.aggregateCollapsed)&&(n[i++]=s.totals);}return n}function Y(e){var t=/^function[^(]*\(([^)]*)\)\s*{([\s\S]*)}$/,o=e.toString().match(t);return {params:o[1].split(","),body:o[2]}}function G(e){var t=Y(e.accumulate),o=new Function("_items","for (let "+t.params[0]+", _i=0, _il=_items.length; _i<_il; _i++) {"+t.params[0]+" = _items[_i]; "+t.body+"}");return o.displayName="compiledAccumulatorLoop",o}function K(){var e=Y(he),t="{ continue _coreloop; }$1",o="{ _retval[_idx++] = $item$; continue _coreloop; }$1",n=e.body.replace(/return false\s*([;}]|\}|$)/gi,t).replace(/return!1([;}]|\}|$)/gi,t).replace(/return true\s*([;}]|\}|$)/gi,o).replace(/return!0([;}]|\}|$)/gi,o).replace(/return ([^;}]+?)\s*([;}]|$)/gi,"{ if ($1) { _retval[_idx++] = $item$; }; continue _coreloop; }$2"),r=["let _retval = [], _idx = 0; ","let $item$, $args$ = _args; ","_coreloop: ","for (let _i = 0, _il = _items.length; _i < _il; _i++) { ","$item$ = _items[_i]; ","$filter$; ","} ","return _retval; "].join("");r=r.replace(/\$filter\$/gi,n),r=r.replace(/\$item\$/gi,e.params[0]),r=r.replace(/\$args\$/gi,e.params[1]);var i=new Function("_items,_args",r);return i.displayName="compiledFilter",i}function U(){var e=Y(he),t="{ continue _coreloop; }$1",o="{ _cache[_i] = true;_retval[_idx++] = $item$; continue _coreloop; }$1",n=e.body.replace(/return false\s*([;}]|\}|$)/gi,t).replace(/return!1([;}]|\}|$)/gi,t).replace(/return true\s*([;}]|\}|$)/gi,o).replace(/return!0([;}]|\}|$)/gi,o).replace(/return ([^;}]+?)\s*([;}]|$)/gi,"{ if ((_cache[_i] = $1)) { _retval[_idx++] = $item$; }; continue _coreloop; }$2"),r=["let _retval = [], _idx = 0; ","let $item$, $args$ = _args; ","_coreloop: ","for (let _i = 0, _il = _items.length; _i < _il; _i++) { ","$item$ = _items[_i]; ","if (_cache[_i]) { ","_retval[_idx++] = $item$; ","continue _coreloop; ","} ","$filter$; ","} ","return _retval; "].join("");r=r.replace(/\$filter\$/gi,n),r=r.replace(/\$item\$/gi,e.params[0]),r=r.replace(/\$args\$/gi,e.params[1]);var i=new Function("_items,_args,_cache",r);return i.displayName="compiledFilterWithCaching",i}function Q(e,t){for(var o=[],n=0,r=0,i=e.length;r<i;r++)he(e[r],t)&&(o[n++]=e[r]);return o}function J(e,t,o){for(var n=[],r=0,i=void 0,s=0,l=e.length;s<l;s++)i=e[s],o[s]?n[r++]=i:he(i,t)&&(n[r++]=i,o[s]=!0);return n}function Z(t){if(he){var o=e.inlineFilters?be:Q,n=e.inlineFilters?Se:J;we.isFilterNarrowing?ye=o(ye,Re):we.isFilterExpanding?ye=n(t,Re,xe):we.isFilterUnchanged||(ye=o(t,Re));}else ye=ke?t:t.concat();var r=void 0;return ke?(ye.length<De*ke&&(De=Math.floor(ye.length/ke)),r=ye.slice(ke*De,ke*De+ke)):r=ye,{totalRows:ye.length,rows:r}}function ee(e,t){var o=void 0,n=void 0,r=void 0,i=[],s=0,l=t.length;we&&we.ignoreDiffsBefore&&(s=Math.max(0,Math.min(t.length,we.ignoreDiffsBefore))),we&&we.ignoreDiffsAfter&&(l=Math.min(t.length,Math.max(0,we.ignoreDiffsAfter)));for(var a=s,c=e.length;a<l;a++)a>=c?i[i.length]=a:(o=t[a],n=e[a],(_e.length&&(r=o.__nonDataRow||n.__nonDataRow)&&o.__group!==n.__group||o.__group&&!o.equals(n)||r&&(o.__groupTotals||n.__groupTotals)||o[le]!=n[le]||pe&&pe[o[le]])&&(i[i.length]=a));return i}function te(e){ue=null,we.isFilterNarrowing==Ce.isFilterNarrowing&&we.isFilterExpanding==Ce.isFilterExpanding||(xe=[]);var t=Z(e);ze=t.totalRows;var o=t.rows;$e=[],_e.length&&($e=q(o),$e.length&&(O($e),o=X($e)));var n=ee(ce,o);return ce=o,n}function oe(){if(!fe){var e=ce.length,t=ze,o=te(ae,he);ke&&ze<De*ke&&(De=Math.max(0,Math.ceil(ze/ke)-1),o=te(ae,he)),pe=null,Ce=we,we={},t!==ze&&Me.notify(u(),null,ie),e!==ce.length&&Le.notify({previous:e,current:ce.length,dataView:ie},null,ie),o.length>0&&Fe.notify({rows:o,dataView:ie},null,ie);}}function ne(e,t,o){function n(t){l.join(",")!=t.join(",")&&(l=t,a.notify({grid:e,ids:l,dataView:i},new d.default.EventData,i));}function r(){if(l.length>0){s=!0;var o=i.mapIdsToRows(l);t||n(i.mapRowsToIds(o)),e.setSelectedRows(o),s=!1;}}var i=this,s=void 0,l=i.mapRowsToIds(e.getSelectedRows()),a=new d.default.Event;return e.onSelectedRowsChanged.subscribe(function(t,r){if(!s){var a=i.mapRowsToIds(e.getSelectedRows());if(o&&e.getOptions().multiSelect){var c=h.default.grep(l,function(e){return void 0===i.getRowById(e)});n(c.concat(a));}else n(a);}}),this.onRowsChanged.subscribe(r),this.onRowCountChanged.subscribe(r),a}function re(e,t){function o(e){r={};for(var t in e){var o=ce[t][le];r[o]=e[t];}}function n(){if(r){i=!0,S();var o={};for(var n in r){var s=ue[n];void 0!=s&&(o[s]=r[n]);}e.setCellCssStyles(t,o),i=!1;}}var r=void 0,i=void 0;o(e.getCellCssStyles(t)),e.onCellCssStylesChanged.subscribe(function(e,n){i||t==n.key&&n.hash&&o(n.hash);}),this.onRowsChanged.subscribe(n),this.onRowCountChanged.subscribe(n);}var ie=this,se={groupItemMetadataProvider:null,inlineFilters:!1},le="id",ae=[],ce=[],de={},ue=null,he=null,pe=null,fe=!1,ge=!0,ve=void 0,me=void 0,we={},Ce={},Re=void 0,ye=[],be=void 0,Se=void 0,xe=[],Ee={getter:null,formatter:null,comparer:function(e,t){return e.value===t.value?0:e.value>t.value?1:-1},predefinedValues:[],aggregators:[],aggregateEmpty:!1,aggregateCollapsed:!1,aggregateChildGroups:!1,collapsed:!1,displayTotalsRow:!0,lazyTotalsCalculation:!1},_e=[],$e=[],Pe=[],Te=":|:",ke=0,De=0,ze=0,Le=new d.default.Event,Fe=new d.default.Event,Me=new d.default.Event;e=h.default.extend(!0,{},se,e),h.default.extend(this,{beginUpdate:t,endUpdate:o,setPagingOptions:c,getPagingInfo:u,getItems:l,setItems:a,setFilter:v,sort:p,fastSort:f,reSort:g,setGrouping:w,getGrouping:m,groupBy:C,setAggregators:R,collapseAllGroups:H,expandAllGroups:I,collapseGroup:N,expandGroup:W,getGroups:j,getIdxById:b,getRowById:x,getItemById:E,getItemByIdx:y,mapRowsToIds:$,mapIdsToRows:_,setRefreshHints:n,setFilterArgs:r,refresh:oe,updateItem:P,insertItem:T,addItem:k,deleteItem:D,syncGridSelection:ne,syncGridCellCssStyles:re,getLength:z,getItem:L,getItemMetadata:F,onRowCountChanged:Le,onRowsChanged:Fe,onPagingInfoChanged:Me});}function i(e){this.field_=e,this.init=function(){this.count_=0,this.nonNullCount_=0,this.sum_=0;},this.accumulate=function(e){var t=e[this.field_];this.count_++,null==t||""===t||isNaN(t)||(this.nonNullCount_++,this.sum_+=parseFloat(t));},this.storeResult=function(e){e.avg||(e.avg={}),0!=this.nonNullCount_&&(e.avg[this.field_]=this.sum_/this.nonNullCount_);};}function s(e){this.field_=e,this.init=function(){this.min_=null;},this.accumulate=function(e){var t=e[this.field_];null==t||""===t||isNaN(t)||(null==this.min_||t<this.min_)&&(this.min_=t);},this.storeResult=function(e){e.min||(e.min={}),e.min[this.field_]=this.min_;};}function l(e){this.field_=e,this.init=function(){this.max_=null;},this.accumulate=function(e){var t=e[this.field_];null==t||""===t||isNaN(t)||(null==this.max_||t>this.max_)&&(this.max_=t);},this.storeResult=function(e){e.max||(e.max={}),e.max[this.field_]=this.max_;};}function a(e){this.field_=e,this.init=function(){this.sum_=null;},this.accumulate=function(e){var t=e[this.field_];null==t||""===t||isNaN(t)||(this.sum_+=parseFloat(t));},this.storeResult=function(e){e.sum||(e.sum={}),e.sum[this.field_]=this.sum_;};}Object.defineProperty(t,"__esModule",{value:!0});var c=o(1),d=n(c),u=o(2),h=n(u),p=o(31),f=n(p),g={Avg:i,Min:s,Max:l,Sum:a},v={DataView:r,GroupMetaDataProvider:f.default,Aggregators:g};t.default=v;},function(e,t,o){function n(e){return e&&e.__esModule?e:{default:e}}function r(e){var t=void 0,o=void 0;this.init=function(){t=(0, v.default)("<INPUT type=text class='editor-text' />").appendTo(e.container).bind("keydown.nav",function(e){e.keyCode!==m.LEFT&&e.keyCode!==m.RIGHT||e.stopImmediatePropagation();}).focus().select();},this.destroy=function(){t.remove();},this.focus=function(){t.focus();},this.getValue=function(){return t.val()},this.setValue=function(e){t.val(e);},this.loadValue=function(n){o=n[e.column.field]||"",t.val(o),t[0].defaultValue=o,t.select();},this.serializeValue=function(){return t.val()},this.applyValue=function(t,o){t[e.column.field]=o;},this.isValueChanged=function(){return !(""==t.val()&&null==o)&&t.val()!=o},this.validate=function(){var o=!0,n=null;if(e.column.validator){var r=e.column.validator(t.val(),e);o=r.valid,n=r.msg;}return {valid:!0,msg:null}},this.init();}function i(e){var t=void 0,o=void 0;this.init=function(){t=(0, v.default)("<INPUT type=text class='editor-text' />"),t.bind("keydown.nav",function(e){e.keyCode!==m.LEFT&&e.keyCode!==m.RIGHT||e.stopImmediatePropagation();}),t.appendTo(e.container),t.focus().select();},this.destroy=function(){t.remove();},this.focus=function(){t.focus();},this.loadValue=function(n){o=n[e.column.field],t.val(o),t[0].defaultValue=o,t.select();},this.serializeValue=function(){return parseInt(t.val(),10)||0},this.applyValue=function(t,o){t[e.column.field]=o;},this.isValueChanged=function(){return !(""==t.val()&&null==o)&&t.val()!=o},this.validate=function(){if(isNaN(t.val()))return {valid:!1,msg:"Please enter a valid integer"};if(e.column.validator){var o=e.column.validator(t.val());if(!o.valid)return o}return {valid:!0,msg:null}},this.init();}function s(e){function t(){var t=e.column.editorFixedDecimalPlaces;return "undefined"==typeof t&&(t=s.DefaultDecimalPlaces),t||0===t?t:null}var o=void 0,n=void 0;this.init=function(){o=(0, v.default)("<INPUT type=text class='editor-text' />"),o.bind("keydown.nav",function(e){e.keyCode!==m.LEFT&&e.keyCode!==m.RIGHT||e.stopImmediatePropagation();}),o.appendTo(e.container),o.focus().select();},this.destroy=function(){o.remove();},this.focus=function(){o.focus();},this.loadValue=function(r){n=r[e.column.field];var i=t();null!==i&&(n||0===n)&&n.toFixed&&(n=n.toFixed(i)),o.val(n),o[0].defaultValue=n,o.select();},this.serializeValue=function(){var e=parseFloat(o.val())||0,n=t();return null!==n&&(e||0===e)&&e.toFixed&&(e=parseFloat(e.toFixed(n))),e},this.applyValue=function(t,o){t[e.column.field]=o;},this.isValueChanged=function(){return !(""==o.val()&&null==n)&&o.val()!=n},this.validate=function(){if(isNaN(o.val()))return {valid:!1,msg:"Please enter a valid number"};if(e.column.validator){var t=e.column.validator(o.val(),e);if(!t.valid)return t}return {valid:!0,msg:null}},this.init();}function l(e){var t=void 0,o=void 0,n=void 0,r=e.column.options&&e.column.options.date?e.column.options.date:{};this.init=function(){n=r.defaultDate=e.item[e.column.field],t=(0, v.default)('<input type=text data-default-date="'+n+'" class="editor-text" />'),t.appendTo(e.container),t.focus().val(n).select(),o=(0, f.default)(t[0],r);},this.destroy=function(){o.destroy(),t.remove();},this.show=function(){o.open(),o.positionCalendar();},this.hide=function(){o.close();},this.position=function(e){o.positionCalendar();},this.focus=function(){t.focus();},this.loadValue=function(o){n=o[e.column.field],t.val(n),t.select();},this.serializeValue=function(){return t.val()},this.applyValue=function(t,o){t[e.column.field]=o;},this.isValueChanged=function(){return !(""==t.val()&&null==n)&&t.val()!=n},this.validate=function(){if(e.column.validator){var o=e.column.validator(t.val(),e);if(!o.valid)return o}return {valid:!0,msg:null}},this.init();}function a(e){var t=void 0,o=void 0;this.init=function(){t=(0, v.default)("<select tabIndex='0' class='editor-yesno'><option value='yes'>Yes</option><option value='no'>No</option></select>"),t.appendTo(e.container),t.focus();},this.destroy=function(){t.remove();},this.focus=function(){t.focus();},this.loadValue=function(n){t.val((o=n[e.column.field])?"yes":"no"),t.select();},this.serializeValue=function(){return "yes"==t.val()},this.applyValue=function(t,o){t[e.column.field]=o;},this.isValueChanged=function(){return t.val()!=o},this.validate=function(){var o=!0,n=null;if(e.column.validator){var r=e.column.validator(t.val(),e);o=r.valid,n=r.msg;}return {valid:!0,msg:null}},this.init();}function c(e){var t=void 0,o=void 0;this.init=function(){t=(0, v.default)("<INPUT type=checkbox value='true' class='editor-checkbox' hideFocus>"),t.appendTo(e.container),t.focus();},this.destroy=function(){t.remove();},this.focus=function(){t.focus();},this.loadValue=function(n){o=!!n[e.column.field],o?t.prop("checked",!0):t.prop("checked",!1);},this.serializeValue=function(){return t.prop("checked")},this.applyValue=function(t,o){t[e.column.field]=o;},this.isValueChanged=function(){return this.serializeValue()!==o},this.validate=function(){var o=!0,n=null;if(e.column.validator){var r=e.column.validator(t.val(),e);o=r.valid,n=r.msg;}return {valid:!0,msg:null}},this.init();}function d(e){var t=void 0,o=void 0,n=void 0,r=this;this.init=function(){var n=(0, v.default)("body");o=(0, v.default)("<div class='slick-large-editor-text' />").appendTo(n),t=(0, v.default)("<textarea hidefocus rows=5 />").appendTo(o),(0, v.default)("<div><button>Save</button> <button>Cancel</button></div>").appendTo(o),o.find("button:first").bind("click",this.save),o.find("button:last").bind("click",this.cancel),t.bind("keydown",this.handleKeyDown),r.position(e.position),t.focus().select();},this.handleKeyDown=function(t){t.which==m.ENTER&&t.ctrlKey?r.save():t.which==m.ESCAPE?(t.preventDefault(),r.cancel()):t.which==m.TAB&&t.shiftKey?(t.preventDefault(),e.grid.navigatePrev()):t.which==m.TAB&&(t.preventDefault(),e.grid.navigateNext());},this.save=function(){e.commitChanges();},this.cancel=function(){t.val(n),e.cancelChanges();},this.hide=function(){o.hide();},this.show=function(){o.show();},this.position=function(e){o.css("top",e.top-5).css("left",e.left-5);},this.destroy=function(){o.remove();},this.focus=function(){t.focus();},this.loadValue=function(o){t.val(n=o[e.column.field]),t.select();},this.serializeValue=function(){return t.val()},this.applyValue=function(t,o){t[e.column.field]=o;},this.isValueChanged=function(){return !(""==t.val()&&null==n)&&t.val()!=n},this.validate=function(){var t=!0,o=null;if(e.column.validator){var n=e.column.validator($select.val(),e);t=n.valid,o=n.msg;}return {valid:!0,msg:null}},this.init();}Object.defineProperty(t,"__esModule",{value:!0});var u=o(1),h=n(u),p=o(32),f=n(p),g=o(2),v=n(g),m=h.default.keyCode,w={Text:r,Integer:i,Float:s,Date:l,YesNoSelect:a,Checkbox:c,LongText:d};h.default.Editors=w,t.default=w,s.DefaultDecimalPlaces=null;},function(e,t){function o(e,t,o,n,r){return null==o||""===o?"-":o<50?"<span style='color:red;font-weight:bold;'>"+o+"%</span>":"<span style='color:green'>"+o+"%</span>"}function n(e,t,o,n,r){if(null==o||""===o)return "";var i=void 0;return i=o<30?"red":o<70?"silver":"green","<span class='percent-complete-bar' style='background:"+i+";width:"+o+"%'></span>"}function r(e,t,o,n,r){return o?"Yes":"No"}function i(e,t,o,n,r){return o?"✔":""}Object.defineProperty(t,"__esModule",{value:!0}),t.default={PercentComplete:o,PercentCompleteBar:n,YesNo:r,Checkmark:i};},function(module,exports,__webpack_require__){function _interopRequireDefault(e){return e&&e.__esModule?e:{default:e}}function SlickGrid(container,data,columns,options){function init(){if($container=(0, _jquery2.default)(container),$container.length<1)throw new Error("SlickGrid requires a valid container, "+container+" does not exist in the DOM.");cacheCssForHiddenInit(),maxSupportedCssHeight=maxSupportedCssHeight||getMaxSupportedCssHeight(),scrollbarDimensions=scrollbarDimensions||measureScrollbar(),options=_jquery2.default.extend({},defaults,options),validateAndEnforceOptions(),columnDefaults.width=options.defaultColumnWidth,columnsById={};for(var e=0;e<columns.length;e++){var t=columns[e]=_jquery2.default.extend({},columnDefaults,columns[e]);columnsById[t.id]=e,t.minWidth&&t.width<t.minWidth&&(t.width=t.minWidth),t.maxWidth&&t.width>t.maxWidth&&(t.width=t.maxWidth);}editController={commitCurrentEdit:commitCurrentEdit,cancelCurrentEdit:cancelCurrentEdit},$container.empty().css("overflow","hidden").css("outline",0).addClass(uid).addClass("ui-widget"),/relative|absolute|fixed/.test($container.css("position"))||$container.css("position","relative"),$focusSink=(0, _jquery2.default)("<div tabIndex='0' hideFocus style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container),$headerScroller=(0, _jquery2.default)("<div class='slick-header ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container),$headers=(0, _jquery2.default)("<div class='slick-header-columns' />").appendTo($headerScroller),$headers.width(getHeadersWidth()),$headerRowScroller=(0, _jquery2.default)("<div class='slick-headerrow ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container),$headerRow=(0, _jquery2.default)("<div class='slick-headerrow-columns' />").appendTo($headerRowScroller),$headerRowSpacer=(0, _jquery2.default)("<div style='display:block;height:1px;position:absolute;top:0;left:0;'></div>").css("width",getCanvasWidth()+scrollbarDimensions.width+"px").appendTo($headerRowScroller),$topPanelScroller=(0, _jquery2.default)("<div class='slick-top-panel-scroller ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container),$topPanel=(0, _jquery2.default)("<div class='slick-top-panel' style='width:10000px' />").appendTo($topPanelScroller),options.showTopPanel||$topPanelScroller.hide(),options.showHeaderRow||$headerRowScroller.hide(),$viewport=(0, _jquery2.default)("<div class='slick-viewport' style='width:100%;overflow:auto;outline:0;position:relative;;'>").appendTo($container),$viewport.css("overflow-y",options.autoHeight?"hidden":"auto"),$canvas=(0, _jquery2.default)("<div class='grid-canvas' />").appendTo($viewport),options.createFooterRow&&($footerRowScroller=(0, _jquery2.default)("<div class='slick-footerrow ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container),$footerRow=(0, _jquery2.default)("<div class='slick-footerrow-columns' />").appendTo($footerRowScroller),$footerRowSpacer=(0, _jquery2.default)("<div style='display:block;height:1px;position:absolute;top:0;left:0;'></div>").css("width",getCanvasWidth()+scrollbarDimensions.width+"px").appendTo($footerRowScroller),options.showFooterRow||$footerRowScroller.hide()),$focusSink2=$focusSink.clone().appendTo($container),options.explicitInitialization||finishInitialization();}function finishInitialization(){initialized||(initialized=!0,viewportW=parseFloat(_jquery2.default.css($container[0],"width",!0)),measureCellPaddingAndBorder(),disableSelection($headers),options.enableTextSelectionOnCells||$viewport.bind("selectstart.ui",function(e){return (0, _jquery2.default)(e.target).is("input,textarea")}),updateColumnCaches(),createColumnHeaders(),setupColumnSort(),createCssRules(),resizeCanvas(),bindAncestorScrollEvents(),
     $container.bind("resize.slickgrid",resizeCanvas),$viewport.bind("scroll",handleScroll),$headerScroller.bind("contextmenu",handleHeaderContextMenu).bind("click",handleHeaderClick).delegate(".slick-header-column","mouseenter",handleHeaderMouseEnter).delegate(".slick-header-column","mouseleave",handleHeaderMouseLeave),$headerRowScroller.bind("scroll",handleHeaderRowScroll),options.createFooterRow&&$footerRowScroller.bind("scroll",handleFooterRowScroll),$focusSink.add($focusSink2).bind("keydown",handleKeyDown),$canvas.bind("keydown",handleKeyDown).bind("click",handleClick).bind("dblclick",handleDblClick).bind("contextmenu",handleContextMenu).delegate(".slick-cell","mouseenter",handleMouseEnter).delegate(".slick-cell","mouseleave",handleMouseLeave),(0, _interact2.default)($canvas[0]).allowFrom("div.slick-cell").draggable({onmove:handleDrag,onstart:handleDragStart,onend:handleDragEnd}).styleCursor(!1),navigator.userAgent.toLowerCase().match(/webkit/)&&navigator.userAgent.toLowerCase().match(/macintosh/)&&$canvas.bind("mousewheel",handleMouseWheel),restoreCssFromHiddenInit());}function cacheCssForHiddenInit(){$hiddenParents=$container.parents().addBack().not(":visible"),$hiddenParents.each(function(){var e={};for(var t in cssShow)e[t]=this.style[t],this.style[t]=cssShow[t];oldProps.push(e);});}function restoreCssFromHiddenInit(){$hiddenParents.each(function(e){var t=oldProps[e];for(var o in cssShow)this.style[o]=t[o];});}function registerPlugin(e){plugins.unshift(e),e.init(self);}function unregisterPlugin(e){for(var t=plugins.length;t>=0;t--)if(plugins[t]===e){plugins[t].destroy&&plugins[t].destroy(),plugins.splice(t,1);break}}function setSelectionModel(e){selectionModel&&(selectionModel.onSelectedRangesChanged.unsubscribe(handleSelectedRangesChanged),selectionModel.destroy&&selectionModel.destroy()),selectionModel=e,selectionModel&&(selectionModel.init(self),selectionModel.onSelectedRangesChanged.subscribe(handleSelectedRangesChanged));}function getSelectionModel(){return selectionModel}function getCanvasNode(){return $canvas[0]}function measureScrollbar(){var e=(0, _jquery2.default)("<div style='position:absolute; top:-10000px; left:-10000px; width:100px; height:100px; overflow:scroll;'></div>").appendTo("body"),t={width:e.width()-e[0].clientWidth,height:e.height()-e[0].clientHeight};return e.remove(),t}function getHeadersWidth(){for(var e=0,t=0,o=columns.length;t<o;t++){var n=columns[t].width;e+=n;}return e+=scrollbarDimensions.width,Math.max(e,viewportW)+1e3}function getCanvasWidth(){for(var e=viewportHasVScroll?viewportW-scrollbarDimensions.width:viewportW,t=0,o=columns.length;o--;)t+=columns[o].width;return options.fullWidthRows?Math.max(t,e):t}function updateCanvasWidth(e){var t=canvasWidth;canvasWidth=getCanvasWidth(),canvasWidth!=t&&($canvas.width(canvasWidth),$headerRow.width(canvasWidth),options.createFooterRow&&$footerRow.width(canvasWidth),$headers.width(getHeadersWidth()),viewportHasHScroll=canvasWidth>viewportW-scrollbarDimensions.width);var o=canvasWidth+(viewportHasVScroll?scrollbarDimensions.width:0);$headerRowSpacer.width(o),options.createFooterRow&&$footerRowSpacer.width(o),(canvasWidth!=t||e)&&applyColumnWidths();}function disableSelection(e){e&&e.jquery&&e.attr("unselectable","on").css("MozUserSelect","none").bind("selectstart.ui",function(){return !1});}function getMaxSupportedCssHeight(){for(var e=1e6,t=navigator.userAgent.toLowerCase().match(/firefox/)?6e6:1e9,o=(0, _jquery2.default)("<div style='display:none' />").appendTo(document.body);;){var n=2*e;if(o.css("height",n),n>t||o.height()!==n)break;e=n;}return o.remove(),e}function bindAncestorScrollEvents(){for(var e=$canvas[0];(e=e.parentNode)!=document.body&&null!=e;)if(e==$viewport[0]||e.scrollWidth!=e.clientWidth||e.scrollHeight!=e.clientHeight){var t=(0, _jquery2.default)(e);$boundAncestors=$boundAncestors?$boundAncestors.add(t):t,t.bind("scroll."+uid,handleActiveCellPositionChange);}}function unbindAncestorScrollEvents(){$boundAncestors&&($boundAncestors.unbind("scroll."+uid),$boundAncestors=null);}function updateColumnHeader(e,t,o){if(initialized){var n=getColumnIndex(e);if(null!=n){var r=columns[n],i=$headers.children().eq(n);i&&(void 0!==t&&(columns[n].name=t),void 0!==o&&(columns[n].toolTip=o),trigger(self.onBeforeHeaderCellDestroy,{node:i[0],column:r,grid:self}),i.attr("title",o||"").children().eq(0).html(t),trigger(self.onHeaderCellRendered,{node:i[0],column:r,grid:self}));}}}function getHeaderRow(){return $headerRow[0]}function getFooterRow(){return $footerRow[0]}function getHeaderRowColumn(e){var t=getColumnIndex(e),o=$headerRow.children().eq(t);return o&&o[0]}function getFooterRowColumn(e){var t=getColumnIndex(e),o=$footerRow.children().eq(t);return o&&o[0]}function createColumnHeaders(){function e(){(0, _jquery2.default)(this).addClass("ui-state-hover");}function t(){(0, _jquery2.default)(this).removeClass("ui-state-hover");}$headers.find(".slick-header-column").each(function(){var e=(0, _jquery2.default)(this).data("column");e&&trigger(self.onBeforeHeaderCellDestroy,{node:this,column:e,grid:self});}),$headers.empty(),$headers.width(getHeadersWidth()),$headerRow.find(".slick-headerrow-column").each(function(){var e=(0, _jquery2.default)(this).data("column");e&&trigger(self.onBeforeHeaderRowCellDestroy,{node:this,column:e,grid:self});}),$headerRow.empty(),options.createFooterRow&&($footerRow.find(".slick-footerrow-column").each(function(){var e=(0, _jquery2.default)(this).data("column");e&&trigger(self.onBeforeFooterRowCellDestroy,{node:this,column:e});}),$footerRow.empty());for(var o=0;o<columns.length;o++){var n=columns[o],r=(0, _jquery2.default)("<div class='ui-state-default slick-header-column' />").html("<span class='slick-column-name'>"+n.name+"</span>").width(n.width-headerColumnWidthDiff).attr("id",""+uid+n.id).attr("title",n.toolTip||"").data("column",n).addClass(n.headerCssClass||"").appendTo($headers);if((options.enableColumnReorder||n.sortable)&&r.on("mouseenter",e).on("mouseleave",t),n.sortable&&(r.addClass("slick-header-sortable"),r.append("<span class='slick-sort-indicator' />")),trigger(self.onHeaderCellRendered,{node:r[0],column:n,grid:self}),options.showHeaderRow){var i=(0, _jquery2.default)("<div class='ui-state-default slick-headerrow-column l"+o+" r"+o+"'></div>").data("column",n).appendTo($headerRow);trigger(self.onHeaderRowCellRendered,{node:i[0],column:n,grid:self});}if(options.createFooterRow&&options.showFooterRow){var s=(0, _jquery2.default)("<div class='ui-state-default slick-footerrow-column l"+o+" r"+o+"'></div>").data("column",n).appendTo($footerRow);trigger(self.onFooterRowCellRendered,{node:s[0],column:n});}}setSortColumns(sortColumns),setupColumnResize(),options.enableColumnReorder&&setupColumnReorder();}function setupColumnSort(){$headers.click(function(e){if(e.metaKey=e.metaKey||e.ctrlKey,!(0, _jquery2.default)(e.target).hasClass("slick-resizable-handle")){var t=(0, _jquery2.default)(e.target).closest(".slick-header-column");if(t.length){var o=t.data("column");if(o.sortable){if(!getEditorLock().commitCurrentEdit())return;for(var n=null,r=0;r<sortColumns.length;r++)if(sortColumns[r].columnId==o.id){n=sortColumns[r],n.sortAsc=!n.sortAsc;break}e.metaKey&&options.multiColumnSort?n&&sortColumns.splice(r,1):((e.shiftKey||e.metaKey)&&options.multiColumnSort||(sortColumns=[]),n?0==sortColumns.length&&sortColumns.push(n):(n={columnId:o.id,sortAsc:o.defaultSortAsc},sortColumns.push(n))),setSortColumns(sortColumns),options.multiColumnSort?trigger(self.onSort,{multiColumnSort:!0,sortCols:_jquery2.default.map(sortColumns,function(e){return {sortCol:columns[getColumnIndex(e.columnId)],sortAsc:e.sortAsc}}),grid:self},e):trigger(self.onSort,{multiColumnSort:!1,sortCol:o,sortAsc:n.sortAsc,grid:self},e);}}}});}function setupColumnReorder(){var e=0,t=0,o=document.createElement("div");o.className="interact-placeholder",(0, _interact2.default)(".slick-header-column",{context:$container[0]}).ignoreFrom(".slick-resizable-handle").draggable({inertia:!0,restrict:{restriction:"parent",endOnly:!0,elementRect:{top:0,left:0,bottom:0,right:0}},autoScroll:!0,axis:"x",onstart:function(n){e=0,t=n.target.offsetWidth,$headers.find(".slick-header-column").each(function(e){(0, _jquery2.default)(this).data("index",e);}),o.style.height=n.target.offsetHeight+"px",o.style.width=t+"px",(0, _jquery2.default)(n.target).after(o).css({position:"absolute",zIndex:1e3,marginLeft:(0, _jquery2.default)(n.target).position().left});},onmove:function(t){e+=t.dx,t.target.style.transform="translate3d("+e+"px, -3px, 100px)";},onend:function(n){e=0,t=0,(0, _jquery2.default)(n.target).css({position:"relative",zIndex:"",marginLeft:0,transform:"none"}),o.parentNode.removeChild(o);var r=[];$headers.find(".slick-header-column").each(function(e){r.push(columns[(0, _jquery2.default)(this).data("index")]),(0, _jquery2.default)(this).removeData("index");}),setColumns(r),trigger(self.onColumnsReordered,{grid:self}),setupColumnResize();}}).dropzone({accept:".slick-header-column",ondragenter:function(e){e.target.classList.add("interact-drop-active"),e.relatedTarget.classList.add("interact-can-drop");},ondragleave:function(e){e.target.classList.remove("interact-drop-active"),e.relatedTarget.classList.remove("interact-can-drop");},ondrop:function(t){t.target.classList.remove("interact-drop-active"),t.relatedTarget.classList.remove("interact-can-drop"),(0, _jquery2.default)(t.target)[e>0?"after":"before"](t.relatedTarget);}}).styleCursor(!1);}function setupColumnResize(){var e,t,o,n;t=$headers.children(),t.find(".slick-resizable-handle").remove(),t.each(function(e,t){columns[e].resizable&&(void 0===o&&(o=e),n=e);}),void 0!==o&&t.each(function(t,r){if(!(t<o||options.forceFitColumns&&t>=n)){e=(0, _jquery2.default)(r);var i=(0, _jquery2.default)("<div class='slick-resizable-handle' />");if(i.appendTo(r),!e.data("resizable")){var s=columns[t];s.resizable&&(e.data("resizable",!0),(0, _interact2.default)(r).resizable({preserveAspectRatio:!1,edges:{left:!0,right:!0,bottom:!1,top:!1}}).on("resizestart",function(e){return !!getEditorLock().commitCurrentEdit()&&(s.previousWidth=e.rect.width,void e.target.classList.add("slick-header-column-active"))}).on("resizemove",function(e){var t=e.dx,o=s.width+=t;s.minWidth>0&&s.minWidth>o?o=s.minWidth:s.maxWidth>0&&s.maxWidth<o&&(o=s.maxWidth),s.width=o,options.forceFitColumns&&autosizeColumns(),applyColumnHeaderWidths(),options.syncColumnCellResize&&applyColumnWidths();}).on("resizeend",function(e){e.target.classList.remove("slick-header-column-active"),invalidateAllRows(),updateCanvasWidth(!0),render(),trigger(self.onColumnsResized,{grid:self});}));}}});}function getVBoxDelta(e){var t=["borderTopWidth","borderBottomWidth","paddingTop","paddingBottom"],o=0;return _jquery2.default.each(t,function(t,n){o+=parseFloat(e.css(n))||0;}),o}function measureCellPaddingAndBorder(){var e,t=["borderLeftWidth","borderRightWidth","paddingLeft","paddingRight"],o=["borderTopWidth","borderBottomWidth","paddingTop","paddingBottom"],n=_jquery2.default.fn.jquery.split(".");jQueryNewWidthBehaviour=1==n[0]&&n[1]>=8||n[0]>=2,e=(0, _jquery2.default)("<div class='ui-state-default slick-header-column' style='visibility:hidden'>-</div>").appendTo($headers),headerColumnWidthDiff=headerColumnHeightDiff=0,"border-box"!=e.css("box-sizing")&&"border-box"!=e.css("-moz-box-sizing")&&"border-box"!=e.css("-webkit-box-sizing")&&(_jquery2.default.each(t,function(t,o){headerColumnWidthDiff+=parseFloat(e.css(o))||0;}),_jquery2.default.each(o,function(t,o){headerColumnHeightDiff+=parseFloat(e.css(o))||0;})),e.remove();var r=(0, _jquery2.default)("<div class='slick-row' />").appendTo($canvas);e=(0, _jquery2.default)("<div class='slick-cell' id='' style='visibility:hidden'>-</div>").appendTo(r),cellWidthDiff=cellHeightDiff=0,"border-box"!=e.css("box-sizing")&&"border-box"!=e.css("-moz-box-sizing")&&"border-box"!=e.css("-webkit-box-sizing")&&(_jquery2.default.each(t,function(t,o){cellWidthDiff+=parseFloat(e.css(o))||0;}),_jquery2.default.each(o,function(t,o){cellHeightDiff+=parseFloat(e.css(o))||0;})),r.remove(),absoluteColumnMinWidth=Math.max(headerColumnWidthDiff,cellWidthDiff);}function createCssRules(){$style=(0, _jquery2.default)("<style type='text/css' rel='stylesheet' />").appendTo((0, _jquery2.default)("head"));for(var e=options.rowHeight-cellHeightDiff,t=["."+uid+" .slick-header-column { left: 0; }","."+uid+" .slick-top-panel { height:"+options.topPanelHeight+"px; }","."+uid+" .slick-headerrow-columns { height:"+options.headerRowHeight+"px; }","."+uid+" .slick-footerrow-columns { height:"+options.footerRowHeight+"px; }","."+uid+" .slick-cell { height:"+e+"px; }","."+uid+" .slick-row { height:"+options.rowHeight+"px; }"],o=0;o<columns.length;o++)t.push("."+uid+" .l"+o+" { }"),t.push("."+uid+" .r"+o+" { }");$style[0].styleSheet?$style[0].styleSheet.cssText=t.join(" "):$style[0].appendChild(document.createTextNode(t.join(" ")));}function getColumnCssRules(e){if(!stylesheet){for(var t=document.styleSheets,o=0;o<t.length;o++)if((t[o].ownerNode||t[o].owningElement)==$style[0]){stylesheet=t[o];break}if(!stylesheet)throw new Error("Cannot find stylesheet.");columnCssRulesL=[],columnCssRulesR=[];for(var n,r,i=stylesheet.cssRules||stylesheet.rules,o=0;o<i.length;o++){var s=i[o].selectorText;(n=/\.l\d+/.exec(s))?(r=parseInt(n[0].substr(2,n[0].length-2),10),columnCssRulesL[r]=i[o]):(n=/\.r\d+/.exec(s))&&(r=parseInt(n[0].substr(2,n[0].length-2),10),columnCssRulesR[r]=i[o]);}}return {left:columnCssRulesL[e],right:columnCssRulesR[e]}}function removeCssRules(){$style.remove(),stylesheet=null;}function destroy(){getEditorLock().cancelCurrentEdit(),trigger(self.onBeforeDestroy,{grid:self});for(var e=plugins.length;e--;)unregisterPlugin(plugins[e]);unbindAncestorScrollEvents(),$container.unbind(".slickgrid"),removeCssRules(),$container.empty().removeClass(uid);}function trigger(e,t,o){return o=o||new _slick2.default.EventData,t=t||{},t.grid=self,e.notify(t,o,self)}function getEditorLock(){return options.editorLock}function getEditController(){return editController}function getColumnIndex(e){return columnsById[e]}function autosizeColumns(){var e,t,o,n=[],r=0,i=0,s=viewportHasVScroll?viewportW-scrollbarDimensions.width:viewportW;for(e=0;e<columns.length;e++)t=columns[e],n.push(t.width),i+=t.width,t.resizable&&(r+=t.width-Math.max(t.minWidth,absoluteColumnMinWidth));for(o=i;i>s&&r;){var l=(i-s)/r;for(e=0;e<columns.length&&i>s;e++){t=columns[e];var a=n[e];if(!(!t.resizable||a<=t.minWidth||a<=absoluteColumnMinWidth)){var c=Math.max(t.minWidth,absoluteColumnMinWidth),d=Math.floor(l*(a-c))||1;d=Math.min(d,a-c),i-=d,r-=d,n[e]-=d;}}if(o<=i)break;o=i;}for(o=i;i<s;){var u=s/i;for(e=0;e<columns.length&&i<s;e++){t=columns[e];var h,p=n[e];h=!t.resizable||t.maxWidth<=p?0:Math.min(Math.floor(u*p)-p,t.maxWidth-p||1e6)||1,i+=h,n[e]+=i<=s?h:0;}if(o>=i)break;o=i;}var f=!1;for(e=0;e<columns.length;e++)columns[e].rerenderOnResize&&columns[e].width!=n[e]&&(f=!0),columns[e].width=n[e];applyColumnHeaderWidths(),updateCanvasWidth(!0),f&&(invalidateAllRows(),render());}function applyColumnHeaderWidths(){if(initialized){for(var e,t=0,o=$headers.children("[id]"),n=o.length;t<n;t++)e=(0, _jquery2.default)(o[t]),jQueryNewWidthBehaviour?e.outerWidth()!==columns[t].width&&e.outerWidth(columns[t].width):e.width()!==columns[t].width-headerColumnWidthDiff&&e.width(columns[t].width-headerColumnWidthDiff);updateColumnCaches();}}function applyColumnWidths(){for(var e,t,o=0,n=0;n<columns.length;n++)e=columns[n].width,t=getColumnCssRules(n),t.left.style.left=o+"px",t.right.style.right=canvasWidth-o-e+"px",o+=columns[n].width;}function setSortColumn(e,t){setSortColumns([{columnId:e,sortAsc:t}]);}function setSortColumns(e){sortColumns=e;var t=$headers.children();t.removeClass("slick-header-column-sorted").find(".slick-sort-indicator").removeClass("slick-sort-indicator-asc slick-sort-indicator-desc"),_jquery2.default.each(sortColumns,function(e,o){null==o.sortAsc&&(o.sortAsc=!0);var n=getColumnIndex(o.columnId);null!=n&&t.eq(n).addClass("slick-header-column-sorted").find(".slick-sort-indicator").addClass(o.sortAsc?"slick-sort-indicator-asc":"slick-sort-indicator-desc");});}function getSortColumns(){return sortColumns}function handleSelectedRangesChanged(e,t){selectedRows=[];for(var o={},n=0;n<t.length;n++)for(var r=t[n].fromRow;r<=t[n].toRow;r++){o[r]||(selectedRows.push(r),o[r]={});for(var i=t[n].fromCell;i<=t[n].toCell;i++)canCellBeSelected(r,i)&&(o[r][columns[i].id]=options.selectedCellCssClass);}setCellCssStyles(options.selectedCellCssClass,o),trigger(self.onSelectedRowsChanged,{rows:getSelectedRows(),grid:self},e);}function getColumns(){return columns}function updateColumnCaches(){columnPosLeft=[],columnPosRight=[];for(var e=0,t=0,o=columns.length;t<o;t++)columnPosLeft[t]=e,columnPosRight[t]=e+columns[t].width,e+=columns[t].width;}function setColumns(e){columns=e,columnsById={};for(var t=0;t<columns.length;t++){var o=columns[t]=_jquery2.default.extend({},columnDefaults,columns[t]);columnsById[o.id]=t,o.minWidth&&o.width<o.minWidth&&(o.width=o.minWidth),o.maxWidth&&o.width>o.maxWidth&&(o.width=o.maxWidth);}updateColumnCaches(),initialized&&(invalidateAllRows(),createColumnHeaders(),removeCssRules(),createCssRules(),resizeCanvas(),applyColumnWidths(),handleScroll());}function getOptions(){return options}function setOptions(e){getEditorLock().commitCurrentEdit()&&(makeActiveCellNormal(),options.enableAddRow!==e.enableAddRow&&invalidateRow(getDataLength()),options=_jquery2.default.extend(options,e),validateAndEnforceOptions(),$viewport.css("overflow-y",options.autoHeight?"hidden":"auto"),render());}function validateAndEnforceOptions(){options.autoHeight&&(options.leaveSpaceForNewRows=!1);}function setData(e,t){data=e,invalidateAllRows(),updateRowCount(),t&&scrollTo(0);}function getData(){return data}function getDataLength(){return data.getLength?data.getLength():data.length}function getDataLengthIncludingAddNew(){return getDataLength()+(options.enableAddRow?1:0)}function getDataItem(e){return data.getItem?data.getItem(e):data[e]}function getTopPanel(){return $topPanel[0]}function setTopPanelVisibility(e){options.showTopPanel!=e&&(options.showTopPanel=e,e?$topPanelScroller.slideDown("fast",resizeCanvas):$topPanelScroller.slideUp("fast",resizeCanvas));}function setHeaderRowVisibility(e){options.showHeaderRow!=e&&(options.showHeaderRow=e,e?$headerRowScroller.slideDown("fast",resizeCanvas):$headerRowScroller.slideUp("fast",resizeCanvas));}function setFooterRowVisibility(e){options.showFooterRow!=e&&(options.showFooterRow=e,e?$footerRowScroller.slideDown("fast",resizeCanvas):$footerRowScroller.slideUp("fast",resizeCanvas));}function getContainerNode(){return $container.get(0)}function getRowTop(e){return options.rowHeight*e-offset}function getRowFromPosition(e){return Math.floor((e+offset)/options.rowHeight)}function scrollTo(e){e=Math.max(e,0),e=Math.min(e,th-viewportH+(viewportHasHScroll?scrollbarDimensions.height:0));var t=offset;page=Math.min(n-1,Math.floor(e/ph)),offset=Math.round(page*cj);var o=e-offset;if(offset!=t){var r=getVisibleRange(o);cleanupRows(r),updateRowPositions();}prevScrollTop!=o&&(vScrollDir=prevScrollTop+t<o+offset?1:-1,$viewport[0].scrollTop=lastRenderedScrollTop=scrollTop=prevScrollTop=o,trigger(self.onViewportChanged,{grid:self}));}function defaultFormatter(e,t,o,n,r){return null==o?"":(o+"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function getFormatter(e,t){var o=data.getItemMetadata&&data.getItemMetadata(e),n=o&&o.columns&&(o.columns[t.id]||o.columns[getColumnIndex(t.id)]);return n&&n.formatter||o&&o.formatter||t.formatter||options.formatterFactory&&options.formatterFactory.getFormatter(t)||options.defaultFormatter}function getEditor(e,t){var o=columns[t],n=data.getItemMetadata&&data.getItemMetadata(e),r=n&&n.columns;return r&&r[o.id]&&void 0!==r[o.id].editor?r[o.id].editor:r&&r[t]&&void 0!==r[t].editor?r[t].editor:o.editor||options.editorFactory&&options.editorFactory.getEditor(o)}function getDataItemValueForColumn(e,t){return options.dataItemColumnValueExtractor?options.dataItemColumnValueExtractor(e,t):e[t.field]}function appendRowHtml(e,t,o,n){var r=getDataItem(t),i=t<n&&!r,s="slick-row"+(i?" loading":"")+(t===activeRow?" active":"")+(t%2==1?" odd":" even");r||(s+=" "+options.addNewRowCssClass);var l=data.getItemMetadata&&data.getItemMetadata(t);l&&l.cssClasses&&(s+=" "+l.cssClasses),e.push("<div class='ui-widget-content "+s+"' style='top:"+getRowTop(t)+"px'>");for(var a,c,d=0,u=columns.length;d<u;d++){if(c=columns[d],a=1,l&&l.columns){var h=l.columns[c.id]||l.columns[d];a=h&&h.colspan||1,"*"===a&&(a=u-d);}if(columnPosRight[Math.min(u-1,d+a-1)]>o.leftPx){if(columnPosLeft[d]>o.rightPx)break;appendCellHtml(e,t,d,a,r);}a>1&&(d+=a-1);}e.push("</div>");}function appendCellHtml(e,t,o,n,r){var i=columns[o],s="slick-cell l"+o+" r"+Math.min(columns.length-1,o+n-1)+(i.cssClass?" "+i.cssClass:"");t===activeRow&&o===activeCell&&(s+=" active");for(var l in cellCssClasses)cellCssClasses[l][t]&&cellCssClasses[l][t][i.id]&&(s+=" "+cellCssClasses[l][t][i.id]);if(e.push("<div class='"+s+"'>"),r){var a=getDataItemValueForColumn(r,i);e.push(getFormatter(t,i)(t,o,a,i,r));}e.push("</div>"),rowsCache[t].cellRenderQueue.push(o),rowsCache[t].cellColSpans[o]=n;}function cleanupRows(e){for(var t in rowsCache)(t=parseInt(t,10))!==activeRow&&(t<e.top||t>e.bottom)&&removeRowFromCache(t);options.enableAsyncPostRenderCleanup&&startPostProcessingCleanup();}function invalidate(){updateRowCount(),invalidateAllRows(),render();}function invalidateAllRows(){currentEditor&&makeActiveCellNormal();for(var e in rowsCache)removeRowFromCache(e);options.enableAsyncPostRenderCleanup&&startPostProcessingCleanup();}function queuePostProcessedRowForCleanup(e,t,o){postProcessgroupId++;for(var n in t)t.hasOwnProperty(n)&&postProcessedCleanupQueue.push({actionType:"C",groupId:postProcessgroupId,node:e.cellNodesByColumnIdx[0|n],columnIdx:0|n,rowIdx:o});postProcessedCleanupQueue.push({actionType:"R",groupId:postProcessgroupId,node:e.rowNode}),(0, _jquery2.default)(e.rowNode).detach();}function queuePostProcessedCellForCleanup(e,t,o){postProcessedCleanupQueue.push({actionType:"C",groupId:postProcessgroupId,node:e,columnIdx:t,rowIdx:o}),(0, _jquery2.default)(e).detach();}function removeRowFromCache(e){var t=rowsCache[e];t&&(rowNodeFromLastMouseWheelEvent===t.rowNode?(t.rowNode.style.display="none",zombieRowNodeFromLastMouseWheelEvent=rowNodeFromLastMouseWheelEvent,zombieRowCacheFromLastMouseWheelEvent=t,zombieRowPostProcessedFromLastMouseWheelEvent=postProcessedRows[e]):options.enableAsyncPostRenderCleanup&&postProcessedRows[e]?queuePostProcessedRowForCleanup(t,postProcessedRows[e],e):$canvas[0].removeChild(t.rowNode),delete rowsCache[e],delete postProcessedRows[e],renderedRows--,counter_rows_removed++);}function invalidateRows(e){var t,o;if(e&&e.length){for(vScrollDir=0,t=0,o=e.length;t<o;t++)currentEditor&&activeRow===e[t]&&makeActiveCellNormal(),rowsCache[e[t]]&&removeRowFromCache(e[t]);options.enableAsyncPostRenderCleanup&&startPostProcessingCleanup();}}function invalidateRow(e){invalidateRows([e]);}function updateCell(e,t){var o=getCellNode(e,t);if(o){var n=columns[t],r=getDataItem(e);currentEditor&&activeRow===e&&activeCell===t?currentEditor.loadValue(r):(o.innerHTML=r?getFormatter(e,n)(e,t,getDataItemValueForColumn(r,n),n,r):"",invalidatePostProcessingResults(e));}}function updateRow(e){var t=rowsCache[e];if(t){ensureCellNodesInRowsCache(e);var o=getDataItem(e);for(var n in t.cellNodesByColumnIdx)if(t.cellNodesByColumnIdx.hasOwnProperty(n)){n|=0;var r=columns[n],i=t.cellNodesByColumnIdx[n];e===activeRow&&n===activeCell&&currentEditor?currentEditor.loadValue(o):o?i.innerHTML=getFormatter(e,r)(e,n,getDataItemValueForColumn(o,r),r,o):i.innerHTML="";}invalidatePostProcessingResults(e);}}function getViewportHeight(){return parseFloat(_jquery2.default.css($container[0],"height",!0))-parseFloat(_jquery2.default.css($container[0],"paddingTop",!0))-parseFloat(_jquery2.default.css($container[0],"paddingBottom",!0))-parseFloat(_jquery2.default.css($headerScroller[0],"height"))-getVBoxDelta($headerScroller)-(options.showTopPanel?options.topPanelHeight+getVBoxDelta($topPanelScroller):0)-(options.showHeaderRow?options.headerRowHeight+getVBoxDelta($headerRowScroller):0)-(options.createFooterRow&&options.showFooterRow?options.footerRowHeight+getVBoxDelta($footerRowScroller):0)}function resizeCanvas(){initialized&&(viewportH=options.autoHeight?options.rowHeight*getDataLengthIncludingAddNew():getViewportHeight(),numVisibleRows=Math.ceil(viewportH/options.rowHeight),viewportW=parseFloat(_jquery2.default.css($container[0],"width",!0)),options.autoHeight||$viewport.height(viewportH),options.forceFitColumns&&autosizeColumns(),updateRowCount(),handleScroll(),lastRenderedScrollLeft=-1,render());}function updateRowCount(){if(initialized){var e=getDataLengthIncludingAddNew(),t=e+(options.leaveSpaceForNewRows?numVisibleRows-1:0),o=viewportHasVScroll;viewportHasVScroll=!options.autoHeight&&t*options.rowHeight>viewportH,viewportHasHScroll=canvasWidth>viewportW-scrollbarDimensions.width,makeActiveCellNormal();var r=e-1;for(var i in rowsCache)i>r&&removeRowFromCache(i);options.enableAsyncPostRenderCleanup&&startPostProcessingCleanup(),activeCellNode&&activeRow>r&&resetActiveCell();var s=h;th=Math.max(options.rowHeight*t,viewportH-scrollbarDimensions.height),th<maxSupportedCssHeight?(h=ph=th,n=1,cj=0):(h=maxSupportedCssHeight,ph=h/100,n=Math.floor(th/ph),cj=(th-h)/(n-1)),h!==s&&($canvas.css("height",h),scrollTop=$viewport[0].scrollTop);var l=scrollTop+offset<=th-viewportH;0==th||0==scrollTop?page=offset=0:scrollTo(l?scrollTop+offset:th-viewportH),h!=s&&options.autoHeight&&resizeCanvas(),options.forceFitColumns&&o!=viewportHasVScroll&&autosizeColumns(),updateCanvasWidth(!1);}}function getVisibleRange(e,t){return null==e&&(e=scrollTop),null==t&&(t=scrollLeft),{top:getRowFromPosition(e),bottom:getRowFromPosition(e+viewportH)+1,leftPx:t,rightPx:t+viewportW}}function getRenderedRange(e,t){var o=getVisibleRange(e,t),n=Math.round(viewportH/options.rowHeight),r=3;return vScrollDir==-1?(o.top-=n,o.bottom+=r):1==vScrollDir?(o.top-=r,o.bottom+=n):(o.top-=r,o.bottom+=r),o.top=Math.max(0,o.top),o.bottom=Math.min(getDataLengthIncludingAddNew()-1,o.bottom),o.leftPx-=viewportW,o.rightPx+=viewportW,o.leftPx=Math.max(0,o.leftPx),o.rightPx=Math.min(canvasWidth,o.rightPx),o}function ensureCellNodesInRowsCache(e){var t=rowsCache[e];if(t&&t.cellRenderQueue.length)for(var o=t.rowNode.lastChild;t.cellRenderQueue.length;){var n=t.cellRenderQueue.pop();t.cellNodesByColumnIdx[n]=o,o=o.previousSibling;}}function cleanUpCells(e,t){var o=0,n=rowsCache[t],r=[];for(var i in n.cellNodesByColumnIdx)if(n.cellNodesByColumnIdx.hasOwnProperty(i)){i|=0;var s=n.cellColSpans[i];(columnPosLeft[i]>e.rightPx||columnPosRight[Math.min(columns.length-1,i+s-1)]<e.leftPx)&&(t==activeRow&&i==activeCell||r.push(i));}var l,a;for(postProcessgroupId++;null!=(l=r.pop());)a=n.cellNodesByColumnIdx[l],options.enableAsyncPostRenderCleanup&&postProcessedRows[t]&&postProcessedRows[t][l]?queuePostProcessedCellForCleanup(a,l,t):n.rowNode.removeChild(a),delete n.cellColSpans[l],delete n.cellNodesByColumnIdx[l],postProcessedRows[t]&&delete postProcessedRows[t][l],o++;}function cleanUpAndRenderCells(e){for(var t,o,n,r=[],i=[],l=e.top,a=e.bottom;l<=a;l++)if(t=rowsCache[l]){ensureCellNodesInRowsCache(l),cleanUpCells(e,l),o=0;var c=data.getItemMetadata&&data.getItemMetadata(l);c=c&&c.columns;for(var d=getDataItem(l),u=0,h=columns.length;u<h&&!(columnPosLeft[u]>e.rightPx);u++)if(null==(n=t.cellColSpans[u])){if(n=1,c){var p=c[columns[u].id]||c[u];n=p&&p.colspan||1,"*"===n&&(n=h-u);}columnPosRight[Math.min(h-1,u+n-1)]>e.leftPx&&(appendCellHtml(r,l,u,n,d),o++),u+=n>1?n-1:0;}else u+=n>1?n-1:0;o&&(i.push(l));}if(r.length){var f=document.createElement("div");f.innerHTML=r.join("");for(var g,v;null!=(g=i.pop());){t=rowsCache[g];for(var m;null!=(m=t.cellRenderQueue.pop());)v=f.lastChild,t.rowNode.appendChild(v),t.cellNodesByColumnIdx[m]=v;}}}function renderRows(e){for(var t=$canvas[0],o=[],n=[],r=!1,i=getDataLength(),s=e.top,l=e.bottom;s<=l;s++)rowsCache[s]||(renderedRows++,n.push(s),rowsCache[s]={rowNode:null,cellColSpans:[],cellNodesByColumnIdx:[],cellRenderQueue:[]},appendRowHtml(o,s,e,i),activeCellNode&&activeRow===s&&(r=!0),counter_rows_rendered++);if(n.length){var a=document.createElement("div");a.innerHTML=o.join("");for(var s=0,l=n.length;s<l;s++)rowsCache[n[s]].rowNode=t.appendChild(a.firstChild);r&&(activeCellNode=getCellNode(activeRow,activeCell));}}function startPostProcessing(){options.enableAsyncPostRender&&(clearTimeout(h_postrender),h_postrender=setTimeout(asyncPostProcessRows,options.asyncPostRenderDelay));}function startPostProcessingCleanup(){options.enableAsyncPostRenderCleanup&&(clearTimeout(h_postrenderCleanup),h_postrenderCleanup=setTimeout(asyncPostProcessCleanupRows,options.asyncPostRenderCleanupDelay));}function invalidatePostProcessingResults(e){for(var t in postProcessedRows[e])postProcessedRows[e].hasOwnProperty(t)&&(postProcessedRows[e][t]="C");postProcessFromRow=Math.min(postProcessFromRow,e),postProcessToRow=Math.max(postProcessToRow,e),startPostProcessing();}function updateRowPositions(){for(var e in rowsCache)rowsCache[e].rowNode.style.top=getRowTop(e)+"px";}function render(){if(initialized){var e=getVisibleRange(),t=getRenderedRange();cleanupRows(t),lastRenderedScrollLeft!=scrollLeft&&cleanUpAndRenderCells(t),renderRows(t),postProcessFromRow=e.top,postProcessToRow=Math.min(getDataLengthIncludingAddNew()-1,e.bottom),startPostProcessing(),lastRenderedScrollTop=scrollTop,lastRenderedScrollLeft=scrollLeft,h_render=null;}}function handleHeaderRowScroll(){var e=$headerRowScroller[0].scrollLeft;e!=$viewport[0].scrollLeft&&($viewport[0].scrollLeft=e);}function handleFooterRowScroll(){var e=$footerRowScroller[0].scrollLeft;e!=$viewport[0].scrollLeft&&($viewport[0].scrollLeft=e);}function handleScroll(){scrollTop=$viewport[0].scrollTop,scrollLeft=$viewport[0].scrollLeft;var e=Math.abs(scrollTop-prevScrollTop),t=Math.abs(scrollLeft-prevScrollLeft);if(t&&(prevScrollLeft=scrollLeft,$headerScroller[0].scrollLeft=scrollLeft,$topPanelScroller[0].scrollLeft=scrollLeft,$headerRowScroller[0].scrollLeft=scrollLeft,options.createFooterRow&&($footerRowScroller[0].scrollLeft=scrollLeft)),e)if(vScrollDir=prevScrollTop<scrollTop?1:-1,prevScrollTop=scrollTop,e<viewportH)scrollTo(scrollTop+offset);else{var o=offset;page=h==viewportH?0:Math.min(n-1,Math.floor(scrollTop*((th-viewportH)/(h-viewportH))*(1/ph))),offset=Math.round(page*cj),o!=offset&&invalidateAllRows();}(t||e)&&(h_render&&clearTimeout(h_render),(Math.abs(lastRenderedScrollTop-scrollTop)>20||Math.abs(lastRenderedScrollLeft-scrollLeft)>20)&&(options.forceSyncScrolling||Math.abs(lastRenderedScrollTop-scrollTop)<viewportH&&Math.abs(lastRenderedScrollLeft-scrollLeft)<viewportW?render():h_render=setTimeout(render,50),trigger(self.onViewportChanged,{grid:self}))),trigger(self.onScroll,{scrollLeft:scrollLeft,scrollTop:scrollTop,grid:self});}function asyncPostProcessRows(){for(var e=getDataLength();postProcessFromRow<=postProcessToRow;){var t=vScrollDir>=0?postProcessFromRow++:postProcessToRow--,o=rowsCache[t];if(o&&!(t>=e)){postProcessedRows[t]||(postProcessedRows[t]={}),ensureCellNodesInRowsCache(t);for(var n in o.cellNodesByColumnIdx)if(o.cellNodesByColumnIdx.hasOwnProperty(n)){n|=0;var r=columns[n],i=postProcessedRows[t][n];if(r.asyncPostRender&&"R"!==i){var s=o.cellNodesByColumnIdx[n];s&&r.asyncPostRender(s,t,getDataItem(t),r,"C"===i),postProcessedRows[t][n]="R";}}return void(h_postrender=setTimeout(asyncPostProcessRows,options.asyncPostRenderDelay))}}}function asyncPostProcessCleanupRows(){if(postProcessedCleanupQueue.length>0){for(var e=postProcessedCleanupQueue[0].groupId;postProcessedCleanupQueue.length>0&&postProcessedCleanupQueue[0].groupId==e;){var t=postProcessedCleanupQueue.shift();if("R"==t.actionType&&(0, _jquery2.default)(t.node).remove(),"C"==t.actionType){var o=columns[t.columnIdx];o.asyncPostRenderCleanup&&t.node&&o.asyncPostRenderCleanup(t.node,t.rowIdx,o);}
     }h_postrenderCleanup=setTimeout(asyncPostProcessCleanupRows,options.asyncPostRenderCleanupDelay);}}function updateCellCssStylesOnRenderedRows(e,t){var o,n,r,i;for(var s in rowsCache){if(i=t&&t[s],r=e&&e[s],i)for(n in i)r&&i[n]==r[n]||(o=getCellNode(s,getColumnIndex(n)),o&&(0, _jquery2.default)(o).removeClass(i[n]));if(r)for(n in r)i&&i[n]==r[n]||(o=getCellNode(s,getColumnIndex(n)),o&&(0, _jquery2.default)(o).addClass(r[n]));}}function addCellCssStyles(e,t){if(cellCssClasses[e])throw"addCellCssStyles: cell CSS hash with key '"+e+"' already exists.";cellCssClasses[e]=t,updateCellCssStylesOnRenderedRows(t,null),trigger(self.onCellCssStylesChanged,{key:e,hash:t,grid:self});}function removeCellCssStyles(e){cellCssClasses[e]&&(updateCellCssStylesOnRenderedRows(null,cellCssClasses[e]),delete cellCssClasses[e],trigger(self.onCellCssStylesChanged,{key:e,hash:null,grid:self}));}function setCellCssStyles(e,t){var o=cellCssClasses[e];cellCssClasses[e]=t,updateCellCssStylesOnRenderedRows(t,o),trigger(self.onCellCssStylesChanged,{key:e,hash:t,grid:self});}function getCellCssStyles(e){return cellCssClasses[e]}function flashCell(e,t,o){if(o=o||100,rowsCache[e]){var n=function e(t){t&&setTimeout(function(){r.queue(function(){r.toggleClass(options.cellFlashingCssClass).dequeue(),e(t-1);});},o);},r=(0, _jquery2.default)(getCellNode(e,t));n(4);}}function handleMouseWheel(e){var t=(0, _jquery2.default)(e.target).closest(".slick-row")[0];t!=rowNodeFromLastMouseWheelEvent&&(zombieRowNodeFromLastMouseWheelEvent&&zombieRowNodeFromLastMouseWheelEvent!=t&&(options.enableAsyncPostRenderCleanup&&zombieRowPostProcessedFromLastMouseWheelEvent?queuePostProcessedRowForCleanup(zombieRowCacheFromLastMouseWheelEvent,zombieRowPostProcessedFromLastMouseWheelEvent):$canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent),zombieRowNodeFromLastMouseWheelEvent=null,zombieRowCacheFromLastMouseWheelEvent=null,zombieRowPostProcessedFromLastMouseWheelEvent=null,options.enableAsyncPostRenderCleanup&&startPostProcessingCleanup()),rowNodeFromLastMouseWheelEvent=t);}function handleDragStart(e){var t=_jquery2.default.Event(e.originalEvent.type,e.originalEvent),o=getCellFromEvent(t);if(!o||!cellExists(o.row,o.cell))return !1;var n=trigger(self.onDragStart,e,t);return !!t.isImmediatePropagationStopped()&&n}function handleDrag(e){var t=_jquery2.default.Event(e.originalEvent.type,e.originalEvent);return trigger(self.onDrag,e,t)}function handleDragEnd(e){trigger(self.onDragEnd,e,_jquery2.default.Event("mousedown"));}function handleKeyDown(e){trigger(self.onKeyDown,{row:activeRow,cell:activeCell,grid:self},e);var t=e.isImmediatePropagationStopped(),o=_slick2.default.keyCode;if(!t)if(e.shiftKey||e.altKey||e.ctrlKey)e.which!=o.TAB||!e.shiftKey||e.ctrlKey||e.altKey||(t=navigatePrev());else{if(options.editable&&currentEditor&&currentEditor.keyCaptureList&&currentEditor.keyCaptureList.indexOf(e.which)>-1)return;if(e.which==o.ESCAPE){if(!getEditorLock().isActive())return;cancelEditAndSetFocus();}else e.which==o.PAGE_DOWN?(navigatePageDown(),t=!0):e.which==o.PAGE_UP?(navigatePageUp(),t=!0):e.which==o.LEFT?t=navigateLeft():e.which==o.RIGHT?t=navigateRight():e.which==o.UP?t=navigateUp():e.which==o.DOWN?t=navigateDown():e.which==o.TAB?t=navigateNext():e.which==o.ENTER&&(options.editable&&(currentEditor?activeRow===getDataLength()?navigateDown():commitEditAndSetFocus():getEditorLock().commitCurrentEdit()&&makeActiveCellEditable()),t=!0);}if(t){e.stopPropagation(),e.preventDefault();try{e.originalEvent.keyCode=0;}catch(e){}}}function handleClick(e){currentEditor||(e.target!=document.activeElement||(0, _jquery2.default)(e.target).hasClass("slick-cell"))&&setFocus();var t=getCellFromEvent(e);!t||null!==currentEditor&&activeRow==t.row&&activeCell==t.cell||(trigger(self.onClick,{row:t.row,cell:t.cell,grid:self},e),e.isImmediatePropagationStopped()||activeCell==t.cell&&activeRow==t.row||!canCellBeActive(t.row,t.cell)||getEditorLock().isActive()&&!getEditorLock().commitCurrentEdit()||(scrollRowIntoView(t.row,!1),setActiveCellInternal(getCellNode(t.row,t.cell))));}function handleContextMenu(e){var t=(0, _jquery2.default)(e.target).closest(".slick-cell",$canvas);0!==t.length&&(activeCellNode===t[0]&&null!==currentEditor||trigger(self.onContextMenu,{grid:self},e));}function handleDblClick(e){var t=getCellFromEvent(e);!t||null!==currentEditor&&activeRow==t.row&&activeCell==t.cell||(trigger(self.onDblClick,{row:t.row,cell:t.cell,grid:self},e),e.isImmediatePropagationStopped()||options.editable&&gotoCell(t.row,t.cell,!0));}function handleHeaderMouseEnter(e){trigger(self.onHeaderMouseEnter,{column:(0, _jquery2.default)(this).data("column"),grid:self},e);}function handleHeaderMouseLeave(e){trigger(self.onHeaderMouseLeave,{column:(0, _jquery2.default)(this).data("column"),grid:self},e);}function handleHeaderContextMenu(e){var t=(0, _jquery2.default)(e.target).closest(".slick-header-column",".slick-header-columns"),o=t&&t.data("column");trigger(self.onHeaderContextMenu,{column:o,grid:self},e);}function handleHeaderClick(e){var t=(0, _jquery2.default)(e.target).closest(".slick-header-column",".slick-header-columns"),o=t&&t.data("column");o&&trigger(self.onHeaderClick,{column:o,grid:self},e);}function handleMouseEnter(e){trigger(self.onMouseEnter,{grid:self},e);}function handleMouseLeave(e){trigger(self.onMouseLeave,{grid:self},e);}function cellExists(e,t){return !(e<0||e>=getDataLength()||t<0||t>=columns.length)}function getCellFromPoint(e,t){for(var o=getRowFromPosition(t),n=0,r=0,i=0;i<columns.length&&r<e;i++)r+=columns[i].width,n++;return n<0&&(n=0),{row:o,cell:n-1}}function getCellFromNode(e){var t=/l\d+/.exec(e.className);if(!t)throw"getCellFromNode: cannot get cell - "+e.className;return parseInt(t[0].substr(1,t[0].length-1),10)}function getRowFromNode(e){for(var t in rowsCache)if(rowsCache[t].rowNode===e)return 0|t;return null}function getCellFromEvent(e){var t=(0, _jquery2.default)(e.target).closest(".slick-cell",$canvas);if(!t.length)return null;var o=getRowFromNode(t[0].parentNode),n=getCellFromNode(t[0]);return null==o||null==n?null:{row:o,cell:n}}function getCellNodeBox(e,t){if(!cellExists(e,t))return null;for(var o=getRowTop(e),n=o+options.rowHeight-1,r=0,i=0;i<t;i++)r+=columns[i].width;var s=r+columns[t].width;return {top:o,left:r,bottom:n,right:s}}function resetActiveCell(){setActiveCellInternal(null,!1);}function setFocus(){tabbingDirection==-1?$focusSink[0].focus():$focusSink2[0].focus();}function scrollCellIntoView(e,t,o){scrollRowIntoView(e,o);var n=getColspan(e,t),r=columnPosLeft[t],i=columnPosRight[t+(n>1?n-1:0)],s=scrollLeft+viewportW;r<scrollLeft?($viewport.scrollLeft(r),handleScroll(),render()):i>s&&($viewport.scrollLeft(Math.min(r,i-$viewport[0].clientWidth)),handleScroll(),render());}function setActiveCellInternal(e,t){null!==activeCellNode&&(makeActiveCellNormal(),(0, _jquery2.default)(activeCellNode).removeClass("active"),rowsCache[activeRow]&&(0, _jquery2.default)(rowsCache[activeRow].rowNode).removeClass("active"));var o=activeCellNode!==e;activeCellNode=e,null!=activeCellNode?(activeRow=getRowFromNode(activeCellNode.parentNode),activeCell=activePosX=getCellFromNode(activeCellNode),null==t&&(t=activeRow==getDataLength()||options.autoEdit),(0, _jquery2.default)(activeCellNode).addClass("active"),(0, _jquery2.default)(rowsCache[activeRow].rowNode).addClass("active"),options.editable&&t&&isCellPotentiallyEditable(activeRow,activeCell)&&(clearTimeout(h_editorLoader),options.asyncEditorLoading?h_editorLoader=setTimeout(function(){makeActiveCellEditable();},options.asyncEditorLoadDelay):makeActiveCellEditable())):activeRow=activeCell=null,o&&trigger(self.onActiveCellChanged,getActiveCell());}function clearTextSelection(){if(document.selection&&document.selection.empty)try{document.selection.empty();}catch(e){}else if(window.getSelection){var e=window.getSelection();e&&e.removeAllRanges&&e.removeAllRanges();}}function isCellPotentiallyEditable(e,t){var o=getDataLength();return !(e<o&&!getDataItem(e))&&(!(columns[t].cannotTriggerInsert&&e>=o)&&!!getEditor(e,t))}function makeActiveCellNormal(){if(currentEditor){if(trigger(self.onBeforeCellEditorDestroy,{editor:currentEditor,grid:self}),currentEditor.destroy(),currentEditor=null,activeCellNode){var e=getDataItem(activeRow);if((0, _jquery2.default)(activeCellNode).removeClass("editable invalid"),e){var t=columns[activeCell],o=getFormatter(activeRow,t);activeCellNode.innerHTML=o(activeRow,activeCell,getDataItemValueForColumn(e,t),t,e,self),invalidatePostProcessingResults(activeRow);}}navigator.userAgent.toLowerCase().match(/msie/)&&clearTextSelection(),getEditorLock().deactivate(editController);}}function makeActiveCellEditable(e){if(activeCellNode){if(!options.editable)throw"Grid : makeActiveCellEditable : should never get called when options.editable is false";if(clearTimeout(h_editorLoader),isCellPotentiallyEditable(activeRow,activeCell)){var t=columns[activeCell],o=getDataItem(activeRow);if(trigger(self.onBeforeEditCell,{row:activeRow,cell:activeCell,item:o,column:t,grid:self})===!1)return void setFocus();getEditorLock().activate(editController),(0, _jquery2.default)(activeCellNode).addClass("editable");var n=e||getEditor(activeRow,activeCell);e||n.suppressClearOnEdit||(activeCellNode.innerHTML=""),currentEditor=new n({grid:self,gridPosition:absBox($container[0]),position:absBox(activeCellNode),container:activeCellNode,column:t,item:o||{},commitChanges:commitEditAndSetFocus,cancelChanges:cancelEditAndSetFocus}),o&&currentEditor.loadValue(o),serializedEditorValue=currentEditor.serializeValue(),currentEditor.position&&handleActiveCellPositionChange();}}}function commitEditAndSetFocus(){getEditorLock().commitCurrentEdit()&&(setFocus(),options.autoEdit&&navigateDown());}function cancelEditAndSetFocus(){getEditorLock().cancelCurrentEdit()&&setFocus();}function absBox(e){var t={top:e.offsetTop,left:e.offsetLeft,bottom:0,right:0,width:(0, _jquery2.default)(e).outerWidth(),height:(0, _jquery2.default)(e).outerHeight(),visible:!0};t.bottom=t.top+t.height,t.right=t.left+t.width;for(var o=e.offsetParent;(e=e.parentNode)!=document.body&&null!=e;)t.visible&&e.scrollHeight!=e.offsetHeight&&"visible"!=(0, _jquery2.default)(e).css("overflowY")&&(t.visible=t.bottom>e.scrollTop&&t.top<e.scrollTop+e.clientHeight),t.visible&&e.scrollWidth!=e.offsetWidth&&"visible"!=(0, _jquery2.default)(e).css("overflowX")&&(t.visible=t.right>e.scrollLeft&&t.left<e.scrollLeft+e.clientWidth),t.left-=e.scrollLeft,t.top-=e.scrollTop,e===o&&(t.left+=e.offsetLeft,t.top+=e.offsetTop,o=e.offsetParent),t.bottom=t.top+t.height,t.right=t.left+t.width;return t}function getActiveCellPosition(){return absBox(activeCellNode)}function getGridPosition(){return absBox($container[0])}function handleActiveCellPositionChange(){if(activeCellNode&&(trigger(self.onActiveCellPositionChanged,{grid:self}),currentEditor)){var e=getActiveCellPosition();currentEditor.show&&currentEditor.hide&&(e.visible?currentEditor.show():currentEditor.hide()),currentEditor.position&&currentEditor.position(e);}}function getCellEditor(){return currentEditor}function getActiveCell(){return activeCellNode?{row:activeRow,cell:activeCell,grid:self}:null}function getActiveCellNode(){return activeCellNode}function scrollRowIntoView(e,t){var o=e*options.rowHeight,n=(e+1)*options.rowHeight-viewportH+(viewportHasHScroll?scrollbarDimensions.height:0);(e+1)*options.rowHeight>scrollTop+viewportH+offset?(scrollTo(t?o:n),render()):e*options.rowHeight<scrollTop+offset&&(scrollTo(t?n:o),render());}function scrollRowToTop(e){scrollTo(e*options.rowHeight),render();}function scrollPage(e){var t=e*numVisibleRows;if(scrollTo((getRowFromPosition(scrollTop)+t)*options.rowHeight),render(),options.enableCellNavigation&&null!=activeRow){var o=activeRow+t,n=getDataLengthIncludingAddNew();o>=n&&(o=n-1),o<0&&(o=0);for(var r=0,i=null,s=activePosX;r<=activePosX;)canCellBeActive(o,r)&&(i=r),r+=getColspan(o,r);null!==i?(setActiveCellInternal(getCellNode(o,i)),activePosX=s):resetActiveCell();}}function navigatePageDown(){scrollPage(1);}function navigatePageUp(){scrollPage(-1);}function getColspan(e,t){var o=data.getItemMetadata&&data.getItemMetadata(e);if(!o||!o.columns)return 1;var n=o.columns[columns[t].id]||o.columns[t],r=n&&n.colspan;return r="*"===r?columns.length-t:r||1}function findFirstFocusableCell(e){for(var t=0;t<columns.length;){if(canCellBeActive(e,t))return t;t+=getColspan(e,t);}return null}function findLastFocusableCell(e){for(var t=0,o=null;t<columns.length;)canCellBeActive(e,t)&&(o=t),t+=getColspan(e,t);return o}function gotoRight(e,t,o){if(t>=columns.length)return null;do t+=getColspan(e,t);while(t<columns.length&&!canCellBeActive(e,t));return t<columns.length?{row:e,cell:t,posX:t}:null}function gotoLeft(e,t,o){if(t<=0)return null;var n=findFirstFocusableCell(e);if(null===n||n>=t)return null;for(var r,i={row:e,cell:n,posX:n};;){if(r=gotoRight(i.row,i.cell,i.posX),!r)return null;if(r.cell>=t)return i;i=r;}}function gotoDown(e,t,o){for(var n,r=getDataLengthIncludingAddNew();;){if(++e>=r)return null;for(n=t=0;t<=o;)n=t,t+=getColspan(e,t);if(canCellBeActive(e,n))return {row:e,cell:n,posX:o}}}function gotoUp(e,t,o){for(var n;;){if(--e<0)return null;for(n=t=0;t<=o;)n=t,t+=getColspan(e,t);if(canCellBeActive(e,n))return {row:e,cell:n,posX:o}}}function gotoNext(e,t,o){if(null==e&&null==t&&(e=t=o=0,canCellBeActive(e,t)))return {row:e,cell:t,posX:t};var n=gotoRight(e,t,o);if(n)return n;for(var r=null,i=getDataLengthIncludingAddNew();++e<i;)if(r=findFirstFocusableCell(e),null!==r)return {row:e,cell:r,posX:r};return null}function gotoPrev(e,t,o){if(null==e&&null==t&&(e=getDataLengthIncludingAddNew()-1,t=o=columns.length-1,canCellBeActive(e,t)))return {row:e,cell:t,posX:t};for(var n,r;!n&&!(n=gotoLeft(e,t,o));){if(--e<0)return null;t=0,r=findLastFocusableCell(e),null!==r&&(n={row:e,cell:r,posX:r});}return n}function navigateRight(){return navigate("right")}function navigateLeft(){return navigate("left")}function navigateDown(){return navigate("down")}function navigateUp(){return navigate("up")}function navigateNext(){return navigate("next")}function navigatePrev(){return navigate("prev")}function navigate(e){if(!options.enableCellNavigation)return !1;if(!activeCellNode&&"prev"!=e&&"next"!=e)return !1;if(!getEditorLock().commitCurrentEdit())return !0;setFocus();var t={up:-1,down:1,left:-1,right:1,prev:-1,next:1};tabbingDirection=t[e];var o={up:gotoUp,down:gotoDown,left:gotoLeft,right:gotoRight,prev:gotoPrev,next:gotoNext},n=o[e],r=n(activeRow,activeCell,activePosX);if(r){var i=r.row==getDataLength();return scrollCellIntoView(r.row,r.cell,!i),setActiveCellInternal(getCellNode(r.row,r.cell)),activePosX=r.posX,!0}return setActiveCellInternal(getCellNode(activeRow,activeCell)),!1}function getCellNode(e,t){return rowsCache[e]?(ensureCellNodesInRowsCache(e),rowsCache[e].cellNodesByColumnIdx[t]):null}function setActiveCell(e,t){initialized&&(e>getDataLength()||e<0||t>=columns.length||t<0||options.enableCellNavigation&&(scrollCellIntoView(e,t,!1),setActiveCellInternal(getCellNode(e,t),!1)));}function canCellBeActive(e,t){if(!options.enableCellNavigation||e>=getDataLengthIncludingAddNew()||e<0||t>=columns.length||t<0)return !1;var o=data.getItemMetadata&&data.getItemMetadata(e);if(o&&"boolean"==typeof o.focusable)return o.focusable;var n=o&&o.columns;return n&&n[columns[t].id]&&"boolean"==typeof n[columns[t].id].focusable?n[columns[t].id].focusable:n&&n[t]&&"boolean"==typeof n[t].focusable?n[t].focusable:columns[t].focusable}function canCellBeSelected(e,t){if(e>=getDataLength()||e<0||t>=columns.length||t<0)return !1;var o=data.getItemMetadata&&data.getItemMetadata(e);if(o&&"boolean"==typeof o.selectable)return o.selectable;var n=o&&o.columns&&(o.columns[columns[t].id]||o.columns[t]);return n&&"boolean"==typeof n.selectable?n.selectable:columns[t].selectable}function gotoCell(e,t,o){if(initialized&&canCellBeActive(e,t)&&getEditorLock().commitCurrentEdit()){scrollCellIntoView(e,t,!1);var n=getCellNode(e,t);setActiveCellInternal(n,o||e===getDataLength()||options.autoEdit),currentEditor||setFocus();}}function commitCurrentEdit(){var e=getDataItem(activeRow),t=columns[activeCell];if(currentEditor){if(currentEditor.isValueChanged()){var o=currentEditor.validate();if(o.valid){if(activeRow<getDataLength()){var n={row:activeRow,cell:activeCell,editor:currentEditor,serializedValue:currentEditor.serializeValue(),prevSerializedValue:serializedEditorValue,execute:function(){this.editor.applyValue(e,this.serializedValue),updateRow(this.row),trigger(self.onCellChange,{row:activeRow,cell:activeCell,item:e,grid:self});},undo:function(){this.editor.applyValue(e,this.prevSerializedValue),updateRow(this.row),trigger(self.onCellChange,{row:activeRow,cell:activeCell,item:e,grid:self});}};options.editCommandHandler?(makeActiveCellNormal(),options.editCommandHandler(e,t,n)):(n.execute(),makeActiveCellNormal());}else{var r={};currentEditor.applyValue(r,currentEditor.serializeValue()),makeActiveCellNormal(),trigger(self.onAddNewRow,{item:r,column:t,grid:self});}return !getEditorLock().isActive()}return (0, _jquery2.default)(activeCellNode).removeClass("invalid"),(0, _jquery2.default)(activeCellNode).width(),(0, _jquery2.default)(activeCellNode).addClass("invalid"),trigger(self.onValidationError,{editor:currentEditor,cellNode:activeCellNode,validationResults:o,row:activeRow,cell:activeCell,column:t,grid:self}),currentEditor.focus(),!1}makeActiveCellNormal();}return !0}function cancelCurrentEdit(){return makeActiveCellNormal(),!0}function rowsToRanges(e){for(var t=[],o=columns.length-1,n=0;n<e.length;n++)t.push(new _slick2.default.Range(e[n],0,e[n],o));return t}function getSelectedRows(){if(!selectionModel)throw"Selection model is not set";return selectedRows}function setSelectedRows(e){if(!selectionModel)throw"Selection model is not set";selectionModel.setSelectedRanges(rowsToRanges(e));}var defaults={explicitInitialization:!1,rowHeight:25,defaultColumnWidth:80,enableAddRow:!1,leaveSpaceForNewRows:!1,editable:!1,autoEdit:!0,enableCellNavigation:!0,enableColumnReorder:!0,asyncEditorLoading:!1,asyncEditorLoadDelay:100,forceFitColumns:!1,enableAsyncPostRender:!1,asyncPostRenderDelay:50,enableAsyncPostRenderCleanup:!1,asyncPostRenderCleanupDelay:40,autoHeight:!1,editorLock:_slick2.default.GlobalEditorLock,showHeaderRow:!1,headerRowHeight:25,createFooterRow:!1,showFooterRow:!1,footerRowHeight:25,showTopPanel:!1,topPanelHeight:25,formatterFactory:null,editorFactory:null,cellFlashingCssClass:"flashing",selectedCellCssClass:"selected",multiSelect:!0,enableTextSelectionOnCells:!1,dataItemColumnValueExtractor:null,fullWidthRows:!1,multiColumnSort:!1,defaultFormatter:defaultFormatter,forceSyncScrolling:!1,addNewRowCssClass:"new-row"},columnDefaults={name:"",resizable:!0,sortable:!1,minWidth:30,rerenderOnResize:!1,headerCssClass:null,defaultSortAsc:!0,focusable:!0,selectable:!0},th,h,ph,n,cj,page=0,offset=0,vScrollDir=1,initialized=!1,$container,uid="slickgrid_"+Math.round(1e6*Math.random()),self=this,$focusSink,$focusSink2,$headerScroller,$headers,$headerRow,$headerRowScroller,$headerRowSpacer,$footerRow,$footerRowScroller,$footerRowSpacer,$topPanelScroller,$topPanel,$viewport,$canvas,$style,$boundAncestors,stylesheet,columnCssRulesL,columnCssRulesR,viewportH,viewportW,canvasWidth,viewportHasHScroll,viewportHasVScroll,headerColumnWidthDiff=0,headerColumnHeightDiff=0,cellWidthDiff=0,cellHeightDiff=0,jQueryNewWidthBehaviour=!1,absoluteColumnMinWidth,tabbingDirection=1,activePosX,activeRow,activeCell,activeCellNode=null,currentEditor=null,serializedEditorValue,editController,rowsCache={},renderedRows=0,numVisibleRows,prevScrollTop=0,scrollTop=0,lastRenderedScrollTop=0,lastRenderedScrollLeft=0,prevScrollLeft=0,scrollLeft=0,selectionModel,selectedRows=[],plugins=[],cellCssClasses={},columnsById={},sortColumns=[],columnPosLeft=[],columnPosRight=[],h_editorLoader=null,h_render=null,h_postrender=null,h_postrenderCleanup=null,postProcessedRows={},postProcessToRow=null,postProcessFromRow=null,postProcessedCleanupQueue=[],postProcessgroupId=0,counter_rows_rendered=0,counter_rows_removed=0,rowNodeFromLastMouseWheelEvent,zombieRowNodeFromLastMouseWheelEvent,zombieRowCacheFromLastMouseWheelEvent,zombieRowPostProcessedFromLastMouseWheelEvent,cssShow={position:"absolute",visibility:"hidden",display:"block"},$hiddenParents,oldProps=[];this.debug=function(){var e="";e+="\ncounter_rows_rendered:  "+counter_rows_rendered,e+="\ncounter_rows_removed:  "+counter_rows_removed,e+="\nrenderedRows:  "+renderedRows,e+="\nnumVisibleRows:  "+numVisibleRows,e+="\nmaxSupportedCssHeight:  "+maxSupportedCssHeight,e+="\nn(umber of pages):  "+n,e+="\n(current) page:  "+page,e+="\npage height (ph):  "+ph,e+="\nvScrollDir:  "+vScrollDir,alert(e);},this.eval=function(expr){return eval(expr)},_jquery2.default.extend(this,{slickGridVersion:"2.2.4",onScroll:new _slick2.default.Event,onSort:new _slick2.default.Event,onHeaderMouseEnter:new _slick2.default.Event,onHeaderMouseLeave:new _slick2.default.Event,onHeaderContextMenu:new _slick2.default.Event,onHeaderClick:new _slick2.default.Event,onHeaderCellRendered:new _slick2.default.Event,onBeforeHeaderCellDestroy:new _slick2.default.Event,onHeaderRowCellRendered:new _slick2.default.Event,onFooterRowCellRendered:new _slick2.default.Event,onBeforeHeaderRowCellDestroy:new _slick2.default.Event,onBeforeFooterRowCellDestroy:new _slick2.default.Event,onMouseEnter:new _slick2.default.Event,onMouseLeave:new _slick2.default.Event,onClick:new _slick2.default.Event,onDblClick:new _slick2.default.Event,onContextMenu:new _slick2.default.Event,onKeyDown:new _slick2.default.Event,onAddNewRow:new _slick2.default.Event,onValidationError:new _slick2.default.Event,onViewportChanged:new _slick2.default.Event,onColumnsReordered:new _slick2.default.Event,onColumnsResized:new _slick2.default.Event,onCellChange:new _slick2.default.Event,onBeforeEditCell:new _slick2.default.Event,onBeforeCellEditorDestroy:new _slick2.default.Event,onBeforeDestroy:new _slick2.default.Event,onActiveCellChanged:new _slick2.default.Event,onActiveCellPositionChanged:new _slick2.default.Event,onDragInit:new _slick2.default.Event,onDragStart:new _slick2.default.Event,onDrag:new _slick2.default.Event,onDragEnd:new _slick2.default.Event,onSelectedRowsChanged:new _slick2.default.Event,onCellCssStylesChanged:new _slick2.default.Event,registerPlugin:registerPlugin,unregisterPlugin:unregisterPlugin,getColumns:getColumns,setColumns:setColumns,getColumnIndex:getColumnIndex,updateColumnHeader:updateColumnHeader,setSortColumn:setSortColumn,setSortColumns:setSortColumns,getSortColumns:getSortColumns,autosizeColumns:autosizeColumns,getOptions:getOptions,setOptions:setOptions,getData:getData,getDataLength:getDataLength,getDataItem:getDataItem,setData:setData,getSelectionModel:getSelectionModel,setSelectionModel:setSelectionModel,getSelectedRows:getSelectedRows,setSelectedRows:setSelectedRows,getContainerNode:getContainerNode,render:render,invalidate:invalidate,invalidateRow:invalidateRow,invalidateRows:invalidateRows,invalidateAllRows:invalidateAllRows,updateCell:updateCell,updateRow:updateRow,getViewport:getVisibleRange,getRenderedRange:getRenderedRange,resizeCanvas:resizeCanvas,updateRowCount:updateRowCount,scrollRowIntoView:scrollRowIntoView,scrollRowToTop:scrollRowToTop,scrollCellIntoView:scrollCellIntoView,getCanvasNode:getCanvasNode,focus:setFocus,getCellFromPoint:getCellFromPoint,getCellFromEvent:getCellFromEvent,getActiveCell:getActiveCell,setActiveCell:setActiveCell,getActiveCellNode:getActiveCellNode,getActiveCellPosition:getActiveCellPosition,resetActiveCell:resetActiveCell,editActiveCell:makeActiveCellEditable,getCellEditor:getCellEditor,getCellNode:getCellNode,getCellNodeBox:getCellNodeBox,canCellBeSelected:canCellBeSelected,canCellBeActive:canCellBeActive,navigatePrev:navigatePrev,navigateNext:navigateNext,navigateUp:navigateUp,navigateDown:navigateDown,navigateLeft:navigateLeft,navigateRight:navigateRight,navigatePageUp:navigatePageUp,navigatePageDown:navigatePageDown,gotoCell:gotoCell,getTopPanel:getTopPanel,setTopPanelVisibility:setTopPanelVisibility,setHeaderRowVisibility:setHeaderRowVisibility,getHeaderRow:getHeaderRow,getHeaderRowColumn:getHeaderRowColumn,setFooterRowVisibility:setFooterRowVisibility,getFooterRow:getFooterRow,getFooterRowColumn:getFooterRowColumn,getGridPosition:getGridPosition,flashCell:flashCell,addCellCssStyles:addCellCssStyles,setCellCssStyles:setCellCssStyles,removeCellCssStyles:removeCellCssStyles,getCellCssStyles:getCellCssStyles,init:finishInitialization,destroy:destroy,getEditorLock:getEditorLock,getEditController:getEditController}),init();}Object.defineProperty(exports,"__esModule",{value:!0});var _jquery=__webpack_require__(2),_jquery2=_interopRequireDefault(_jquery),_interact=__webpack_require__(5),_interact2=_interopRequireDefault(_interact),_slick=__webpack_require__(1),_slick2=_interopRequireDefault(_slick);_slick2.default.Grid=SlickGrid,exports.default=SlickGrid;var scrollbarDimensions,maxSupportedCssHeight;},function(e,t,o){function n(e){return e&&e.__esModule?e:{default:e}}function r(e){function t(t,o,n,r,i){if(!e.enableExpandCollapse)return i.title;var s=15*i.level+"px";return "<span class='"+e.toggleCssClass+" "+(i.collapsed?e.toggleCollapsedCssClass:e.toggleExpandedCssClass)+"' style='margin-left:"+s+"'></span><span class='"+e.groupTitleCssClass+"' level='"+i.level+"'>"+i.title+"</span>"}function o(e,t,o,n,r){return n.groupTotalsFormatter&&n.groupTotalsFormatter(r,n)||""}function n(e){u=e,u.onClick.subscribe(i),u.onKeyDown.subscribe(l);}function r(){u&&(u.onClick.unsubscribe(i),u.onKeyDown.unsubscribe(l));}function i(t,o){var n=this.getDataItem(o.row);if(n&&n instanceof a.default.Group&&(0, s.default)(t.target).hasClass(e.toggleCssClass)){var r=u.getRenderedRange();this.getData().setRefreshHints({ignoreDiffsBefore:r.top,ignoreDiffsAfter:r.bottom+1}),n.collapsed?this.getData().expandGroup(n.groupingKey):this.getData().collapseGroup(n.groupingKey),t.stopImmediatePropagation(),t.preventDefault();}}function l(t){if(e.enableExpandCollapse&&t.which==a.default.keyCode.SPACE){var o=this.getActiveCell();if(o){var n=this.getDataItem(o.row);if(n&&n instanceof a.default.Group){var r=u.getRenderedRange();this.getData().setRefreshHints({ignoreDiffsBefore:r.top,ignoreDiffsAfter:r.bottom+1}),n.collapsed?this.getData().expandGroup(n.groupingKey):this.getData().collapseGroup(n.groupingKey),t.stopImmediatePropagation(),t.preventDefault();}}}}function c(t){return {selectable:!1,focusable:e.groupFocusable,cssClasses:e.groupCssClass,columns:{0:{colspan:"*",formatter:e.groupFormatter,editor:null}}}}function d(t){return {selectable:!1,focusable:e.totalsFocusable,cssClasses:e.totalsCssClass,formatter:e.totalsFormatter,editor:null}}var u=void 0,h={groupCssClass:"slick-group",groupTitleCssClass:"slick-group-title",totalsCssClass:"slick-group-totals",groupFocusable:!0,totalsFocusable:!1,toggleCssClass:"slick-group-toggle",toggleExpandedCssClass:"expanded",toggleCollapsedCssClass:"collapsed",enableExpandCollapse:!0,groupFormatter:t,totalsFormatter:o};return e=s.default.extend(!0,{},h,e),{init:n,destroy:r,getGroupRowMetadata:c,getTotalsRowMetadata:d}}Object.defineProperty(t,"__esModule",{value:!0});var i=o(2),s=n(i),l=o(1),a=n(l);t.default=r;},function(e,t){e.exports=flatpickr_1;}]));
-
+    //# sourceMappingURL=slick.es6.min.js.map
     });
 
     var SlickGrid = unwrapExports(slick_es6_min);
@@ -40579,3987 +41753,6 @@
       };
     };
 
-    function squaredEuclidean(p, q) {
-        let d = 0;
-        for (let i = 0; i < p.length; i++) {
-            d += (p[i] - q[i]) * (p[i] - q[i]);
-        }
-        return d;
-    }
-
-    const defaultOptions = {
-        distanceFunction: squaredEuclidean
-    };
-    function nearestVector(listVectors, vector, options = defaultOptions) {
-        const distanceFunction = options.distanceFunction || defaultOptions.distanceFunction;
-        const similarityFunction = options.similarityFunction || defaultOptions.similarityFunction;
-        let vectorIndex = -1;
-        if (typeof similarityFunction === 'function') {
-            // maximum similarity
-            let maxSim = Number.MIN_VALUE;
-            for (let j = 0; j < listVectors.length; j++) {
-                const sim = similarityFunction(vector, listVectors[j]);
-                if (sim > maxSim) {
-                    maxSim = sim;
-                    vectorIndex = j;
-                }
-            }
-        }
-        else if (typeof distanceFunction === 'function') {
-            // minimum distance
-            let minDist = Number.MAX_VALUE;
-            for (let i = 0; i < listVectors.length; i++) {
-                const dist = distanceFunction(vector, listVectors[i]);
-                if (dist < minDist) {
-                    minDist = dist;
-                    vectorIndex = i;
-                }
-            }
-        }
-        else {
-            throw new Error("A similarity or distance function it's required");
-        }
-        return vectorIndex;
-    }
-
-    /**
-     * Calculates the distance matrix for a given array of points
-     * @ignore
-     * @param {Array<Array<number>>} data - the [x,y,z,...] points to cluster
-     * @param {function} distance - Distance function to use between the points
-     * @return {Array<Array<number>>} - matrix with the distance values
-     */
-    function calculateDistanceMatrix(data, distance) {
-      var distanceMatrix = new Array(data.length);
-      for (var i = 0; i < data.length; ++i) {
-        for (var j = i; j < data.length; ++j) {
-          if (!distanceMatrix[i]) {
-            distanceMatrix[i] = new Array(data.length);
-          }
-          if (!distanceMatrix[j]) {
-            distanceMatrix[j] = new Array(data.length);
-          }
-          const dist = distance(data[i], data[j]);
-          distanceMatrix[i][j] = dist;
-          distanceMatrix[j][i] = dist;
-        }
-      }
-      return distanceMatrix;
-    }
-
-    /**
-     * Updates the cluster identifier based in the new data
-     * @ignore
-     * @param {Array<Array<number>>} data - the [x,y,z,...] points to cluster
-     * @param {Array<Array<number>>} centers - the K centers in format [x,y,z,...]
-     * @param {Array <number>} clusterID - the cluster identifier for each data dot
-     * @param {function} distance - Distance function to use between the points
-     * @return {Array} the cluster identifier for each data dot
-     */
-    function updateClusterID(data, centers, clusterID, distance) {
-      for (var i = 0; i < data.length; i++) {
-        clusterID[i] = nearestVector(centers, data[i], {
-          distanceFunction: distance
-        });
-      }
-      return clusterID;
-    }
-
-    /**
-     * Update the center values based in the new configurations of the clusters
-     * @ignore
-     * @param {Array<Array<number>>} prevCenters - Centroids from the previous iteration
-     * @param {Array <Array <number>>} data - the [x,y,z,...] points to cluster
-     * @param {Array <number>} clusterID - the cluster identifier for each data dot
-     * @param {number} K - Number of clusters
-     * @return {Array} he K centers in format [x,y,z,...]
-     */
-    function updateCenters(prevCenters, data, clusterID, K) {
-      const nDim = data[0].length;
-
-      // copy previous centers
-      var centers = new Array(K);
-      var centersLen = new Array(K);
-      for (var i = 0; i < K; i++) {
-        centers[i] = new Array(nDim);
-        centersLen[i] = 0;
-        for (var j = 0; j < nDim; j++) {
-          centers[i][j] = 0;
-        }
-      }
-
-      // add the value for all dimensions of the point
-      for (var l = 0; l < data.length; l++) {
-        centersLen[clusterID[l]]++;
-        for (var dim = 0; dim < nDim; dim++) {
-          centers[clusterID[l]][dim] += data[l][dim];
-        }
-      }
-
-      // divides by length
-      for (var id = 0; id < K; id++) {
-        for (var d = 0; d < nDim; d++) {
-          if (centersLen[id]) {
-            centers[id][d] /= centersLen[id];
-          } else {
-            centers[id][d] = prevCenters[id][d];
-          }
-        }
-      }
-      return centers;
-    }
-
-    /**
-     * The centers have moved more than the tolerance value?
-     * @ignore
-     * @param {Array<Array<number>>} centers - the K centers in format [x,y,z,...]
-     * @param {Array<Array<number>>} oldCenters - the K old centers in format [x,y,z,...]
-     * @param {function} distanceFunction - Distance function to use between the points
-     * @param {number} tolerance - Allowed distance for the centroids to move
-     * @return {boolean}
-     */
-    function hasConverged(centers, oldCenters, distanceFunction, tolerance) {
-      for (var i = 0; i < centers.length; i++) {
-        if (distanceFunction(centers[i], oldCenters[i]) > tolerance) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    const LOOP = 8;
-    const FLOAT_MUL = 1 / 16777216;
-    const sh1 = 15;
-    const sh2 = 18;
-    const sh3 = 11;
-    function multiply_uint32(n, m) {
-        n >>>= 0;
-        m >>>= 0;
-        const nlo = n & 0xffff;
-        const nhi = n - nlo;
-        return (((nhi * m) >>> 0) + nlo * m) >>> 0;
-    }
-    class XSadd {
-        constructor(seed = Date.now()) {
-            this.state = new Uint32Array(4);
-            this.init(seed);
-            this.random = this.getFloat.bind(this);
-        }
-        /**
-         * Returns a 32-bit integer r (0 <= r < 2^32)
-         */
-        getUint32() {
-            this.nextState();
-            return (this.state[3] + this.state[2]) >>> 0;
-        }
-        /**
-         * Returns a floating point number r (0.0 <= r < 1.0)
-         */
-        getFloat() {
-            return (this.getUint32() >>> 8) * FLOAT_MUL;
-        }
-        init(seed) {
-            if (!Number.isInteger(seed)) {
-                throw new TypeError('seed must be an integer');
-            }
-            this.state[0] = seed;
-            this.state[1] = 0;
-            this.state[2] = 0;
-            this.state[3] = 0;
-            for (let i = 1; i < LOOP; i++) {
-                this.state[i & 3] ^=
-                    (i +
-                        multiply_uint32(1812433253, this.state[(i - 1) & 3] ^ ((this.state[(i - 1) & 3] >>> 30) >>> 0))) >>>
-                        0;
-            }
-            this.periodCertification();
-            for (let i = 0; i < LOOP; i++) {
-                this.nextState();
-            }
-        }
-        periodCertification() {
-            if (this.state[0] === 0 &&
-                this.state[1] === 0 &&
-                this.state[2] === 0 &&
-                this.state[3] === 0) {
-                this.state[0] = 88; // X
-                this.state[1] = 83; // S
-                this.state[2] = 65; // A
-                this.state[3] = 68; // D
-            }
-        }
-        nextState() {
-            let t = this.state[0];
-            t ^= t << sh1;
-            t ^= t >>> sh2;
-            t ^= this.state[3] << sh3;
-            this.state[0] = this.state[1];
-            this.state[1] = this.state[2];
-            this.state[2] = this.state[3];
-            this.state[3] = t;
-        }
-    }
-
-    const PROB_TOLERANCE = 0.00000001;
-    function randomChoice(values, options = {}, random = Math.random) {
-        const { size = 1, replace = false, probabilities } = options;
-        let valuesArr;
-        let cumSum;
-        if (typeof values === 'number') {
-            valuesArr = getArray(values);
-        }
-        else {
-            valuesArr = values.slice();
-        }
-        if (probabilities) {
-            if (!replace) {
-                throw new Error('choice with probabilities and no replacement is not implemented');
-            }
-            // check input is sane
-            if (probabilities.length !== valuesArr.length) {
-                throw new Error('the length of probabilities option should be equal to the number of choices');
-            }
-            cumSum = [probabilities[0]];
-            for (let i = 1; i < probabilities.length; i++) {
-                cumSum[i] = cumSum[i - 1] + probabilities[i];
-            }
-            if (Math.abs(1 - cumSum[cumSum.length - 1]) > PROB_TOLERANCE) {
-                throw new Error(`probabilities should sum to 1, but instead sums to ${cumSum[cumSum.length - 1]}`);
-            }
-        }
-        if (replace === false && size > valuesArr.length) {
-            throw new Error('size option is too large');
-        }
-        const result = [];
-        for (let i = 0; i < size; i++) {
-            const index = randomIndex(valuesArr.length, random, cumSum);
-            result.push(valuesArr[index]);
-            if (!replace) {
-                valuesArr.splice(index, 1);
-            }
-        }
-        return result;
-    }
-    function getArray(n) {
-        const arr = [];
-        for (let i = 0; i < n; i++) {
-            arr.push(i);
-        }
-        return arr;
-    }
-    function randomIndex(n, random, cumSum) {
-        const rand = random();
-        if (!cumSum) {
-            return Math.floor(rand * n);
-        }
-        else {
-            let idx = 0;
-            while (rand > cumSum[idx]) {
-                idx++;
-            }
-            return idx;
-        }
-    }
-
-    // tslint:disable-next-line
-    /**
-     * @classdesc Random class
-     */
-    class Random {
-        /**
-         * @param [seedOrRandom=Math.random] - Control the random number generator used by the Random class instance. Pass a random number generator function with a uniform distribution over the half-open interval [0, 1[. If seed will pass it to ml-xsadd to create a seeded random number generator. If undefined will use Math.random.
-         */
-        constructor(seedOrRandom = Math.random) {
-            if (typeof seedOrRandom === 'number') {
-                const xsadd = new XSadd(seedOrRandom);
-                this.randomGenerator = xsadd.random;
-            }
-            else {
-                this.randomGenerator = seedOrRandom;
-            }
-        }
-        choice(values, options) {
-            if (typeof values === 'number') {
-                return randomChoice(values, options, this.randomGenerator);
-            }
-            return randomChoice(values, options, this.randomGenerator);
-        }
-        /**
-         * Draw a random number from a uniform distribution on [0,1)
-         * @return The random number
-         */
-        random() {
-            return this.randomGenerator();
-        }
-        /**
-         * Draw a random integer from a uniform distribution on [low, high). If only low is specified, the number is drawn on [0, low)
-         * @param low - The lower bound of the uniform distribution interval.
-         * @param high - The higher bound of the uniform distribution interval.
-         */
-        randInt(low, high) {
-            if (high === undefined) {
-                high = low;
-                low = 0;
-            }
-            return low + Math.floor(this.randomGenerator() * (high - low));
-        }
-        /**
-         * Draw several random number from a uniform distribution on [0, 1)
-         * @param size - The number of number to draw
-         * @return - The list of drawn numbers.
-         */
-        randomSample(size) {
-            const result = [];
-            for (let i = 0; i < size; i++) {
-                result.push(this.random());
-            }
-            return result;
-        }
-    }
-
-    /**
-     * Computes the maximum of the given values
-     * @param {Array<number>} input
-     * @return {number}
-     */
-    function max$4(input) {
-      if (!Array.isArray(input)) {
-        throw new Error('input must be an array');
-      }
-
-      if (input.length === 0) {
-        throw new Error('input must not be empty');
-      }
-
-      var max = input[0];
-      for (var i = 1; i < input.length; i++) {
-        if (input[i] > max) max = input[i];
-      }
-      return max;
-    }
-
-    /**
-     * Computes the minimum of the given values
-     * @param {Array<number>} input
-     * @return {number}
-     */
-    function min$3(input) {
-      if (!Array.isArray(input)) {
-        throw new Error('input must be an array');
-      }
-
-      if (input.length === 0) {
-        throw new Error('input must not be empty');
-      }
-
-      var min = input[0];
-      for (var i = 1; i < input.length; i++) {
-        if (input[i] < min) min = input[i];
-      }
-      return min;
-    }
-
-    function rescale(input, options = {}) {
-      if (!Array.isArray(input)) {
-        throw new TypeError('input must be an array');
-      } else if (input.length === 0) {
-        throw new TypeError('input must not be empty');
-      }
-
-      let output;
-      if (options.output !== undefined) {
-        if (!Array.isArray(options.output)) {
-          throw new TypeError('output option must be an array if specified');
-        }
-        output = options.output;
-      } else {
-        output = new Array(input.length);
-      }
-
-      const currentMin = min$3(input);
-      const currentMax = max$4(input);
-
-      if (currentMin === currentMax) {
-        throw new RangeError('minimum and maximum input values are equal. Cannot rescale a constant array');
-      }
-
-      const {
-        min: minValue = options.autoMinMax ? currentMin : 0,
-        max: maxValue = options.autoMinMax ? currentMax : 1
-      } = options;
-
-      if (minValue >= maxValue) {
-        throw new RangeError('min option must be smaller than max option');
-      }
-
-      const factor = (maxValue - minValue) / (currentMax - currentMin);
-      for (var i = 0; i < input.length; i++) {
-        output[i] = (input[i] - currentMin) * factor + minValue;
-      }
-
-      return output;
-    }
-
-    /**
-     * @class LuDecomposition
-     * @link https://github.com/lutzroeder/Mapack/blob/master/Source/LuDecomposition.cs
-     * @param {Matrix} matrix
-     */
-    class LuDecomposition$$1 {
-      constructor(matrix) {
-        matrix = WrapperMatrix2D.checkMatrix(matrix);
-
-        var lu = matrix.clone();
-        var rows = lu.rows;
-        var columns = lu.columns;
-        var pivotVector = new Array(rows);
-        var pivotSign = 1;
-        var i, j, k, p, s, t, v;
-        var LUcolj, kmax;
-
-        for (i = 0; i < rows; i++) {
-          pivotVector[i] = i;
-        }
-
-        LUcolj = new Array(rows);
-
-        for (j = 0; j < columns; j++) {
-          for (i = 0; i < rows; i++) {
-            LUcolj[i] = lu.get(i, j);
-          }
-
-          for (i = 0; i < rows; i++) {
-            kmax = Math.min(i, j);
-            s = 0;
-            for (k = 0; k < kmax; k++) {
-              s += lu.get(i, k) * LUcolj[k];
-            }
-            LUcolj[i] -= s;
-            lu.set(i, j, LUcolj[i]);
-          }
-
-          p = j;
-          for (i = j + 1; i < rows; i++) {
-            if (Math.abs(LUcolj[i]) > Math.abs(LUcolj[p])) {
-              p = i;
-            }
-          }
-
-          if (p !== j) {
-            for (k = 0; k < columns; k++) {
-              t = lu.get(p, k);
-              lu.set(p, k, lu.get(j, k));
-              lu.set(j, k, t);
-            }
-
-            v = pivotVector[p];
-            pivotVector[p] = pivotVector[j];
-            pivotVector[j] = v;
-
-            pivotSign = -pivotSign;
-          }
-
-          if (j < rows && lu.get(j, j) !== 0) {
-            for (i = j + 1; i < rows; i++) {
-              lu.set(i, j, lu.get(i, j) / lu.get(j, j));
-            }
-          }
-        }
-
-        this.LU = lu;
-        this.pivotVector = pivotVector;
-        this.pivotSign = pivotSign;
-      }
-
-      /**
-       *
-       * @return {boolean}
-       */
-      isSingular() {
-        var data = this.LU;
-        var col = data.columns;
-        for (var j = 0; j < col; j++) {
-          if (data[j][j] === 0) {
-            return true;
-          }
-        }
-        return false;
-      }
-
-      /**
-       *
-       * @param {Matrix} value
-       * @return {Matrix}
-       */
-      solve(value) {
-        value = Matrix.checkMatrix(value);
-
-        var lu = this.LU;
-        var rows = lu.rows;
-
-        if (rows !== value.rows) {
-          throw new Error('Invalid matrix dimensions');
-        }
-        if (this.isSingular()) {
-          throw new Error('LU matrix is singular');
-        }
-
-        var count = value.columns;
-        var X = value.subMatrixRow(this.pivotVector, 0, count - 1);
-        var columns = lu.columns;
-        var i, j, k;
-
-        for (k = 0; k < columns; k++) {
-          for (i = k + 1; i < columns; i++) {
-            for (j = 0; j < count; j++) {
-              X[i][j] -= X[k][j] * lu[i][k];
-            }
-          }
-        }
-        for (k = columns - 1; k >= 0; k--) {
-          for (j = 0; j < count; j++) {
-            X[k][j] /= lu[k][k];
-          }
-          for (i = 0; i < k; i++) {
-            for (j = 0; j < count; j++) {
-              X[i][j] -= X[k][j] * lu[i][k];
-            }
-          }
-        }
-        return X;
-      }
-
-      /**
-       *
-       * @return {number}
-       */
-      get determinant() {
-        var data = this.LU;
-        if (!data.isSquare()) {
-          throw new Error('Matrix must be square');
-        }
-        var determinant = this.pivotSign;
-        var col = data.columns;
-        for (var j = 0; j < col; j++) {
-          determinant *= data[j][j];
-        }
-        return determinant;
-      }
-
-      /**
-       *
-       * @return {Matrix}
-       */
-      get lowerTriangularMatrix() {
-        var data = this.LU;
-        var rows = data.rows;
-        var columns = data.columns;
-        var X = new Matrix(rows, columns);
-        for (var i = 0; i < rows; i++) {
-          for (var j = 0; j < columns; j++) {
-            if (i > j) {
-              X[i][j] = data[i][j];
-            } else if (i === j) {
-              X[i][j] = 1;
-            } else {
-              X[i][j] = 0;
-            }
-          }
-        }
-        return X;
-      }
-
-      /**
-       *
-       * @return {Matrix}
-       */
-      get upperTriangularMatrix() {
-        var data = this.LU;
-        var rows = data.rows;
-        var columns = data.columns;
-        var X = new Matrix(rows, columns);
-        for (var i = 0; i < rows; i++) {
-          for (var j = 0; j < columns; j++) {
-            if (i <= j) {
-              X[i][j] = data[i][j];
-            } else {
-              X[i][j] = 0;
-            }
-          }
-        }
-        return X;
-      }
-
-      /**
-       *
-       * @return {Array<number>}
-       */
-      get pivotPermutationVector() {
-        return this.pivotVector.slice();
-      }
-    }
-
-    function hypotenuse(a, b) {
-      var r = 0;
-      if (Math.abs(a) > Math.abs(b)) {
-        r = b / a;
-        return Math.abs(a) * Math.sqrt(1 + r * r);
-      }
-      if (b !== 0) {
-        r = a / b;
-        return Math.abs(b) * Math.sqrt(1 + r * r);
-      }
-      return 0;
-    }
-
-    function getFilled2DArray(rows, columns, value) {
-      var array = new Array(rows);
-      for (var i = 0; i < rows; i++) {
-        array[i] = new Array(columns);
-        for (var j = 0; j < columns; j++) {
-          array[i][j] = value;
-        }
-      }
-      return array;
-    }
-
-    /**
-     * @class SingularValueDecomposition
-     * @see https://github.com/accord-net/framework/blob/development/Sources/Accord.Math/Decompositions/SingularValueDecomposition.cs
-     * @param {Matrix} value
-     * @param {object} [options]
-     * @param {boolean} [options.computeLeftSingularVectors=true]
-     * @param {boolean} [options.computeRightSingularVectors=true]
-     * @param {boolean} [options.autoTranspose=false]
-     */
-    class SingularValueDecomposition$$1 {
-      constructor(value, options = {}) {
-        value = WrapperMatrix2D.checkMatrix(value);
-
-        var m = value.rows;
-        var n = value.columns;
-
-        const {
-          computeLeftSingularVectors = true,
-          computeRightSingularVectors = true,
-          autoTranspose = false
-        } = options;
-
-        var wantu = Boolean(computeLeftSingularVectors);
-        var wantv = Boolean(computeRightSingularVectors);
-
-        var swapped = false;
-        var a;
-        if (m < n) {
-          if (!autoTranspose) {
-            a = value.clone();
-            // eslint-disable-next-line no-console
-            console.warn(
-              'Computing SVD on a matrix with more columns than rows. Consider enabling autoTranspose'
-            );
-          } else {
-            a = value.transpose();
-            m = a.rows;
-            n = a.columns;
-            swapped = true;
-            var aux = wantu;
-            wantu = wantv;
-            wantv = aux;
-          }
-        } else {
-          a = value.clone();
-        }
-
-        var nu = Math.min(m, n);
-        var ni = Math.min(m + 1, n);
-        var s = new Array(ni);
-        var U = getFilled2DArray(m, nu, 0);
-        var V = getFilled2DArray(n, n, 0);
-
-        var e = new Array(n);
-        var work = new Array(m);
-
-        var si = new Array(ni);
-        for (let i = 0; i < ni; i++) si[i] = i;
-
-        var nct = Math.min(m - 1, n);
-        var nrt = Math.max(0, Math.min(n - 2, m));
-        var mrc = Math.max(nct, nrt);
-
-        for (let k = 0; k < mrc; k++) {
-          if (k < nct) {
-            s[k] = 0;
-            for (let i = k; i < m; i++) {
-              s[k] = hypotenuse(s[k], a[i][k]);
-            }
-            if (s[k] !== 0) {
-              if (a[k][k] < 0) {
-                s[k] = -s[k];
-              }
-              for (let i = k; i < m; i++) {
-                a[i][k] /= s[k];
-              }
-              a[k][k] += 1;
-            }
-            s[k] = -s[k];
-          }
-
-          for (let j = k + 1; j < n; j++) {
-            if (k < nct && s[k] !== 0) {
-              let t = 0;
-              for (let i = k; i < m; i++) {
-                t += a[i][k] * a[i][j];
-              }
-              t = -t / a[k][k];
-              for (let i = k; i < m; i++) {
-                a[i][j] += t * a[i][k];
-              }
-            }
-            e[j] = a[k][j];
-          }
-
-          if (wantu && k < nct) {
-            for (let i = k; i < m; i++) {
-              U[i][k] = a[i][k];
-            }
-          }
-
-          if (k < nrt) {
-            e[k] = 0;
-            for (let i = k + 1; i < n; i++) {
-              e[k] = hypotenuse(e[k], e[i]);
-            }
-            if (e[k] !== 0) {
-              if (e[k + 1] < 0) {
-                e[k] = 0 - e[k];
-              }
-              for (let i = k + 1; i < n; i++) {
-                e[i] /= e[k];
-              }
-              e[k + 1] += 1;
-            }
-            e[k] = -e[k];
-            if (k + 1 < m && e[k] !== 0) {
-              for (let i = k + 1; i < m; i++) {
-                work[i] = 0;
-              }
-              for (let i = k + 1; i < m; i++) {
-                for (let j = k + 1; j < n; j++) {
-                  work[i] += e[j] * a[i][j];
-                }
-              }
-              for (let j = k + 1; j < n; j++) {
-                let t = -e[j] / e[k + 1];
-                for (let i = k + 1; i < m; i++) {
-                  a[i][j] += t * work[i];
-                }
-              }
-            }
-            if (wantv) {
-              for (let i = k + 1; i < n; i++) {
-                V[i][k] = e[i];
-              }
-            }
-          }
-        }
-
-        let p = Math.min(n, m + 1);
-        if (nct < n) {
-          s[nct] = a[nct][nct];
-        }
-        if (m < p) {
-          s[p - 1] = 0;
-        }
-        if (nrt + 1 < p) {
-          e[nrt] = a[nrt][p - 1];
-        }
-        e[p - 1] = 0;
-
-        if (wantu) {
-          for (let j = nct; j < nu; j++) {
-            for (let i = 0; i < m; i++) {
-              U[i][j] = 0;
-            }
-            U[j][j] = 1;
-          }
-          for (let k = nct - 1; k >= 0; k--) {
-            if (s[k] !== 0) {
-              for (let j = k + 1; j < nu; j++) {
-                let t = 0;
-                for (let i = k; i < m; i++) {
-                  t += U[i][k] * U[i][j];
-                }
-                t = -t / U[k][k];
-                for (let i = k; i < m; i++) {
-                  U[i][j] += t * U[i][k];
-                }
-              }
-              for (let i = k; i < m; i++) {
-                U[i][k] = -U[i][k];
-              }
-              U[k][k] = 1 + U[k][k];
-              for (let i = 0; i < k - 1; i++) {
-                U[i][k] = 0;
-              }
-            } else {
-              for (let i = 0; i < m; i++) {
-                U[i][k] = 0;
-              }
-              U[k][k] = 1;
-            }
-          }
-        }
-
-        if (wantv) {
-          for (let k = n - 1; k >= 0; k--) {
-            if (k < nrt && e[k] !== 0) {
-              for (let j = k + 1; j < n; j++) {
-                let t = 0;
-                for (let i = k + 1; i < n; i++) {
-                  t += V[i][k] * V[i][j];
-                }
-                t = -t / V[k + 1][k];
-                for (let i = k + 1; i < n; i++) {
-                  V[i][j] += t * V[i][k];
-                }
-              }
-            }
-            for (let i = 0; i < n; i++) {
-              V[i][k] = 0;
-            }
-            V[k][k] = 1;
-          }
-        }
-
-        var pp = p - 1;
-        var eps = Number.EPSILON;
-        while (p > 0) {
-          let k, kase;
-          for (k = p - 2; k >= -1; k--) {
-            if (k === -1) {
-              break;
-            }
-            const alpha =
-              Number.MIN_VALUE + eps * Math.abs(s[k] + Math.abs(s[k + 1]));
-            if (Math.abs(e[k]) <= alpha || Number.isNaN(e[k])) {
-              e[k] = 0;
-              break;
-            }
-          }
-          if (k === p - 2) {
-            kase = 4;
-          } else {
-            let ks;
-            for (ks = p - 1; ks >= k; ks--) {
-              if (ks === k) {
-                break;
-              }
-              let t =
-                (ks !== p ? Math.abs(e[ks]) : 0) +
-                (ks !== k + 1 ? Math.abs(e[ks - 1]) : 0);
-              if (Math.abs(s[ks]) <= eps * t) {
-                s[ks] = 0;
-                break;
-              }
-            }
-            if (ks === k) {
-              kase = 3;
-            } else if (ks === p - 1) {
-              kase = 1;
-            } else {
-              kase = 2;
-              k = ks;
-            }
-          }
-
-          k++;
-
-          switch (kase) {
-            case 1: {
-              let f = e[p - 2];
-              e[p - 2] = 0;
-              for (let j = p - 2; j >= k; j--) {
-                let t = hypotenuse(s[j], f);
-                let cs = s[j] / t;
-                let sn = f / t;
-                s[j] = t;
-                if (j !== k) {
-                  f = -sn * e[j - 1];
-                  e[j - 1] = cs * e[j - 1];
-                }
-                if (wantv) {
-                  for (let i = 0; i < n; i++) {
-                    t = cs * V[i][j] + sn * V[i][p - 1];
-                    V[i][p - 1] = -sn * V[i][j] + cs * V[i][p - 1];
-                    V[i][j] = t;
-                  }
-                }
-              }
-              break;
-            }
-            case 2: {
-              let f = e[k - 1];
-              e[k - 1] = 0;
-              for (let j = k; j < p; j++) {
-                let t = hypotenuse(s[j], f);
-                let cs = s[j] / t;
-                let sn = f / t;
-                s[j] = t;
-                f = -sn * e[j];
-                e[j] = cs * e[j];
-                if (wantu) {
-                  for (let i = 0; i < m; i++) {
-                    t = cs * U[i][j] + sn * U[i][k - 1];
-                    U[i][k - 1] = -sn * U[i][j] + cs * U[i][k - 1];
-                    U[i][j] = t;
-                  }
-                }
-              }
-              break;
-            }
-            case 3: {
-              const scale = Math.max(
-                Math.abs(s[p - 1]),
-                Math.abs(s[p - 2]),
-                Math.abs(e[p - 2]),
-                Math.abs(s[k]),
-                Math.abs(e[k])
-              );
-              const sp = s[p - 1] / scale;
-              const spm1 = s[p - 2] / scale;
-              const epm1 = e[p - 2] / scale;
-              const sk = s[k] / scale;
-              const ek = e[k] / scale;
-              const b = ((spm1 + sp) * (spm1 - sp) + epm1 * epm1) / 2;
-              const c = sp * epm1 * (sp * epm1);
-              let shift = 0;
-              if (b !== 0 || c !== 0) {
-                if (b < 0) {
-                  shift = 0 - Math.sqrt(b * b + c);
-                } else {
-                  shift = Math.sqrt(b * b + c);
-                }
-                shift = c / (b + shift);
-              }
-              let f = (sk + sp) * (sk - sp) + shift;
-              let g = sk * ek;
-              for (let j = k; j < p - 1; j++) {
-                let t = hypotenuse(f, g);
-                if (t === 0) t = Number.MIN_VALUE;
-                let cs = f / t;
-                let sn = g / t;
-                if (j !== k) {
-                  e[j - 1] = t;
-                }
-                f = cs * s[j] + sn * e[j];
-                e[j] = cs * e[j] - sn * s[j];
-                g = sn * s[j + 1];
-                s[j + 1] = cs * s[j + 1];
-                if (wantv) {
-                  for (let i = 0; i < n; i++) {
-                    t = cs * V[i][j] + sn * V[i][j + 1];
-                    V[i][j + 1] = -sn * V[i][j] + cs * V[i][j + 1];
-                    V[i][j] = t;
-                  }
-                }
-                t = hypotenuse(f, g);
-                if (t === 0) t = Number.MIN_VALUE;
-                cs = f / t;
-                sn = g / t;
-                s[j] = t;
-                f = cs * e[j] + sn * s[j + 1];
-                s[j + 1] = -sn * e[j] + cs * s[j + 1];
-                g = sn * e[j + 1];
-                e[j + 1] = cs * e[j + 1];
-                if (wantu && j < m - 1) {
-                  for (let i = 0; i < m; i++) {
-                    t = cs * U[i][j] + sn * U[i][j + 1];
-                    U[i][j + 1] = -sn * U[i][j] + cs * U[i][j + 1];
-                    U[i][j] = t;
-                  }
-                }
-              }
-              e[p - 2] = f;
-              break;
-            }
-            case 4: {
-              if (s[k] <= 0) {
-                s[k] = s[k] < 0 ? -s[k] : 0;
-                if (wantv) {
-                  for (let i = 0; i <= pp; i++) {
-                    V[i][k] = -V[i][k];
-                  }
-                }
-              }
-              while (k < pp) {
-                if (s[k] >= s[k + 1]) {
-                  break;
-                }
-                let t = s[k];
-                s[k] = s[k + 1];
-                s[k + 1] = t;
-                if (wantv && k < n - 1) {
-                  for (let i = 0; i < n; i++) {
-                    t = V[i][k + 1];
-                    V[i][k + 1] = V[i][k];
-                    V[i][k] = t;
-                  }
-                }
-                if (wantu && k < m - 1) {
-                  for (let i = 0; i < m; i++) {
-                    t = U[i][k + 1];
-                    U[i][k + 1] = U[i][k];
-                    U[i][k] = t;
-                  }
-                }
-                k++;
-              }
-              p--;
-              break;
-            }
-            // no default
-          }
-        }
-
-        if (swapped) {
-          var tmp = V;
-          V = U;
-          U = tmp;
-        }
-
-        this.m = m;
-        this.n = n;
-        this.s = s;
-        this.U = U;
-        this.V = V;
-      }
-
-      /**
-       * Solve a problem of least square (Ax=b) by using the SVD. Useful when A is singular. When A is not singular, it would be better to use qr.solve(value).
-       * Example : We search to approximate x, with A matrix shape m*n, x vector size n, b vector size m (m > n). We will use :
-       * var svd = SingularValueDecomposition(A);
-       * var x = svd.solve(b);
-       * @param {Matrix} value - Matrix 1D which is the vector b (in the equation Ax = b)
-       * @return {Matrix} - The vector x
-       */
-      solve(value) {
-        var Y = value;
-        var e = this.threshold;
-        var scols = this.s.length;
-        var Ls = Matrix.zeros(scols, scols);
-
-        for (let i = 0; i < scols; i++) {
-          if (Math.abs(this.s[i]) <= e) {
-            Ls[i][i] = 0;
-          } else {
-            Ls[i][i] = 1 / this.s[i];
-          }
-        }
-
-        var U = this.U;
-        var V = this.rightSingularVectors;
-
-        var VL = V.mmul(Ls);
-        var vrows = V.rows;
-        var urows = U.length;
-        var VLU = Matrix.zeros(vrows, urows);
-
-        for (let i = 0; i < vrows; i++) {
-          for (let j = 0; j < urows; j++) {
-            let sum = 0;
-            for (let k = 0; k < scols; k++) {
-              sum += VL[i][k] * U[j][k];
-            }
-            VLU[i][j] = sum;
-          }
-        }
-
-        return VLU.mmul(Y);
-      }
-
-      /**
-       *
-       * @param {Array<number>} value
-       * @return {Matrix}
-       */
-      solveForDiagonal(value) {
-        return this.solve(Matrix.diag(value));
-      }
-
-      /**
-       * Get the inverse of the matrix. We compute the inverse of a matrix using SVD when this matrix is singular or ill-conditioned. Example :
-       * var svd = SingularValueDecomposition(A);
-       * var inverseA = svd.inverse();
-       * @return {Matrix} - The approximation of the inverse of the matrix
-       */
-      inverse() {
-        var V = this.V;
-        var e = this.threshold;
-        var vrows = V.length;
-        var vcols = V[0].length;
-        var X = new Matrix(vrows, this.s.length);
-
-        for (let i = 0; i < vrows; i++) {
-          for (let j = 0; j < vcols; j++) {
-            if (Math.abs(this.s[j]) > e) {
-              X[i][j] = V[i][j] / this.s[j];
-            } else {
-              X[i][j] = 0;
-            }
-          }
-        }
-
-        var U = this.U;
-
-        var urows = U.length;
-        var ucols = U[0].length;
-        var Y = new Matrix(vrows, urows);
-
-        for (let i = 0; i < vrows; i++) {
-          for (let j = 0; j < urows; j++) {
-            let sum = 0;
-            for (let k = 0; k < ucols; k++) {
-              sum += X[i][k] * U[j][k];
-            }
-            Y[i][j] = sum;
-          }
-        }
-
-        return Y;
-      }
-
-      /**
-       *
-       * @return {number}
-       */
-      get condition() {
-        return this.s[0] / this.s[Math.min(this.m, this.n) - 1];
-      }
-
-      /**
-       *
-       * @return {number}
-       */
-      get norm2() {
-        return this.s[0];
-      }
-
-      /**
-       *
-       * @return {number}
-       */
-      get rank() {
-        var tol = Math.max(this.m, this.n) * this.s[0] * Number.EPSILON;
-        var r = 0;
-        var s = this.s;
-        for (var i = 0, ii = s.length; i < ii; i++) {
-          if (s[i] > tol) {
-            r++;
-          }
-        }
-        return r;
-      }
-
-      /**
-       *
-       * @return {Array<number>}
-       */
-      get diagonal() {
-        return this.s;
-      }
-
-      /**
-       *
-       * @return {number}
-       */
-      get threshold() {
-        return Number.EPSILON / 2 * Math.max(this.m, this.n) * this.s[0];
-      }
-
-      /**
-       *
-       * @return {Matrix}
-       */
-      get leftSingularVectors() {
-        if (!Matrix.isMatrix(this.U)) {
-          this.U = new Matrix(this.U);
-        }
-        return this.U;
-      }
-
-      /**
-       *
-       * @return {Matrix}
-       */
-      get rightSingularVectors() {
-        if (!Matrix.isMatrix(this.V)) {
-          this.V = new Matrix(this.V);
-        }
-        return this.V;
-      }
-
-      /**
-       *
-       * @return {Matrix}
-       */
-      get diagonalMatrix() {
-        return Matrix.diag(this.s);
-      }
-    }
-
-    /**
-     * @private
-     * Check that a row index is not out of bounds
-     * @param {Matrix} matrix
-     * @param {number} index
-     * @param {boolean} [outer]
-     */
-    function checkRowIndex(matrix, index, outer) {
-      var max = outer ? matrix.rows : matrix.rows - 1;
-      if (index < 0 || index > max) {
-        throw new RangeError('Row index out of range');
-      }
-    }
-
-    /**
-     * @private
-     * Check that a column index is not out of bounds
-     * @param {Matrix} matrix
-     * @param {number} index
-     * @param {boolean} [outer]
-     */
-    function checkColumnIndex(matrix, index, outer) {
-      var max = outer ? matrix.columns : matrix.columns - 1;
-      if (index < 0 || index > max) {
-        throw new RangeError('Column index out of range');
-      }
-    }
-
-    /**
-     * @private
-     * Check that the provided vector is an array with the right length
-     * @param {Matrix} matrix
-     * @param {Array|Matrix} vector
-     * @return {Array}
-     * @throws {RangeError}
-     */
-    function checkRowVector(matrix, vector) {
-      if (vector.to1DArray) {
-        vector = vector.to1DArray();
-      }
-      if (vector.length !== matrix.columns) {
-        throw new RangeError(
-          'vector size must be the same as the number of columns'
-        );
-      }
-      return vector;
-    }
-
-    /**
-     * @private
-     * Check that the provided vector is an array with the right length
-     * @param {Matrix} matrix
-     * @param {Array|Matrix} vector
-     * @return {Array}
-     * @throws {RangeError}
-     */
-    function checkColumnVector(matrix, vector) {
-      if (vector.to1DArray) {
-        vector = vector.to1DArray();
-      }
-      if (vector.length !== matrix.rows) {
-        throw new RangeError('vector size must be the same as the number of rows');
-      }
-      return vector;
-    }
-
-    function checkIndices(matrix, rowIndices, columnIndices) {
-      return {
-        row: checkRowIndices(matrix, rowIndices),
-        column: checkColumnIndices(matrix, columnIndices)
-      };
-    }
-
-    function checkRowIndices(matrix, rowIndices) {
-      if (typeof rowIndices !== 'object') {
-        throw new TypeError('unexpected type for row indices');
-      }
-
-      var rowOut = rowIndices.some((r) => {
-        return r < 0 || r >= matrix.rows;
-      });
-
-      if (rowOut) {
-        throw new RangeError('row indices are out of range');
-      }
-
-      if (!Array.isArray(rowIndices)) rowIndices = Array.from(rowIndices);
-
-      return rowIndices;
-    }
-
-    function checkColumnIndices(matrix, columnIndices) {
-      if (typeof columnIndices !== 'object') {
-        throw new TypeError('unexpected type for column indices');
-      }
-
-      var columnOut = columnIndices.some((c) => {
-        return c < 0 || c >= matrix.columns;
-      });
-
-      if (columnOut) {
-        throw new RangeError('column indices are out of range');
-      }
-      if (!Array.isArray(columnIndices)) columnIndices = Array.from(columnIndices);
-
-      return columnIndices;
-    }
-
-    function checkRange(matrix, startRow, endRow, startColumn, endColumn) {
-      if (arguments.length !== 5) {
-        throw new RangeError('expected 4 arguments');
-      }
-      checkNumber('startRow', startRow);
-      checkNumber('endRow', endRow);
-      checkNumber('startColumn', startColumn);
-      checkNumber('endColumn', endColumn);
-      if (
-        startRow > endRow ||
-        startColumn > endColumn ||
-        startRow < 0 ||
-        startRow >= matrix.rows ||
-        endRow < 0 ||
-        endRow >= matrix.rows ||
-        startColumn < 0 ||
-        startColumn >= matrix.columns ||
-        endColumn < 0 ||
-        endColumn >= matrix.columns
-      ) {
-        throw new RangeError('Submatrix indices are out of range');
-      }
-    }
-
-    function sumByRow(matrix) {
-      var sum = Matrix.zeros(matrix.rows, 1);
-      for (var i = 0; i < matrix.rows; ++i) {
-        for (var j = 0; j < matrix.columns; ++j) {
-          sum.set(i, 0, sum.get(i, 0) + matrix.get(i, j));
-        }
-      }
-      return sum;
-    }
-
-    function sumByColumn(matrix) {
-      var sum = Matrix.zeros(1, matrix.columns);
-      for (var i = 0; i < matrix.rows; ++i) {
-        for (var j = 0; j < matrix.columns; ++j) {
-          sum.set(0, j, sum.get(0, j) + matrix.get(i, j));
-        }
-      }
-      return sum;
-    }
-
-    function sumAll(matrix) {
-      var v = 0;
-      for (var i = 0; i < matrix.rows; i++) {
-        for (var j = 0; j < matrix.columns; j++) {
-          v += matrix.get(i, j);
-        }
-      }
-      return v;
-    }
-
-    function checkNumber(name, value) {
-      if (typeof value !== 'number') {
-        throw new TypeError(`${name} must be a number`);
-      }
-    }
-
-    class BaseView extends AbstractMatrix() {
-      constructor(matrix, rows, columns) {
-        super();
-        this.matrix = matrix;
-        this.rows = rows;
-        this.columns = columns;
-      }
-
-      static get [Symbol.species]() {
-        return Matrix;
-      }
-    }
-
-    class MatrixTransposeView extends BaseView {
-      constructor(matrix) {
-        super(matrix, matrix.columns, matrix.rows);
-      }
-
-      set(rowIndex, columnIndex, value) {
-        this.matrix.set(columnIndex, rowIndex, value);
-        return this;
-      }
-
-      get(rowIndex, columnIndex) {
-        return this.matrix.get(columnIndex, rowIndex);
-      }
-    }
-
-    class MatrixRowView extends BaseView {
-      constructor(matrix, row) {
-        super(matrix, 1, matrix.columns);
-        this.row = row;
-      }
-
-      set(rowIndex, columnIndex, value) {
-        this.matrix.set(this.row, columnIndex, value);
-        return this;
-      }
-
-      get(rowIndex, columnIndex) {
-        return this.matrix.get(this.row, columnIndex);
-      }
-    }
-
-    class MatrixSubView extends BaseView {
-      constructor(matrix, startRow, endRow, startColumn, endColumn) {
-        checkRange(matrix, startRow, endRow, startColumn, endColumn);
-        super(matrix, endRow - startRow + 1, endColumn - startColumn + 1);
-        this.startRow = startRow;
-        this.startColumn = startColumn;
-      }
-
-      set(rowIndex, columnIndex, value) {
-        this.matrix.set(
-          this.startRow + rowIndex,
-          this.startColumn + columnIndex,
-          value
-        );
-        return this;
-      }
-
-      get(rowIndex, columnIndex) {
-        return this.matrix.get(
-          this.startRow + rowIndex,
-          this.startColumn + columnIndex
-        );
-      }
-    }
-
-    class MatrixSelectionView extends BaseView {
-      constructor(matrix, rowIndices, columnIndices) {
-        var indices = checkIndices(matrix, rowIndices, columnIndices);
-        super(matrix, indices.row.length, indices.column.length);
-        this.rowIndices = indices.row;
-        this.columnIndices = indices.column;
-      }
-
-      set(rowIndex, columnIndex, value) {
-        this.matrix.set(
-          this.rowIndices[rowIndex],
-          this.columnIndices[columnIndex],
-          value
-        );
-        return this;
-      }
-
-      get(rowIndex, columnIndex) {
-        return this.matrix.get(
-          this.rowIndices[rowIndex],
-          this.columnIndices[columnIndex]
-        );
-      }
-    }
-
-    class MatrixRowSelectionView extends BaseView {
-      constructor(matrix, rowIndices) {
-        rowIndices = checkRowIndices(matrix, rowIndices);
-        super(matrix, rowIndices.length, matrix.columns);
-        this.rowIndices = rowIndices;
-      }
-
-      set(rowIndex, columnIndex, value) {
-        this.matrix.set(this.rowIndices[rowIndex], columnIndex, value);
-        return this;
-      }
-
-      get(rowIndex, columnIndex) {
-        return this.matrix.get(this.rowIndices[rowIndex], columnIndex);
-      }
-    }
-
-    class MatrixColumnSelectionView extends BaseView {
-      constructor(matrix, columnIndices) {
-        columnIndices = checkColumnIndices(matrix, columnIndices);
-        super(matrix, matrix.rows, columnIndices.length);
-        this.columnIndices = columnIndices;
-      }
-
-      set(rowIndex, columnIndex, value) {
-        this.matrix.set(rowIndex, this.columnIndices[columnIndex], value);
-        return this;
-      }
-
-      get(rowIndex, columnIndex) {
-        return this.matrix.get(rowIndex, this.columnIndices[columnIndex]);
-      }
-    }
-
-    class MatrixColumnView extends BaseView {
-      constructor(matrix, column) {
-        super(matrix, matrix.rows, 1);
-        this.column = column;
-      }
-
-      set(rowIndex, columnIndex, value) {
-        this.matrix.set(rowIndex, this.column, value);
-        return this;
-      }
-
-      get(rowIndex) {
-        return this.matrix.get(rowIndex, this.column);
-      }
-    }
-
-    class MatrixFlipRowView extends BaseView {
-      constructor(matrix) {
-        super(matrix, matrix.rows, matrix.columns);
-      }
-
-      set(rowIndex, columnIndex, value) {
-        this.matrix.set(this.rows - rowIndex - 1, columnIndex, value);
-        return this;
-      }
-
-      get(rowIndex, columnIndex) {
-        return this.matrix.get(this.rows - rowIndex - 1, columnIndex);
-      }
-    }
-
-    class MatrixFlipColumnView extends BaseView {
-      constructor(matrix) {
-        super(matrix, matrix.rows, matrix.columns);
-      }
-
-      set(rowIndex, columnIndex, value) {
-        this.matrix.set(rowIndex, this.columns - columnIndex - 1, value);
-        return this;
-      }
-
-      get(rowIndex, columnIndex) {
-        return this.matrix.get(rowIndex, this.columns - columnIndex - 1);
-      }
-    }
-
-    function AbstractMatrix(superCtor) {
-      if (superCtor === undefined) superCtor = Object;
-
-      /**
-       * Real matrix
-       * @class Matrix
-       * @param {number|Array|Matrix} nRows - Number of rows of the new matrix,
-       * 2D array containing the data or Matrix instance to clone
-       * @param {number} [nColumns] - Number of columns of the new matrix
-       */
-      class Matrix extends superCtor {
-        static get [Symbol.species]() {
-          return this;
-        }
-
-        /**
-         * Constructs a Matrix with the chosen dimensions from a 1D array
-         * @param {number} newRows - Number of rows
-         * @param {number} newColumns - Number of columns
-         * @param {Array} newData - A 1D array containing data for the matrix
-         * @return {Matrix} - The new matrix
-         */
-        static from1DArray(newRows, newColumns, newData) {
-          var length = newRows * newColumns;
-          if (length !== newData.length) {
-            throw new RangeError('Data length does not match given dimensions');
-          }
-          var newMatrix = new this(newRows, newColumns);
-          for (var row = 0; row < newRows; row++) {
-            for (var column = 0; column < newColumns; column++) {
-              newMatrix.set(row, column, newData[row * newColumns + column]);
-            }
-          }
-          return newMatrix;
-        }
-
-        /**
-             * Creates a row vector, a matrix with only one row.
-             * @param {Array} newData - A 1D array containing data for the vector
-             * @return {Matrix} - The new matrix
-             */
-        static rowVector(newData) {
-          var vector = new this(1, newData.length);
-          for (var i = 0; i < newData.length; i++) {
-            vector.set(0, i, newData[i]);
-          }
-          return vector;
-        }
-
-        /**
-             * Creates a column vector, a matrix with only one column.
-             * @param {Array} newData - A 1D array containing data for the vector
-             * @return {Matrix} - The new matrix
-             */
-        static columnVector(newData) {
-          var vector = new this(newData.length, 1);
-          for (var i = 0; i < newData.length; i++) {
-            vector.set(i, 0, newData[i]);
-          }
-          return vector;
-        }
-
-        /**
-             * Creates an empty matrix with the given dimensions. Values will be undefined. Same as using new Matrix(rows, columns).
-             * @param {number} rows - Number of rows
-             * @param {number} columns - Number of columns
-             * @return {Matrix} - The new matrix
-             */
-        static empty(rows, columns) {
-          return new this(rows, columns);
-        }
-
-        /**
-             * Creates a matrix with the given dimensions. Values will be set to zero.
-             * @param {number} rows - Number of rows
-             * @param {number} columns - Number of columns
-             * @return {Matrix} - The new matrix
-             */
-        static zeros(rows, columns) {
-          return this.empty(rows, columns).fill(0);
-        }
-
-        /**
-             * Creates a matrix with the given dimensions. Values will be set to one.
-             * @param {number} rows - Number of rows
-             * @param {number} columns - Number of columns
-             * @return {Matrix} - The new matrix
-             */
-        static ones(rows, columns) {
-          return this.empty(rows, columns).fill(1);
-        }
-
-        /**
-             * Creates a matrix with the given dimensions. Values will be randomly set.
-             * @param {number} rows - Number of rows
-             * @param {number} columns - Number of columns
-             * @param {function} [rng=Math.random] - Random number generator
-             * @return {Matrix} The new matrix
-             */
-        static rand(rows, columns, rng) {
-          if (rng === undefined) rng = Math.random;
-          var matrix = this.empty(rows, columns);
-          for (var i = 0; i < rows; i++) {
-            for (var j = 0; j < columns; j++) {
-              matrix.set(i, j, rng());
-            }
-          }
-          return matrix;
-        }
-
-        /**
-             * Creates a matrix with the given dimensions. Values will be random integers.
-             * @param {number} rows - Number of rows
-             * @param {number} columns - Number of columns
-             * @param {number} [maxValue=1000] - Maximum value
-             * @param {function} [rng=Math.random] - Random number generator
-             * @return {Matrix} The new matrix
-             */
-        static randInt(rows, columns, maxValue, rng) {
-          if (maxValue === undefined) maxValue = 1000;
-          if (rng === undefined) rng = Math.random;
-          var matrix = this.empty(rows, columns);
-          for (var i = 0; i < rows; i++) {
-            for (var j = 0; j < columns; j++) {
-              var value = Math.floor(rng() * maxValue);
-              matrix.set(i, j, value);
-            }
-          }
-          return matrix;
-        }
-
-        /**
-             * Creates an identity matrix with the given dimension. Values of the diagonal will be 1 and others will be 0.
-             * @param {number} rows - Number of rows
-             * @param {number} [columns=rows] - Number of columns
-             * @param {number} [value=1] - Value to fill the diagonal with
-             * @return {Matrix} - The new identity matrix
-             */
-        static eye(rows, columns, value) {
-          if (columns === undefined) columns = rows;
-          if (value === undefined) value = 1;
-          var min = Math.min(rows, columns);
-          var matrix = this.zeros(rows, columns);
-          for (var i = 0; i < min; i++) {
-            matrix.set(i, i, value);
-          }
-          return matrix;
-        }
-
-        /**
-             * Creates a diagonal matrix based on the given array.
-             * @param {Array} data - Array containing the data for the diagonal
-             * @param {number} [rows] - Number of rows (Default: data.length)
-             * @param {number} [columns] - Number of columns (Default: rows)
-             * @return {Matrix} - The new diagonal matrix
-             */
-        static diag(data, rows, columns) {
-          var l = data.length;
-          if (rows === undefined) rows = l;
-          if (columns === undefined) columns = rows;
-          var min = Math.min(l, rows, columns);
-          var matrix = this.zeros(rows, columns);
-          for (var i = 0; i < min; i++) {
-            matrix.set(i, i, data[i]);
-          }
-          return matrix;
-        }
-
-        /**
-             * Returns a matrix whose elements are the minimum between matrix1 and matrix2
-             * @param {Matrix} matrix1
-             * @param {Matrix} matrix2
-             * @return {Matrix}
-             */
-        static min(matrix1, matrix2) {
-          matrix1 = this.checkMatrix(matrix1);
-          matrix2 = this.checkMatrix(matrix2);
-          var rows = matrix1.rows;
-          var columns = matrix1.columns;
-          var result = new this(rows, columns);
-          for (var i = 0; i < rows; i++) {
-            for (var j = 0; j < columns; j++) {
-              result.set(i, j, Math.min(matrix1.get(i, j), matrix2.get(i, j)));
-            }
-          }
-          return result;
-        }
-
-        /**
-             * Returns a matrix whose elements are the maximum between matrix1 and matrix2
-             * @param {Matrix} matrix1
-             * @param {Matrix} matrix2
-             * @return {Matrix}
-             */
-        static max(matrix1, matrix2) {
-          matrix1 = this.checkMatrix(matrix1);
-          matrix2 = this.checkMatrix(matrix2);
-          var rows = matrix1.rows;
-          var columns = matrix1.columns;
-          var result = new this(rows, columns);
-          for (var i = 0; i < rows; i++) {
-            for (var j = 0; j < columns; j++) {
-              result.set(i, j, Math.max(matrix1.get(i, j), matrix2.get(i, j)));
-            }
-          }
-          return result;
-        }
-
-        /**
-             * Check that the provided value is a Matrix and tries to instantiate one if not
-             * @param {*} value - The value to check
-             * @return {Matrix}
-             */
-        static checkMatrix(value) {
-          return Matrix.isMatrix(value) ? value : new this(value);
-        }
-
-        /**
-             * Returns true if the argument is a Matrix, false otherwise
-             * @param {*} value - The value to check
-             * @return {boolean}
-             */
-        static isMatrix(value) {
-          return (value != null) && (value.klass === 'Matrix');
-        }
-
-        /**
-             * @prop {number} size - The number of elements in the matrix.
-             */
-        get size() {
-          return this.rows * this.columns;
-        }
-
-        /**
-             * Applies a callback for each element of the matrix. The function is called in the matrix (this) context.
-             * @param {function} callback - Function that will be called with two parameters : i (row) and j (column)
-             * @return {Matrix} this
-             */
-        apply(callback) {
-          if (typeof callback !== 'function') {
-            throw new TypeError('callback must be a function');
-          }
-          var ii = this.rows;
-          var jj = this.columns;
-          for (var i = 0; i < ii; i++) {
-            for (var j = 0; j < jj; j++) {
-              callback.call(this, i, j);
-            }
-          }
-          return this;
-        }
-
-        /**
-             * Returns a new 1D array filled row by row with the matrix values
-             * @return {Array}
-             */
-        to1DArray() {
-          var array = new Array(this.size);
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              array[i * this.columns + j] = this.get(i, j);
-            }
-          }
-          return array;
-        }
-
-        /**
-             * Returns a 2D array containing a copy of the data
-             * @return {Array}
-             */
-        to2DArray() {
-          var copy = new Array(this.rows);
-          for (var i = 0; i < this.rows; i++) {
-            copy[i] = new Array(this.columns);
-            for (var j = 0; j < this.columns; j++) {
-              copy[i][j] = this.get(i, j);
-            }
-          }
-          return copy;
-        }
-
-        /**
-             * @return {boolean} true if the matrix has one row
-             */
-        isRowVector() {
-          return this.rows === 1;
-        }
-
-        /**
-             * @return {boolean} true if the matrix has one column
-             */
-        isColumnVector() {
-          return this.columns === 1;
-        }
-
-        /**
-             * @return {boolean} true if the matrix has one row or one column
-             */
-        isVector() {
-          return (this.rows === 1) || (this.columns === 1);
-        }
-
-        /**
-             * @return {boolean} true if the matrix has the same number of rows and columns
-             */
-        isSquare() {
-          return this.rows === this.columns;
-        }
-
-        /**
-             * @return {boolean} true if the matrix is square and has the same values on both sides of the diagonal
-             */
-        isSymmetric() {
-          if (this.isSquare()) {
-            for (var i = 0; i < this.rows; i++) {
-              for (var j = 0; j <= i; j++) {
-                if (this.get(i, j) !== this.get(j, i)) {
-                  return false;
-                }
-              }
-            }
-            return true;
-          }
-          return false;
-        }
-
-        /**
-             * Sets a given element of the matrix. mat.set(3,4,1) is equivalent to mat[3][4]=1
-             * @abstract
-             * @param {number} rowIndex - Index of the row
-             * @param {number} columnIndex - Index of the column
-             * @param {number} value - The new value for the element
-             * @return {Matrix} this
-             */
-        set(rowIndex, columnIndex, value) { // eslint-disable-line no-unused-vars
-          throw new Error('set method is unimplemented');
-        }
-
-        /**
-             * Returns the given element of the matrix. mat.get(3,4) is equivalent to matrix[3][4]
-             * @abstract
-             * @param {number} rowIndex - Index of the row
-             * @param {number} columnIndex - Index of the column
-             * @return {number}
-             */
-        get(rowIndex, columnIndex) { // eslint-disable-line no-unused-vars
-          throw new Error('get method is unimplemented');
-        }
-
-        /**
-             * Creates a new matrix that is a repetition of the current matrix. New matrix has rowRep times the number of
-             * rows of the matrix, and colRep times the number of columns of the matrix
-             * @param {number} rowRep - Number of times the rows should be repeated
-             * @param {number} colRep - Number of times the columns should be re
-             * @return {Matrix}
-             * @example
-             * var matrix = new Matrix([[1,2]]);
-             * matrix.repeat(2); // [[1,2],[1,2]]
-             */
-        repeat(rowRep, colRep) {
-          rowRep = rowRep || 1;
-          colRep = colRep || 1;
-          var matrix = new this.constructor[Symbol.species](this.rows * rowRep, this.columns * colRep);
-          for (var i = 0; i < rowRep; i++) {
-            for (var j = 0; j < colRep; j++) {
-              matrix.setSubMatrix(this, this.rows * i, this.columns * j);
-            }
-          }
-          return matrix;
-        }
-
-        /**
-             * Fills the matrix with a given value. All elements will be set to this value.
-             * @param {number} value - New value
-             * @return {Matrix} this
-             */
-        fill(value) {
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              this.set(i, j, value);
-            }
-          }
-          return this;
-        }
-
-        /**
-             * Negates the matrix. All elements will be multiplied by (-1)
-             * @return {Matrix} this
-             */
-        neg() {
-          return this.mulS(-1);
-        }
-
-        /**
-             * Returns a new array from the given row index
-             * @param {number} index - Row index
-             * @return {Array}
-             */
-        getRow(index) {
-          checkRowIndex(this, index);
-          var row = new Array(this.columns);
-          for (var i = 0; i < this.columns; i++) {
-            row[i] = this.get(index, i);
-          }
-          return row;
-        }
-
-        /**
-             * Returns a new row vector from the given row index
-             * @param {number} index - Row index
-             * @return {Matrix}
-             */
-        getRowVector(index) {
-          return this.constructor.rowVector(this.getRow(index));
-        }
-
-        /**
-             * Sets a row at the given index
-             * @param {number} index - Row index
-             * @param {Array|Matrix} array - Array or vector
-             * @return {Matrix} this
-             */
-        setRow(index, array) {
-          checkRowIndex(this, index);
-          array = checkRowVector(this, array);
-          for (var i = 0; i < this.columns; i++) {
-            this.set(index, i, array[i]);
-          }
-          return this;
-        }
-
-        /**
-             * Swaps two rows
-             * @param {number} row1 - First row index
-             * @param {number} row2 - Second row index
-             * @return {Matrix} this
-             */
-        swapRows(row1, row2) {
-          checkRowIndex(this, row1);
-          checkRowIndex(this, row2);
-          for (var i = 0; i < this.columns; i++) {
-            var temp = this.get(row1, i);
-            this.set(row1, i, this.get(row2, i));
-            this.set(row2, i, temp);
-          }
-          return this;
-        }
-
-        /**
-             * Returns a new array from the given column index
-             * @param {number} index - Column index
-             * @return {Array}
-             */
-        getColumn(index) {
-          checkColumnIndex(this, index);
-          var column = new Array(this.rows);
-          for (var i = 0; i < this.rows; i++) {
-            column[i] = this.get(i, index);
-          }
-          return column;
-        }
-
-        /**
-             * Returns a new column vector from the given column index
-             * @param {number} index - Column index
-             * @return {Matrix}
-             */
-        getColumnVector(index) {
-          return this.constructor.columnVector(this.getColumn(index));
-        }
-
-        /**
-             * Sets a column at the given index
-             * @param {number} index - Column index
-             * @param {Array|Matrix} array - Array or vector
-             * @return {Matrix} this
-             */
-        setColumn(index, array) {
-          checkColumnIndex(this, index);
-          array = checkColumnVector(this, array);
-          for (var i = 0; i < this.rows; i++) {
-            this.set(i, index, array[i]);
-          }
-          return this;
-        }
-
-        /**
-             * Swaps two columns
-             * @param {number} column1 - First column index
-             * @param {number} column2 - Second column index
-             * @return {Matrix} this
-             */
-        swapColumns(column1, column2) {
-          checkColumnIndex(this, column1);
-          checkColumnIndex(this, column2);
-          for (var i = 0; i < this.rows; i++) {
-            var temp = this.get(i, column1);
-            this.set(i, column1, this.get(i, column2));
-            this.set(i, column2, temp);
-          }
-          return this;
-        }
-
-        /**
-             * Adds the values of a vector to each row
-             * @param {Array|Matrix} vector - Array or vector
-             * @return {Matrix} this
-             */
-        addRowVector(vector) {
-          vector = checkRowVector(this, vector);
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              this.set(i, j, this.get(i, j) + vector[j]);
-            }
-          }
-          return this;
-        }
-
-        /**
-             * Subtracts the values of a vector from each row
-             * @param {Array|Matrix} vector - Array or vector
-             * @return {Matrix} this
-             */
-        subRowVector(vector) {
-          vector = checkRowVector(this, vector);
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              this.set(i, j, this.get(i, j) - vector[j]);
-            }
-          }
-          return this;
-        }
-
-        /**
-             * Multiplies the values of a vector with each row
-             * @param {Array|Matrix} vector - Array or vector
-             * @return {Matrix} this
-             */
-        mulRowVector(vector) {
-          vector = checkRowVector(this, vector);
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              this.set(i, j, this.get(i, j) * vector[j]);
-            }
-          }
-          return this;
-        }
-
-        /**
-             * Divides the values of each row by those of a vector
-             * @param {Array|Matrix} vector - Array or vector
-             * @return {Matrix} this
-             */
-        divRowVector(vector) {
-          vector = checkRowVector(this, vector);
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              this.set(i, j, this.get(i, j) / vector[j]);
-            }
-          }
-          return this;
-        }
-
-        /**
-             * Adds the values of a vector to each column
-             * @param {Array|Matrix} vector - Array or vector
-             * @return {Matrix} this
-             */
-        addColumnVector(vector) {
-          vector = checkColumnVector(this, vector);
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              this.set(i, j, this.get(i, j) + vector[i]);
-            }
-          }
-          return this;
-        }
-
-        /**
-             * Subtracts the values of a vector from each column
-             * @param {Array|Matrix} vector - Array or vector
-             * @return {Matrix} this
-             */
-        subColumnVector(vector) {
-          vector = checkColumnVector(this, vector);
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              this.set(i, j, this.get(i, j) - vector[i]);
-            }
-          }
-          return this;
-        }
-
-        /**
-             * Multiplies the values of a vector with each column
-             * @param {Array|Matrix} vector - Array or vector
-             * @return {Matrix} this
-             */
-        mulColumnVector(vector) {
-          vector = checkColumnVector(this, vector);
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              this.set(i, j, this.get(i, j) * vector[i]);
-            }
-          }
-          return this;
-        }
-
-        /**
-             * Divides the values of each column by those of a vector
-             * @param {Array|Matrix} vector - Array or vector
-             * @return {Matrix} this
-             */
-        divColumnVector(vector) {
-          vector = checkColumnVector(this, vector);
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              this.set(i, j, this.get(i, j) / vector[i]);
-            }
-          }
-          return this;
-        }
-
-        /**
-             * Multiplies the values of a row with a scalar
-             * @param {number} index - Row index
-             * @param {number} value
-             * @return {Matrix} this
-             */
-        mulRow(index, value) {
-          checkRowIndex(this, index);
-          for (var i = 0; i < this.columns; i++) {
-            this.set(index, i, this.get(index, i) * value);
-          }
-          return this;
-        }
-
-        /**
-             * Multiplies the values of a column with a scalar
-             * @param {number} index - Column index
-             * @param {number} value
-             * @return {Matrix} this
-             */
-        mulColumn(index, value) {
-          checkColumnIndex(this, index);
-          for (var i = 0; i < this.rows; i++) {
-            this.set(i, index, this.get(i, index) * value);
-          }
-          return this;
-        }
-
-        /**
-             * Returns the maximum value of the matrix
-             * @return {number}
-             */
-        max() {
-          var v = this.get(0, 0);
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              if (this.get(i, j) > v) {
-                v = this.get(i, j);
-              }
-            }
-          }
-          return v;
-        }
-
-        /**
-             * Returns the index of the maximum value
-             * @return {Array}
-             */
-        maxIndex() {
-          var v = this.get(0, 0);
-          var idx = [0, 0];
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              if (this.get(i, j) > v) {
-                v = this.get(i, j);
-                idx[0] = i;
-                idx[1] = j;
-              }
-            }
-          }
-          return idx;
-        }
-
-        /**
-             * Returns the minimum value of the matrix
-             * @return {number}
-             */
-        min() {
-          var v = this.get(0, 0);
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              if (this.get(i, j) < v) {
-                v = this.get(i, j);
-              }
-            }
-          }
-          return v;
-        }
-
-        /**
-             * Returns the index of the minimum value
-             * @return {Array}
-             */
-        minIndex() {
-          var v = this.get(0, 0);
-          var idx = [0, 0];
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              if (this.get(i, j) < v) {
-                v = this.get(i, j);
-                idx[0] = i;
-                idx[1] = j;
-              }
-            }
-          }
-          return idx;
-        }
-
-        /**
-             * Returns the maximum value of one row
-             * @param {number} row - Row index
-             * @return {number}
-             */
-        maxRow(row) {
-          checkRowIndex(this, row);
-          var v = this.get(row, 0);
-          for (var i = 1; i < this.columns; i++) {
-            if (this.get(row, i) > v) {
-              v = this.get(row, i);
-            }
-          }
-          return v;
-        }
-
-        /**
-             * Returns the index of the maximum value of one row
-             * @param {number} row - Row index
-             * @return {Array}
-             */
-        maxRowIndex(row) {
-          checkRowIndex(this, row);
-          var v = this.get(row, 0);
-          var idx = [row, 0];
-          for (var i = 1; i < this.columns; i++) {
-            if (this.get(row, i) > v) {
-              v = this.get(row, i);
-              idx[1] = i;
-            }
-          }
-          return idx;
-        }
-
-        /**
-             * Returns the minimum value of one row
-             * @param {number} row - Row index
-             * @return {number}
-             */
-        minRow(row) {
-          checkRowIndex(this, row);
-          var v = this.get(row, 0);
-          for (var i = 1; i < this.columns; i++) {
-            if (this.get(row, i) < v) {
-              v = this.get(row, i);
-            }
-          }
-          return v;
-        }
-
-        /**
-             * Returns the index of the maximum value of one row
-             * @param {number} row - Row index
-             * @return {Array}
-             */
-        minRowIndex(row) {
-          checkRowIndex(this, row);
-          var v = this.get(row, 0);
-          var idx = [row, 0];
-          for (var i = 1; i < this.columns; i++) {
-            if (this.get(row, i) < v) {
-              v = this.get(row, i);
-              idx[1] = i;
-            }
-          }
-          return idx;
-        }
-
-        /**
-             * Returns the maximum value of one column
-             * @param {number} column - Column index
-             * @return {number}
-             */
-        maxColumn(column) {
-          checkColumnIndex(this, column);
-          var v = this.get(0, column);
-          for (var i = 1; i < this.rows; i++) {
-            if (this.get(i, column) > v) {
-              v = this.get(i, column);
-            }
-          }
-          return v;
-        }
-
-        /**
-             * Returns the index of the maximum value of one column
-             * @param {number} column - Column index
-             * @return {Array}
-             */
-        maxColumnIndex(column) {
-          checkColumnIndex(this, column);
-          var v = this.get(0, column);
-          var idx = [0, column];
-          for (var i = 1; i < this.rows; i++) {
-            if (this.get(i, column) > v) {
-              v = this.get(i, column);
-              idx[0] = i;
-            }
-          }
-          return idx;
-        }
-
-        /**
-             * Returns the minimum value of one column
-             * @param {number} column - Column index
-             * @return {number}
-             */
-        minColumn(column) {
-          checkColumnIndex(this, column);
-          var v = this.get(0, column);
-          for (var i = 1; i < this.rows; i++) {
-            if (this.get(i, column) < v) {
-              v = this.get(i, column);
-            }
-          }
-          return v;
-        }
-
-        /**
-             * Returns the index of the minimum value of one column
-             * @param {number} column - Column index
-             * @return {Array}
-             */
-        minColumnIndex(column) {
-          checkColumnIndex(this, column);
-          var v = this.get(0, column);
-          var idx = [0, column];
-          for (var i = 1; i < this.rows; i++) {
-            if (this.get(i, column) < v) {
-              v = this.get(i, column);
-              idx[0] = i;
-            }
-          }
-          return idx;
-        }
-
-        /**
-             * Returns an array containing the diagonal values of the matrix
-             * @return {Array}
-             */
-        diag() {
-          var min = Math.min(this.rows, this.columns);
-          var diag = new Array(min);
-          for (var i = 0; i < min; i++) {
-            diag[i] = this.get(i, i);
-          }
-          return diag;
-        }
-
-        /**
-             * Returns the sum by the argument given, if no argument given,
-             * it returns the sum of all elements of the matrix.
-             * @param {string} by - sum by 'row' or 'column'.
-             * @return {Matrix|number}
-             */
-        sum(by) {
-          switch (by) {
-            case 'row':
-              return sumByRow(this);
-            case 'column':
-              return sumByColumn(this);
-            default:
-              return sumAll(this);
-          }
-        }
-
-        /**
-             * Returns the mean of all elements of the matrix
-             * @return {number}
-             */
-        mean() {
-          return this.sum() / this.size;
-        }
-
-        /**
-             * Returns the product of all elements of the matrix
-             * @return {number}
-             */
-        prod() {
-          var prod = 1;
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              prod *= this.get(i, j);
-            }
-          }
-          return prod;
-        }
-
-        /**
-             * Returns the norm of a matrix.
-             * @param {string} type - "frobenius" (default) or "max" return resp. the Frobenius norm and the max norm.
-             * @return {number}
-             */
-        norm(type = 'frobenius') {
-          var result = 0;
-          if (type === 'max') {
-            return this.max();
-          } else if (type === 'frobenius') {
-            for (var i = 0; i < this.rows; i++) {
-              for (var j = 0; j < this.columns; j++) {
-                result = result + this.get(i, j) * this.get(i, j);
-              }
-            }
-            return Math.sqrt(result);
-          } else {
-            throw new RangeError(`unknown norm type: ${type}`);
-          }
-        }
-
-        /**
-             * Computes the cumulative sum of the matrix elements (in place, row by row)
-             * @return {Matrix} this
-             */
-        cumulativeSum() {
-          var sum = 0;
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              sum += this.get(i, j);
-              this.set(i, j, sum);
-            }
-          }
-          return this;
-        }
-
-        /**
-             * Computes the dot (scalar) product between the matrix and another
-             * @param {Matrix} vector2 vector
-             * @return {number}
-             */
-        dot(vector2) {
-          if (Matrix.isMatrix(vector2)) vector2 = vector2.to1DArray();
-          var vector1 = this.to1DArray();
-          if (vector1.length !== vector2.length) {
-            throw new RangeError('vectors do not have the same size');
-          }
-          var dot = 0;
-          for (var i = 0; i < vector1.length; i++) {
-            dot += vector1[i] * vector2[i];
-          }
-          return dot;
-        }
-
-        /**
-             * Returns the matrix product between this and other
-             * @param {Matrix} other
-             * @return {Matrix}
-             */
-        mmul(other) {
-          other = this.constructor.checkMatrix(other);
-          if (this.columns !== other.rows) {
-            // eslint-disable-next-line no-console
-            console.warn('Number of columns of left matrix are not equal to number of rows of right matrix.');
-          }
-
-          var m = this.rows;
-          var n = this.columns;
-          var p = other.columns;
-
-          var result = new this.constructor[Symbol.species](m, p);
-
-          var Bcolj = new Array(n);
-          for (var j = 0; j < p; j++) {
-            for (var k = 0; k < n; k++) {
-              Bcolj[k] = other.get(k, j);
-            }
-
-            for (var i = 0; i < m; i++) {
-              var s = 0;
-              for (k = 0; k < n; k++) {
-                s += this.get(i, k) * Bcolj[k];
-              }
-
-              result.set(i, j, s);
-            }
-          }
-          return result;
-        }
-
-        strassen2x2(other) {
-          var result = new this.constructor[Symbol.species](2, 2);
-          const a11 = this.get(0, 0);
-          const b11 = other.get(0, 0);
-          const a12 = this.get(0, 1);
-          const b12 = other.get(0, 1);
-          const a21 = this.get(1, 0);
-          const b21 = other.get(1, 0);
-          const a22 = this.get(1, 1);
-          const b22 = other.get(1, 1);
-
-          // Compute intermediate values.
-          const m1 = (a11 + a22) * (b11 + b22);
-          const m2 = (a21 + a22) * b11;
-          const m3 = a11 * (b12 - b22);
-          const m4 = a22 * (b21 - b11);
-          const m5 = (a11 + a12) * b22;
-          const m6 = (a21 - a11) * (b11 + b12);
-          const m7 = (a12 - a22) * (b21 + b22);
-
-          // Combine intermediate values into the output.
-          const c00 = m1 + m4 - m5 + m7;
-          const c01 = m3 + m5;
-          const c10 = m2 + m4;
-          const c11 = m1 - m2 + m3 + m6;
-
-          result.set(0, 0, c00);
-          result.set(0, 1, c01);
-          result.set(1, 0, c10);
-          result.set(1, 1, c11);
-          return result;
-        }
-
-        strassen3x3(other) {
-          var result = new this.constructor[Symbol.species](3, 3);
-
-          const a00 = this.get(0, 0);
-          const a01 = this.get(0, 1);
-          const a02 = this.get(0, 2);
-          const a10 = this.get(1, 0);
-          const a11 = this.get(1, 1);
-          const a12 = this.get(1, 2);
-          const a20 = this.get(2, 0);
-          const a21 = this.get(2, 1);
-          const a22 = this.get(2, 2);
-
-          const b00 = other.get(0, 0);
-          const b01 = other.get(0, 1);
-          const b02 = other.get(0, 2);
-          const b10 = other.get(1, 0);
-          const b11 = other.get(1, 1);
-          const b12 = other.get(1, 2);
-          const b20 = other.get(2, 0);
-          const b21 = other.get(2, 1);
-          const b22 = other.get(2, 2);
-
-          const m1 = (a00 + a01 + a02 - a10 - a11 - a21 - a22) * b11;
-          const m2 = (a00 - a10) * (-b01 + b11);
-          const m3 = a11 * (-b00 + b01 + b10 - b11 - b12 - b20 + b22);
-          const m4 = (-a00 + a10 + a11) * (b00 - b01 + b11);
-          const m5 = (a10 + a11) * (-b00 + b01);
-          const m6 = a00 * b00;
-          const m7 = (-a00 + a20 + a21) * (b00 - b02 + b12);
-          const m8 = (-a00 + a20) * (b02 - b12);
-          const m9 = (a20 + a21) * (-b00 + b02);
-          const m10 = (a00 + a01 + a02 - a11 - a12 - a20 - a21) * b12;
-          const m11 = a21 * (-b00 + b02 + b10 - b11 - b12 - b20 + b21);
-          const m12 = (-a02 + a21 + a22) * (b11 + b20 - b21);
-          const m13 = (a02 - a22) * (b11 - b21);
-          const m14 = a02 * b20;
-          const m15 = (a21 + a22) * (-b20 + b21);
-          const m16 = (-a02 + a11 + a12) * (b12 + b20 - b22);
-          const m17 = (a02 - a12) * (b12 - b22);
-          const m18 = (a11 + a12) * (-b20 + b22);
-          const m19 = a01 * b10;
-          const m20 = a12 * b21;
-          const m21 = a10 * b02;
-          const m22 = a20 * b01;
-          const m23 = a22 * b22;
-
-          const c00 = m6 + m14 + m19;
-          const c01 = m1 + m4 + m5 + m6 + m12 + m14 + m15;
-          const c02 = m6 + m7 + m9 + m10 + m14 + m16 + m18;
-          const c10 = m2 + m3 + m4 + m6 + m14 + m16 + m17;
-          const c11 = m2 + m4 + m5 + m6 + m20;
-          const c12 = m14 + m16 + m17 + m18 + m21;
-          const c20 = m6 + m7 + m8 + m11 + m12 + m13 + m14;
-          const c21 = m12 + m13 + m14 + m15 + m22;
-          const c22 = m6 + m7 + m8 + m9 + m23;
-
-          result.set(0, 0, c00);
-          result.set(0, 1, c01);
-          result.set(0, 2, c02);
-          result.set(1, 0, c10);
-          result.set(1, 1, c11);
-          result.set(1, 2, c12);
-          result.set(2, 0, c20);
-          result.set(2, 1, c21);
-          result.set(2, 2, c22);
-          return result;
-        }
-
-        /**
-             * Returns the matrix product between x and y. More efficient than mmul(other) only when we multiply squared matrix and when the size of the matrix is > 1000.
-             * @param {Matrix} y
-             * @return {Matrix}
-             */
-        mmulStrassen(y) {
-          var x = this.clone();
-          var r1 = x.rows;
-          var c1 = x.columns;
-          var r2 = y.rows;
-          var c2 = y.columns;
-          if (c1 !== r2) {
-            // eslint-disable-next-line no-console
-            console.warn(`Multiplying ${r1} x ${c1} and ${r2} x ${c2} matrix: dimensions do not match.`);
-          }
-
-          // Put a matrix into the top left of a matrix of zeros.
-          // `rows` and `cols` are the dimensions of the output matrix.
-          function embed(mat, rows, cols) {
-            var r = mat.rows;
-            var c = mat.columns;
-            if ((r === rows) && (c === cols)) {
-              return mat;
-            } else {
-              var resultat = Matrix.zeros(rows, cols);
-              resultat = resultat.setSubMatrix(mat, 0, 0);
-              return resultat;
-            }
-          }
-
-
-          // Make sure both matrices are the same size.
-          // This is exclusively for simplicity:
-          // this algorithm can be implemented with matrices of different sizes.
-
-          var r = Math.max(r1, r2);
-          var c = Math.max(c1, c2);
-          x = embed(x, r, c);
-          y = embed(y, r, c);
-
-          // Our recursive multiplication function.
-          function blockMult(a, b, rows, cols) {
-            // For small matrices, resort to naive multiplication.
-            if (rows <= 512 || cols <= 512) {
-              return a.mmul(b); // a is equivalent to this
-            }
-
-            // Apply dynamic padding.
-            if ((rows % 2 === 1) && (cols % 2 === 1)) {
-              a = embed(a, rows + 1, cols + 1);
-              b = embed(b, rows + 1, cols + 1);
-            } else if (rows % 2 === 1) {
-              a = embed(a, rows + 1, cols);
-              b = embed(b, rows + 1, cols);
-            } else if (cols % 2 === 1) {
-              a = embed(a, rows, cols + 1);
-              b = embed(b, rows, cols + 1);
-            }
-
-            var halfRows = parseInt(a.rows / 2, 10);
-            var halfCols = parseInt(a.columns / 2, 10);
-            // Subdivide input matrices.
-            var a11 = a.subMatrix(0, halfRows - 1, 0, halfCols - 1);
-            var b11 = b.subMatrix(0, halfRows - 1, 0, halfCols - 1);
-
-            var a12 = a.subMatrix(0, halfRows - 1, halfCols, a.columns - 1);
-            var b12 = b.subMatrix(0, halfRows - 1, halfCols, b.columns - 1);
-
-            var a21 = a.subMatrix(halfRows, a.rows - 1, 0, halfCols - 1);
-            var b21 = b.subMatrix(halfRows, b.rows - 1, 0, halfCols - 1);
-
-            var a22 = a.subMatrix(halfRows, a.rows - 1, halfCols, a.columns - 1);
-            var b22 = b.subMatrix(halfRows, b.rows - 1, halfCols, b.columns - 1);
-
-            // Compute intermediate values.
-            var m1 = blockMult(Matrix.add(a11, a22), Matrix.add(b11, b22), halfRows, halfCols);
-            var m2 = blockMult(Matrix.add(a21, a22), b11, halfRows, halfCols);
-            var m3 = blockMult(a11, Matrix.sub(b12, b22), halfRows, halfCols);
-            var m4 = blockMult(a22, Matrix.sub(b21, b11), halfRows, halfCols);
-            var m5 = blockMult(Matrix.add(a11, a12), b22, halfRows, halfCols);
-            var m6 = blockMult(Matrix.sub(a21, a11), Matrix.add(b11, b12), halfRows, halfCols);
-            var m7 = blockMult(Matrix.sub(a12, a22), Matrix.add(b21, b22), halfRows, halfCols);
-
-            // Combine intermediate values into the output.
-            var c11 = Matrix.add(m1, m4);
-            c11.sub(m5);
-            c11.add(m7);
-            var c12 = Matrix.add(m3, m5);
-            var c21 = Matrix.add(m2, m4);
-            var c22 = Matrix.sub(m1, m2);
-            c22.add(m3);
-            c22.add(m6);
-
-            // Crop output to the desired size (undo dynamic padding).
-            var resultat = Matrix.zeros(2 * c11.rows, 2 * c11.columns);
-            resultat = resultat.setSubMatrix(c11, 0, 0);
-            resultat = resultat.setSubMatrix(c12, c11.rows, 0);
-            resultat = resultat.setSubMatrix(c21, 0, c11.columns);
-            resultat = resultat.setSubMatrix(c22, c11.rows, c11.columns);
-            return resultat.subMatrix(0, rows - 1, 0, cols - 1);
-          }
-          return blockMult(x, y, r, c);
-        }
-
-        /**
-             * Returns a row-by-row scaled matrix
-             * @param {number} [min=0] - Minimum scaled value
-             * @param {number} [max=1] - Maximum scaled value
-             * @return {Matrix} - The scaled matrix
-             */
-        scaleRows(min, max) {
-          min = min === undefined ? 0 : min;
-          max = max === undefined ? 1 : max;
-          if (min >= max) {
-            throw new RangeError('min should be strictly smaller than max');
-          }
-          var newMatrix = this.constructor.empty(this.rows, this.columns);
-          for (var i = 0; i < this.rows; i++) {
-            var scaled = rescale(this.getRow(i), { min, max });
-            newMatrix.setRow(i, scaled);
-          }
-          return newMatrix;
-        }
-
-        /**
-             * Returns a new column-by-column scaled matrix
-             * @param {number} [min=0] - Minimum scaled value
-             * @param {number} [max=1] - Maximum scaled value
-             * @return {Matrix} - The new scaled matrix
-             * @example
-             * var matrix = new Matrix([[1,2],[-1,0]]);
-             * var scaledMatrix = matrix.scaleColumns(); // [[1,1],[0,0]]
-             */
-        scaleColumns(min, max) {
-          min = min === undefined ? 0 : min;
-          max = max === undefined ? 1 : max;
-          if (min >= max) {
-            throw new RangeError('min should be strictly smaller than max');
-          }
-          var newMatrix = this.constructor.empty(this.rows, this.columns);
-          for (var i = 0; i < this.columns; i++) {
-            var scaled = rescale(this.getColumn(i), {
-              min: min,
-              max: max
-            });
-            newMatrix.setColumn(i, scaled);
-          }
-          return newMatrix;
-        }
-
-
-        /**
-             * Returns the Kronecker product (also known as tensor product) between this and other
-             * See https://en.wikipedia.org/wiki/Kronecker_product
-             * @param {Matrix} other
-             * @return {Matrix}
-             */
-        kroneckerProduct(other) {
-          other = this.constructor.checkMatrix(other);
-
-          var m = this.rows;
-          var n = this.columns;
-          var p = other.rows;
-          var q = other.columns;
-
-          var result = new this.constructor[Symbol.species](m * p, n * q);
-          for (var i = 0; i < m; i++) {
-            for (var j = 0; j < n; j++) {
-              for (var k = 0; k < p; k++) {
-                for (var l = 0; l < q; l++) {
-                  result[p * i + k][q * j + l] = this.get(i, j) * other.get(k, l);
-                }
-              }
-            }
-          }
-          return result;
-        }
-
-        /**
-             * Transposes the matrix and returns a new one containing the result
-             * @return {Matrix}
-             */
-        transpose() {
-          var result = new this.constructor[Symbol.species](this.columns, this.rows);
-          for (var i = 0; i < this.rows; i++) {
-            for (var j = 0; j < this.columns; j++) {
-              result.set(j, i, this.get(i, j));
-            }
-          }
-          return result;
-        }
-
-        /**
-             * Sorts the rows (in place)
-             * @param {function} compareFunction - usual Array.prototype.sort comparison function
-             * @return {Matrix} this
-             */
-        sortRows(compareFunction) {
-          if (compareFunction === undefined) compareFunction = compareNumbers;
-          for (var i = 0; i < this.rows; i++) {
-            this.setRow(i, this.getRow(i).sort(compareFunction));
-          }
-          return this;
-        }
-
-        /**
-             * Sorts the columns (in place)
-             * @param {function} compareFunction - usual Array.prototype.sort comparison function
-             * @return {Matrix} this
-             */
-        sortColumns(compareFunction) {
-          if (compareFunction === undefined) compareFunction = compareNumbers;
-          for (var i = 0; i < this.columns; i++) {
-            this.setColumn(i, this.getColumn(i).sort(compareFunction));
-          }
-          return this;
-        }
-
-        /**
-             * Returns a subset of the matrix
-             * @param {number} startRow - First row index
-             * @param {number} endRow - Last row index
-             * @param {number} startColumn - First column index
-             * @param {number} endColumn - Last column index
-             * @return {Matrix}
-             */
-        subMatrix(startRow, endRow, startColumn, endColumn) {
-          checkRange(this, startRow, endRow, startColumn, endColumn);
-          var newMatrix = new this.constructor[Symbol.species](endRow - startRow + 1, endColumn - startColumn + 1);
-          for (var i = startRow; i <= endRow; i++) {
-            for (var j = startColumn; j <= endColumn; j++) {
-              newMatrix[i - startRow][j - startColumn] = this.get(i, j);
-            }
-          }
-          return newMatrix;
-        }
-
-        /**
-             * Returns a subset of the matrix based on an array of row indices
-             * @param {Array} indices - Array containing the row indices
-             * @param {number} [startColumn = 0] - First column index
-             * @param {number} [endColumn = this.columns-1] - Last column index
-             * @return {Matrix}
-             */
-        subMatrixRow(indices, startColumn, endColumn) {
-          if (startColumn === undefined) startColumn = 0;
-          if (endColumn === undefined) endColumn = this.columns - 1;
-          if ((startColumn > endColumn) || (startColumn < 0) || (startColumn >= this.columns) || (endColumn < 0) || (endColumn >= this.columns)) {
-            throw new RangeError('Argument out of range');
-          }
-
-          var newMatrix = new this.constructor[Symbol.species](indices.length, endColumn - startColumn + 1);
-          for (var i = 0; i < indices.length; i++) {
-            for (var j = startColumn; j <= endColumn; j++) {
-              if (indices[i] < 0 || indices[i] >= this.rows) {
-                throw new RangeError(`Row index out of range: ${indices[i]}`);
-              }
-              newMatrix.set(i, j - startColumn, this.get(indices[i], j));
-            }
-          }
-          return newMatrix;
-        }
-
-        /**
-             * Returns a subset of the matrix based on an array of column indices
-             * @param {Array} indices - Array containing the column indices
-             * @param {number} [startRow = 0] - First row index
-             * @param {number} [endRow = this.rows-1] - Last row index
-             * @return {Matrix}
-             */
-        subMatrixColumn(indices, startRow, endRow) {
-          if (startRow === undefined) startRow = 0;
-          if (endRow === undefined) endRow = this.rows - 1;
-          if ((startRow > endRow) || (startRow < 0) || (startRow >= this.rows) || (endRow < 0) || (endRow >= this.rows)) {
-            throw new RangeError('Argument out of range');
-          }
-
-          var newMatrix = new this.constructor[Symbol.species](endRow - startRow + 1, indices.length);
-          for (var i = 0; i < indices.length; i++) {
-            for (var j = startRow; j <= endRow; j++) {
-              if (indices[i] < 0 || indices[i] >= this.columns) {
-                throw new RangeError(`Column index out of range: ${indices[i]}`);
-              }
-              newMatrix.set(j - startRow, i, this.get(j, indices[i]));
-            }
-          }
-          return newMatrix;
-        }
-
-        /**
-             * Set a part of the matrix to the given sub-matrix
-             * @param {Matrix|Array< Array >} matrix - The source matrix from which to extract values.
-             * @param {number} startRow - The index of the first row to set
-             * @param {number} startColumn - The index of the first column to set
-             * @return {Matrix}
-             */
-        setSubMatrix(matrix, startRow, startColumn) {
-          matrix = this.constructor.checkMatrix(matrix);
-          var endRow = startRow + matrix.rows - 1;
-          var endColumn = startColumn + matrix.columns - 1;
-          checkRange(this, startRow, endRow, startColumn, endColumn);
-          for (var i = 0; i < matrix.rows; i++) {
-            for (var j = 0; j < matrix.columns; j++) {
-              this[startRow + i][startColumn + j] = matrix.get(i, j);
-            }
-          }
-          return this;
-        }
-
-        /**
-             * Return a new matrix based on a selection of rows and columns
-             * @param {Array<number>} rowIndices - The row indices to select. Order matters and an index can be more than once.
-             * @param {Array<number>} columnIndices - The column indices to select. Order matters and an index can be use more than once.
-             * @return {Matrix} The new matrix
-             */
-        selection(rowIndices, columnIndices) {
-          var indices = checkIndices(this, rowIndices, columnIndices);
-          var newMatrix = new this.constructor[Symbol.species](rowIndices.length, columnIndices.length);
-          for (var i = 0; i < indices.row.length; i++) {
-            var rowIndex = indices.row[i];
-            for (var j = 0; j < indices.column.length; j++) {
-              var columnIndex = indices.column[j];
-              newMatrix[i][j] = this.get(rowIndex, columnIndex);
-            }
-          }
-          return newMatrix;
-        }
-
-        /**
-             * Returns the trace of the matrix (sum of the diagonal elements)
-             * @return {number}
-             */
-        trace() {
-          var min = Math.min(this.rows, this.columns);
-          var trace = 0;
-          for (var i = 0; i < min; i++) {
-            trace += this.get(i, i);
-          }
-          return trace;
-        }
-
-        /*
-             Matrix views
-             */
-
-        /**
-             * Returns a view of the transposition of the matrix
-             * @return {MatrixTransposeView}
-             */
-        transposeView() {
-          return new MatrixTransposeView(this);
-        }
-
-        /**
-             * Returns a view of the row vector with the given index
-             * @param {number} row - row index of the vector
-             * @return {MatrixRowView}
-             */
-        rowView(row) {
-          checkRowIndex(this, row);
-          return new MatrixRowView(this, row);
-        }
-
-        /**
-             * Returns a view of the column vector with the given index
-             * @param {number} column - column index of the vector
-             * @return {MatrixColumnView}
-             */
-        columnView(column) {
-          checkColumnIndex(this, column);
-          return new MatrixColumnView(this, column);
-        }
-
-        /**
-             * Returns a view of the matrix flipped in the row axis
-             * @return {MatrixFlipRowView}
-             */
-        flipRowView() {
-          return new MatrixFlipRowView(this);
-        }
-
-        /**
-             * Returns a view of the matrix flipped in the column axis
-             * @return {MatrixFlipColumnView}
-             */
-        flipColumnView() {
-          return new MatrixFlipColumnView(this);
-        }
-
-        /**
-             * Returns a view of a submatrix giving the index boundaries
-             * @param {number} startRow - first row index of the submatrix
-             * @param {number} endRow - last row index of the submatrix
-             * @param {number} startColumn - first column index of the submatrix
-             * @param {number} endColumn - last column index of the submatrix
-             * @return {MatrixSubView}
-             */
-        subMatrixView(startRow, endRow, startColumn, endColumn) {
-          return new MatrixSubView(this, startRow, endRow, startColumn, endColumn);
-        }
-
-        /**
-             * Returns a view of the cross of the row indices and the column indices
-             * @example
-             * // resulting vector is [[2], [2]]
-             * var matrix = new Matrix([[1,2,3], [4,5,6]]).selectionView([0, 0], [1])
-             * @param {Array<number>} rowIndices
-             * @param {Array<number>} columnIndices
-             * @return {MatrixSelectionView}
-             */
-        selectionView(rowIndices, columnIndices) {
-          return new MatrixSelectionView(this, rowIndices, columnIndices);
-        }
-
-        /**
-             * Returns a view of the row indices
-             * @example
-             * // resulting vector is [[1,2,3], [1,2,3]]
-             * var matrix = new Matrix([[1,2,3], [4,5,6]]).rowSelectionView([0, 0])
-             * @param {Array<number>} rowIndices
-             * @return {MatrixRowSelectionView}
-             */
-        rowSelectionView(rowIndices) {
-          return new MatrixRowSelectionView(this, rowIndices);
-        }
-
-        /**
-             * Returns a view of the column indices
-             * @example
-             * // resulting vector is [[2, 2], [5, 5]]
-             * var matrix = new Matrix([[1,2,3], [4,5,6]]).columnSelectionView([1, 1])
-             * @param {Array<number>} columnIndices
-             * @return {MatrixColumnSelectionView}
-             */
-        columnSelectionView(columnIndices) {
-          return new MatrixColumnSelectionView(this, columnIndices);
-        }
-
-
-        /**
-            * Calculates and returns the determinant of a matrix as a Number
-            * @example
-            *   new Matrix([[1,2,3], [4,5,6]]).det()
-            * @return {number}
-            */
-        det() {
-          if (this.isSquare()) {
-            var a, b, c, d;
-            if (this.columns === 2) {
-              // 2 x 2 matrix
-              a = this.get(0, 0);
-              b = this.get(0, 1);
-              c = this.get(1, 0);
-              d = this.get(1, 1);
-
-              return a * d - (b * c);
-            } else if (this.columns === 3) {
-              // 3 x 3 matrix
-              var subMatrix0, subMatrix1, subMatrix2;
-              subMatrix0 = this.selectionView([1, 2], [1, 2]);
-              subMatrix1 = this.selectionView([1, 2], [0, 2]);
-              subMatrix2 = this.selectionView([1, 2], [0, 1]);
-              a = this.get(0, 0);
-              b = this.get(0, 1);
-              c = this.get(0, 2);
-
-              return a * subMatrix0.det() - b * subMatrix1.det() + c * subMatrix2.det();
-            } else {
-              // general purpose determinant using the LU decomposition
-              return new LuDecomposition$$1(this).determinant;
-            }
-          } else {
-            throw Error('Determinant can only be calculated for a square matrix.');
-          }
-        }
-
-        /**
-             * Returns inverse of a matrix if it exists or the pseudoinverse
-             * @param {number} threshold - threshold for taking inverse of singular values (default = 1e-15)
-             * @return {Matrix} the (pseudo)inverted matrix.
-             */
-        pseudoInverse(threshold) {
-          if (threshold === undefined) threshold = Number.EPSILON;
-          var svdSolution = new SingularValueDecomposition$$1(this, { autoTranspose: true });
-
-          var U = svdSolution.leftSingularVectors;
-          var V = svdSolution.rightSingularVectors;
-          var s = svdSolution.diagonal;
-
-          for (var i = 0; i < s.length; i++) {
-            if (Math.abs(s[i]) > threshold) {
-              s[i] = 1.0 / s[i];
-            } else {
-              s[i] = 0.0;
-            }
-          }
-
-          // convert list to diagonal
-          s = this.constructor[Symbol.species].diag(s);
-          return V.mmul(s.mmul(U.transposeView()));
-        }
-
-        /**
-             * Creates an exact and independent copy of the matrix
-             * @return {Matrix}
-             */
-        clone() {
-          var newMatrix = new this.constructor[Symbol.species](this.rows, this.columns);
-          for (var row = 0; row < this.rows; row++) {
-            for (var column = 0; column < this.columns; column++) {
-              newMatrix.set(row, column, this.get(row, column));
-            }
-          }
-          return newMatrix;
-        }
-      }
-
-      Matrix.prototype.klass = 'Matrix';
-
-      function compareNumbers(a, b) {
-        return a - b;
-      }
-
-      /*
-         Synonyms
-         */
-
-      Matrix.random = Matrix.rand;
-      Matrix.diagonal = Matrix.diag;
-      Matrix.prototype.diagonal = Matrix.prototype.diag;
-      Matrix.identity = Matrix.eye;
-      Matrix.prototype.negate = Matrix.prototype.neg;
-      Matrix.prototype.tensorProduct = Matrix.prototype.kroneckerProduct;
-      Matrix.prototype.determinant = Matrix.prototype.det;
-
-      /*
-         Add dynamically instance and static methods for mathematical operations
-         */
-
-      var inplaceOperator = `
-(function %name%(value) {
-    if (typeof value === 'number') return this.%name%S(value);
-    return this.%name%M(value);
-})
-`;
-
-      var inplaceOperatorScalar = `
-(function %name%S(value) {
-    for (var i = 0; i < this.rows; i++) {
-        for (var j = 0; j < this.columns; j++) {
-            this.set(i, j, this.get(i, j) %op% value);
-        }
-    }
-    return this;
-})
-`;
-
-      var inplaceOperatorMatrix = `
-(function %name%M(matrix) {
-    matrix = this.constructor.checkMatrix(matrix);
-    if (this.rows !== matrix.rows ||
-        this.columns !== matrix.columns) {
-        throw new RangeError('Matrices dimensions must be equal');
-    }
-    for (var i = 0; i < this.rows; i++) {
-        for (var j = 0; j < this.columns; j++) {
-            this.set(i, j, this.get(i, j) %op% matrix.get(i, j));
-        }
-    }
-    return this;
-})
-`;
-
-      var staticOperator = `
-(function %name%(matrix, value) {
-    var newMatrix = new this[Symbol.species](matrix);
-    return newMatrix.%name%(value);
-})
-`;
-
-      var inplaceMethod = `
-(function %name%() {
-    for (var i = 0; i < this.rows; i++) {
-        for (var j = 0; j < this.columns; j++) {
-            this.set(i, j, %method%(this.get(i, j)));
-        }
-    }
-    return this;
-})
-`;
-
-      var staticMethod = `
-(function %name%(matrix) {
-    var newMatrix = new this[Symbol.species](matrix);
-    return newMatrix.%name%();
-})
-`;
-
-      var inplaceMethodWithArgs = `
-(function %name%(%args%) {
-    for (var i = 0; i < this.rows; i++) {
-        for (var j = 0; j < this.columns; j++) {
-            this.set(i, j, %method%(this.get(i, j), %args%));
-        }
-    }
-    return this;
-})
-`;
-
-      var staticMethodWithArgs = `
-(function %name%(matrix, %args%) {
-    var newMatrix = new this[Symbol.species](matrix);
-    return newMatrix.%name%(%args%);
-})
-`;
-
-
-      var inplaceMethodWithOneArgScalar = `
-(function %name%S(value) {
-    for (var i = 0; i < this.rows; i++) {
-        for (var j = 0; j < this.columns; j++) {
-            this.set(i, j, %method%(this.get(i, j), value));
-        }
-    }
-    return this;
-})
-`;
-      var inplaceMethodWithOneArgMatrix = `
-(function %name%M(matrix) {
-    matrix = this.constructor.checkMatrix(matrix);
-    if (this.rows !== matrix.rows ||
-        this.columns !== matrix.columns) {
-        throw new RangeError('Matrices dimensions must be equal');
-    }
-    for (var i = 0; i < this.rows; i++) {
-        for (var j = 0; j < this.columns; j++) {
-            this.set(i, j, %method%(this.get(i, j), matrix.get(i, j)));
-        }
-    }
-    return this;
-})
-`;
-
-      var inplaceMethodWithOneArg = `
-(function %name%(value) {
-    if (typeof value === 'number') return this.%name%S(value);
-    return this.%name%M(value);
-})
-`;
-
-      var staticMethodWithOneArg = staticMethodWithArgs;
-
-      var operators = [
-        // Arithmetic operators
-        ['+', 'add'],
-        ['-', 'sub', 'subtract'],
-        ['*', 'mul', 'multiply'],
-        ['/', 'div', 'divide'],
-        ['%', 'mod', 'modulus'],
-        // Bitwise operators
-        ['&', 'and'],
-        ['|', 'or'],
-        ['^', 'xor'],
-        ['<<', 'leftShift'],
-        ['>>', 'signPropagatingRightShift'],
-        ['>>>', 'rightShift', 'zeroFillRightShift']
-      ];
-
-      var i;
-      var eval2 = eval; // eslint-disable-line no-eval
-      for (var operator of operators) {
-        var inplaceOp = eval2(fillTemplateFunction(inplaceOperator, { name: operator[1], op: operator[0] }));
-        var inplaceOpS = eval2(fillTemplateFunction(inplaceOperatorScalar, { name: `${operator[1]}S`, op: operator[0] }));
-        var inplaceOpM = eval2(fillTemplateFunction(inplaceOperatorMatrix, { name: `${operator[1]}M`, op: operator[0] }));
-        var staticOp = eval2(fillTemplateFunction(staticOperator, { name: operator[1] }));
-        for (i = 1; i < operator.length; i++) {
-          Matrix.prototype[operator[i]] = inplaceOp;
-          Matrix.prototype[`${operator[i]}S`] = inplaceOpS;
-          Matrix.prototype[`${operator[i]}M`] = inplaceOpM;
-          Matrix[operator[i]] = staticOp;
-        }
-      }
-
-      var methods = [['~', 'not']];
-
-      [
-        'abs', 'acos', 'acosh', 'asin', 'asinh', 'atan', 'atanh', 'cbrt', 'ceil',
-        'clz32', 'cos', 'cosh', 'exp', 'expm1', 'floor', 'fround', 'log', 'log1p',
-        'log10', 'log2', 'round', 'sign', 'sin', 'sinh', 'sqrt', 'tan', 'tanh', 'trunc'
-      ].forEach(function (mathMethod) {
-        methods.push([`Math.${mathMethod}`, mathMethod]);
-      });
-
-      for (var method of methods) {
-        var inplaceMeth = eval2(fillTemplateFunction(inplaceMethod, { name: method[1], method: method[0] }));
-        var staticMeth = eval2(fillTemplateFunction(staticMethod, { name: method[1] }));
-        for (i = 1; i < method.length; i++) {
-          Matrix.prototype[method[i]] = inplaceMeth;
-          Matrix[method[i]] = staticMeth;
-        }
-      }
-
-      var methodsWithArgs = [['Math.pow', 1, 'pow']];
-
-      for (var methodWithArg of methodsWithArgs) {
-        var args = 'arg0';
-        for (i = 1; i < methodWithArg[1]; i++) {
-          args += `, arg${i}`;
-        }
-        if (methodWithArg[1] !== 1) {
-          var inplaceMethWithArgs = eval2(fillTemplateFunction(inplaceMethodWithArgs, {
-            name: methodWithArg[2],
-            method: methodWithArg[0],
-            args: args
-          }));
-          var staticMethWithArgs = eval2(fillTemplateFunction(staticMethodWithArgs, { name: methodWithArg[2], args: args }));
-          for (i = 2; i < methodWithArg.length; i++) {
-            Matrix.prototype[methodWithArg[i]] = inplaceMethWithArgs;
-            Matrix[methodWithArg[i]] = staticMethWithArgs;
-          }
-        } else {
-          var tmplVar = {
-            name: methodWithArg[2],
-            args: args,
-            method: methodWithArg[0]
-          };
-          var inplaceMethod2 = eval2(fillTemplateFunction(inplaceMethodWithOneArg, tmplVar));
-          var inplaceMethodS = eval2(fillTemplateFunction(inplaceMethodWithOneArgScalar, tmplVar));
-          var inplaceMethodM = eval2(fillTemplateFunction(inplaceMethodWithOneArgMatrix, tmplVar));
-          var staticMethod2 = eval2(fillTemplateFunction(staticMethodWithOneArg, tmplVar));
-          for (i = 2; i < methodWithArg.length; i++) {
-            Matrix.prototype[methodWithArg[i]] = inplaceMethod2;
-            Matrix.prototype[`${methodWithArg[i]}M`] = inplaceMethodM;
-            Matrix.prototype[`${methodWithArg[i]}S`] = inplaceMethodS;
-            Matrix[methodWithArg[i]] = staticMethod2;
-          }
-        }
-      }
-
-      function fillTemplateFunction(template, values) {
-        for (var value in values) {
-          template = template.replace(new RegExp(`%${value}%`, 'g'), values[value]);
-        }
-        return template;
-      }
-
-      return Matrix;
-    }
-
-    class Matrix extends AbstractMatrix(Array) {
-      constructor(nRows, nColumns) {
-        var i;
-        if (arguments.length === 1 && typeof nRows === 'number') {
-          return new Array(nRows);
-        }
-        if (Matrix.isMatrix(nRows)) {
-          return nRows.clone();
-        } else if (Number.isInteger(nRows) && nRows > 0) {
-          // Create an empty matrix
-          super(nRows);
-          if (Number.isInteger(nColumns) && nColumns > 0) {
-            for (i = 0; i < nRows; i++) {
-              this[i] = new Array(nColumns);
-            }
-          } else {
-            throw new TypeError('nColumns must be a positive integer');
-          }
-        } else if (Array.isArray(nRows)) {
-          // Copy the values from the 2D array
-          const matrix = nRows;
-          nRows = matrix.length;
-          nColumns = matrix[0].length;
-          if (typeof nColumns !== 'number' || nColumns === 0) {
-            throw new TypeError(
-              'Data must be a 2D array with at least one element'
-            );
-          }
-          super(nRows);
-          for (i = 0; i < nRows; i++) {
-            if (matrix[i].length !== nColumns) {
-              throw new RangeError('Inconsistent array dimensions');
-            }
-            this[i] = [].concat(matrix[i]);
-          }
-        } else {
-          throw new TypeError(
-            'First argument must be a positive number or an array'
-          );
-        }
-        this.rows = nRows;
-        this.columns = nColumns;
-        return this;
-      }
-
-      set(rowIndex, columnIndex, value) {
-        this[rowIndex][columnIndex] = value;
-        return this;
-      }
-
-      get(rowIndex, columnIndex) {
-        return this[rowIndex][columnIndex];
-      }
-
-      /**
-       * Removes a row from the given index
-       * @param {number} index - Row index
-       * @return {Matrix} this
-       */
-      removeRow(index) {
-        checkRowIndex(this, index);
-        if (this.rows === 1) {
-          throw new RangeError('A matrix cannot have less than one row');
-        }
-        this.splice(index, 1);
-        this.rows -= 1;
-        return this;
-      }
-
-      /**
-       * Adds a row at the given index
-       * @param {number} [index = this.rows] - Row index
-       * @param {Array|Matrix} array - Array or vector
-       * @return {Matrix} this
-       */
-      addRow(index, array) {
-        if (array === undefined) {
-          array = index;
-          index = this.rows;
-        }
-        checkRowIndex(this, index, true);
-        array = checkRowVector(this, array, true);
-        this.splice(index, 0, array);
-        this.rows += 1;
-        return this;
-      }
-
-      /**
-       * Removes a column from the given index
-       * @param {number} index - Column index
-       * @return {Matrix} this
-       */
-      removeColumn(index) {
-        checkColumnIndex(this, index);
-        if (this.columns === 1) {
-          throw new RangeError('A matrix cannot have less than one column');
-        }
-        for (var i = 0; i < this.rows; i++) {
-          this[i].splice(index, 1);
-        }
-        this.columns -= 1;
-        return this;
-      }
-
-      /**
-       * Adds a column at the given index
-       * @param {number} [index = this.columns] - Column index
-       * @param {Array|Matrix} array - Array or vector
-       * @return {Matrix} this
-       */
-      addColumn(index, array) {
-        if (typeof array === 'undefined') {
-          array = index;
-          index = this.columns;
-        }
-        checkColumnIndex(this, index, true);
-        array = checkColumnVector(this, array);
-        for (var i = 0; i < this.rows; i++) {
-          this[i].splice(index, 0, array[i]);
-        }
-        this.columns += 1;
-        return this;
-      }
-    }
-
-    class WrapperMatrix1D extends AbstractMatrix() {
-      /**
-       * @class WrapperMatrix1D
-       * @param {Array<number>} data
-       * @param {object} [options]
-       * @param {object} [options.rows = 1]
-       */
-      constructor(data, options = {}) {
-        const { rows = 1 } = options;
-
-        if (data.length % rows !== 0) {
-          throw new Error('the data length is not divisible by the number of rows');
-        }
-        super();
-        this.rows = rows;
-        this.columns = data.length / rows;
-        this.data = data;
-      }
-
-      set(rowIndex, columnIndex, value) {
-        var index = this._calculateIndex(rowIndex, columnIndex);
-        this.data[index] = value;
-        return this;
-      }
-
-      get(rowIndex, columnIndex) {
-        var index = this._calculateIndex(rowIndex, columnIndex);
-        return this.data[index];
-      }
-
-      _calculateIndex(row, column) {
-        return row * this.columns + column;
-      }
-
-      static get [Symbol.species]() {
-        return Matrix;
-      }
-    }
-
-    class WrapperMatrix2D extends AbstractMatrix() {
-      /**
-       * @class WrapperMatrix2D
-       * @param {Array<Array<number>>} data
-       */
-      constructor(data) {
-        super();
-        this.data = data;
-        this.rows = data.length;
-        this.columns = data[0].length;
-      }
-
-      set(rowIndex, columnIndex, value) {
-        this.data[rowIndex][columnIndex] = value;
-        return this;
-      }
-
-      get(rowIndex, columnIndex) {
-        return this.data[rowIndex][columnIndex];
-      }
-
-      static get [Symbol.species]() {
-        return Matrix;
-      }
-    }
-
-    /**
-     * Choose K different random points from the original data
-     * @ignore
-     * @param {Array<Array<number>>} data - Points in the format to cluster [x,y,z,...]
-     * @param {number} K - number of clusters
-     * @param {number} seed - seed for random number generation
-     * @return {Array<Array<number>>} - Initial random points
-     */
-    function random$1(data, K, seed) {
-      const random = new Random(seed);
-      return random.choice(data, { size: K });
-    }
-
-    /**
-     * Chooses the most distant points to a first random pick
-     * @ignore
-     * @param {Array<Array<number>>} data - Points in the format to cluster [x,y,z,...]
-     * @param {number} K - number of clusters
-     * @param {Array<Array<number>>} distanceMatrix - matrix with the distance values
-     * @param {number} seed - seed for random number generation
-     * @return {Array<Array<number>>} - Initial random points
-     */
-    function mostDistant(data, K, distanceMatrix, seed) {
-      const random = new Random(seed);
-      var ans = new Array(K);
-      // chooses a random point as initial cluster
-      ans[0] = Math.floor(random.random() * data.length);
-
-      if (K > 1) {
-        // chooses the more distant point
-        var maxDist = { dist: -1, index: -1 };
-        for (var l = 0; l < data.length; ++l) {
-          if (distanceMatrix[ans[0]][l] > maxDist.dist) {
-            maxDist.dist = distanceMatrix[ans[0]][l];
-            maxDist.index = l;
-          }
-        }
-        ans[1] = maxDist.index;
-
-        if (K > 2) {
-          // chooses the set of points that maximises the min distance
-          for (var k = 2; k < K; ++k) {
-            var center = { dist: -1, index: -1 };
-            for (var m = 0; m < data.length; ++m) {
-              // minimum distance to centers
-              var minDistCent = { dist: Number.MAX_VALUE, index: -1 };
-              for (var n = 0; n < k; ++n) {
-                if (
-                  distanceMatrix[n][m] < minDistCent.dist &&
-                  ans.indexOf(m) === -1
-                ) {
-                  minDistCent = {
-                    dist: distanceMatrix[n][m],
-                    index: m
-                  };
-                }
-              }
-
-              if (
-                minDistCent.dist !== Number.MAX_VALUE &&
-                minDistCent.dist > center.dist
-              ) {
-                center = Object.assign({}, minDistCent);
-              }
-            }
-
-            ans[k] = center.index;
-          }
-        }
-      }
-
-      return ans.map((index) => data[index]);
-    }
-
-    // Implementation inspired from scikit
-    function kmeanspp(X, K, options = {}) {
-      X = new Matrix(X);
-      const nSamples = X.length;
-      const random = new Random(options.seed);
-      // Set the number of trials
-      const centers = [];
-      const localTrials = options.localTrials || 2 + Math.floor(Math.log(K));
-
-      // Pick the first center at random from the dataset
-      const firstCenterIdx = random.randInt(nSamples);
-      centers.push(X[firstCenterIdx].slice());
-
-      // Init closest distances
-      let closestDistSquared = [X.map((x) => squaredEuclidean(x, centers[0]))];
-      let cumSumClosestDistSquared = [cumSum(closestDistSquared[0])];
-      const factor = 1 / cumSumClosestDistSquared[0][nSamples - 1];
-      let probabilities = Matrix.mul(closestDistSquared, factor);
-
-      // Iterate over the remaining centers
-      for (let i = 1; i < K; i++) {
-        const candidateIdx = random.choice(nSamples, {
-          replace: true,
-          size: localTrials,
-          probabilities: probabilities[0]
-        });
-
-        const candidates = X.selection(candidateIdx, range$2(X[0].length));
-        const distanceToCandidates = euclidianDistances(candidates, X);
-
-        let bestCandidate;
-        let bestPot;
-        let bestDistSquared;
-
-        for (let j = 0; j < localTrials; j++) {
-          const newDistSquared = Matrix.min(closestDistSquared, [distanceToCandidates[j]]);
-          const newPot = newDistSquared.sum();
-          if (bestCandidate === undefined || newPot < bestPot) {
-            bestCandidate = candidateIdx[j];
-            bestPot = newPot;
-            bestDistSquared = newDistSquared;
-          }
-        }
-        centers[i] = X[bestCandidate].slice();
-        closestDistSquared = bestDistSquared;
-        cumSumClosestDistSquared = [cumSum(closestDistSquared[0])];
-        probabilities = Matrix.mul(
-          closestDistSquared,
-          1 / cumSumClosestDistSquared[0][nSamples - 1]
-        );
-      }
-      return centers;
-    }
-
-    function euclidianDistances(A, B) {
-      const result = new Matrix(A.length, B.length);
-      for (let i = 0; i < A.length; i++) {
-        for (let j = 0; j < B.length; j++) {
-          result.set(i, j, squaredEuclidean(A.getRow(i), B.getRow(j)));
-        }
-      }
-      return result;
-    }
-
-    function range$2(l) {
-      let r = [];
-      for (let i = 0; i < l; i++) {
-        r.push(i);
-      }
-      return r;
-    }
-
-    function cumSum(arr) {
-      let cumSum = [arr[0]];
-      for (let i = 1; i < arr.length; i++) {
-        cumSum[i] = cumSum[i - 1] + arr[i];
-      }
-      return cumSum;
-    }
-
-    const distanceSymbol = Symbol('distance');
-
-    class KMeansResult {
-      /**
-       * Result of the kmeans algorithm
-       * @param {Array<number>} clusters - the cluster identifier for each data dot
-       * @param {Array<Array<object>>} centroids - the K centers in format [x,y,z,...], the error and size of the cluster
-       * @param {boolean} converged - Converge criteria satisfied
-       * @param {number} iterations - Current number of iterations
-       * @param {function} distance - (*Private*) Distance function to use between the points
-       * @constructor
-       */
-      constructor(clusters, centroids, converged, iterations, distance) {
-        this.clusters = clusters;
-        this.centroids = centroids;
-        this.converged = converged;
-        this.iterations = iterations;
-        this[distanceSymbol] = distance;
-      }
-
-      /**
-       * Allows to compute for a new array of points their cluster id
-       * @param {Array<Array<number>>} data - the [x,y,z,...] points to cluster
-       * @return {Array<number>} - cluster id for each point
-       */
-      nearest(data) {
-        const clusterID = new Array(data.length);
-        const centroids = this.centroids.map(function (centroid) {
-          return centroid.centroid;
-        });
-        return updateClusterID(data, centroids, clusterID, this[distanceSymbol]);
-      }
-
-      /**
-       * Returns a KMeansResult with the error and size of the cluster
-       * @ignore
-       * @param {Array<Array<number>>} data - the [x,y,z,...] points to cluster
-       * @return {KMeansResult}
-       */
-      computeInformation(data) {
-        var enrichedCentroids = this.centroids.map(function (centroid) {
-          return {
-            centroid: centroid,
-            error: 0,
-            size: 0
-          };
-        });
-
-        for (var i = 0; i < data.length; i++) {
-          enrichedCentroids[this.clusters[i]].error += this[distanceSymbol](
-            data[i],
-            this.centroids[this.clusters[i]]
-          );
-          enrichedCentroids[this.clusters[i]].size++;
-        }
-
-        for (var j = 0; j < this.centroids.length; j++) {
-          if (enrichedCentroids[j].size) {
-            enrichedCentroids[j].error /= enrichedCentroids[j].size;
-          } else {
-            enrichedCentroids[j].error = null;
-          }
-        }
-
-        return new KMeansResult(
-          this.clusters,
-          enrichedCentroids,
-          this.converged,
-          this.iterations,
-          this[distanceSymbol]
-        );
-      }
-    }
-
-    const defaultOptions$1 = {
-      maxIterations: 100,
-      tolerance: 1e-6,
-      withIterations: false,
-      initialization: 'kmeans++',
-      distanceFunction: squaredEuclidean
-    };
-
-    /**
-     * Each step operation for kmeans
-     * @ignore
-     * @param {Array<Array<number>>} centers - K centers in format [x,y,z,...]
-     * @param {Array<Array<number>>} data - Points [x,y,z,...] to cluster
-     * @param {Array<number>} clusterID - Cluster identifier for each data dot
-     * @param {number} K - Number of clusters
-     * @param {object} [options] - Option object
-     * @param {number} iterations - Current number of iterations
-     * @return {KMeansResult}
-     */
-    function step$1(centers, data, clusterID, K, options, iterations) {
-      clusterID = updateClusterID(
-        data,
-        centers,
-        clusterID,
-        options.distanceFunction
-      );
-      var newCenters = updateCenters(centers, data, clusterID, K);
-      var converged = hasConverged(
-        newCenters,
-        centers,
-        options.distanceFunction,
-        options.tolerance
-      );
-      return new KMeansResult(
-        clusterID,
-        newCenters,
-        converged,
-        iterations,
-        options.distanceFunction
-      );
-    }
-
-    /**
-     * Generator version for the algorithm
-     * @ignore
-     * @param {Array<Array<number>>} centers - K centers in format [x,y,z,...]
-     * @param {Array<Array<number>>} data - Points [x,y,z,...] to cluster
-     * @param {Array<number>} clusterID - Cluster identifier for each data dot
-     * @param {number} K - Number of clusters
-     * @param {object} [options] - Option object
-     */
-    function* kmeansGenerator(centers, data, clusterID, K, options) {
-      var converged = false;
-      var stepNumber = 0;
-      var stepResult;
-      while (!converged && stepNumber < options.maxIterations) {
-        stepResult = step$1(centers, data, clusterID, K, options, ++stepNumber);
-        yield stepResult.computeInformation(data);
-        converged = stepResult.converged;
-        centers = stepResult.centroids;
-      }
-    }
-
-    /**
-     * K-means algorithm
-     * @param {Array<Array<number>>} data - Points in the format to cluster [x,y,z,...]
-     * @param {number} K - Number of clusters
-     * @param {object} [options] - Option object
-     * @param {number} [options.maxIterations = 100] - Maximum of iterations allowed
-     * @param {number} [options.tolerance = 1e-6] - Error tolerance
-     * @param {boolean} [options.withIterations = false] - Store clusters and centroids for each iteration
-     * @param {function} [options.distanceFunction = squaredDistance] - Distance function to use between the points
-     * @param {number} [options.seed] - Seed for random initialization.
-     * @param {string|Array<Array<number>>} [options.initialization = 'kmeans++'] - K centers in format [x,y,z,...] or a method for initialize the data:
-     *  * You can either specify your custom start centroids, or select one of the following initialization method:
-     *  * `'kmeans++'` will use the kmeans++ method as described by http://ilpubs.stanford.edu:8090/778/1/2006-13.pdf
-     *  * `'random'` will choose K random different values.
-     *  * `'mostDistant'` will choose the more distant points to a first random pick
-     * @return {KMeansResult} - Cluster identifier for each data dot and centroids with the following fields:
-     *  * `'clusters'`: Array of indexes for the clusters.
-     *  * `'centroids'`: Array with the resulting centroids.
-     *  * `'iterations'`: Number of iterations that took to converge
-     */
-    function kmeans(data, K, options) {
-      options = Object.assign({}, defaultOptions$1, options);
-
-      if (K <= 0 || K > data.length || !Number.isInteger(K)) {
-        throw new Error(
-          'K should be a positive integer smaller than the number of points'
-        );
-      }
-
-      var centers;
-      if (Array.isArray(options.initialization)) {
-        if (options.initialization.length !== K) {
-          throw new Error('The initial centers should have the same length as K');
-        } else {
-          centers = options.initialization;
-        }
-      } else {
-        switch (options.initialization) {
-          case 'kmeans++':
-            centers = kmeanspp(data, K, options);
-            break;
-          case 'random':
-            centers = random$1(data, K, options.seed);
-            break;
-          case 'mostDistant':
-            centers = mostDistant(
-              data,
-              K,
-              calculateDistanceMatrix(data, options.distanceFunction),
-              options.seed
-            );
-            break;
-          default:
-            throw new Error(
-              `Unknown initialization method: "${options.initialization}"`
-            );
-        }
-      }
-
-      // infinite loop until convergence
-      if (options.maxIterations === 0) {
-        options.maxIterations = Number.MAX_VALUE;
-      }
-
-      var clusterID = new Array(data.length);
-      if (options.withIterations) {
-        return kmeansGenerator(centers, data, clusterID, K, options);
-      } else {
-        var converged = false;
-        var stepNumber = 0;
-        var stepResult;
-        while (!converged && stepNumber < options.maxIterations) {
-          stepResult = step$1(centers, data, clusterID, K, options, ++stepNumber);
-          converged = stepResult.converged;
-          centers = stepResult.centroids;
-        }
-        return stepResult.computeInformation(data);
-      }
-    }
-
     // wrangling tools to manipulate data for processing values
 
     // d3 data is formatted as array of objects, each row is an object
@@ -44652,14 +41845,18 @@
       }
     };
 
-    // convert values to zscores
-    var standardize = function standardize(data) {
+    // normalize data values (scale: 0-1) for unbiased aggregate scores
+    var normalize = function normalize(data) {
       // reformat data
       var df = array_to_object(data);
 
-      // standardize values
-      Object.keys(df).forEach(function (key) {
-        df[key] = arr.zScores(df[key]);
+      // normalize values
+      Object.entries(df).forEach(function (_ref) {
+        var _ref2 = slicedToArray(_ref, 2),
+            key = _ref2[0],
+            col = _ref2[1];
+
+        df[key] = arr.norms(col);
       });
 
       // convert back to original data type
@@ -44690,136 +41887,6 @@
         columns.push(col_def);
         return columns;
       }
-    };
-
-    /**
-     * Partition data into k clusters in which each data element belongs to
-     * the cluster with the nearest mean.
-     *
-     * @param {int} k: number of clusters
-     * @param {array} displayIDs: charts that will display cluster colors
-     * @param {} palette: d3 palette or function mapping cluster ids to color
-     * @param {array} vars: variables used for clustering. NOTE: associated data must be numeric
-     * @param {object} options: ml-kmeans options
-     * @param {bool} std: convert values to zscores to obtain unbiased clusters
-     * @param {bool} hidden: determines whether cluster axis will be displayed on charts (can be individually updated with hideAxis later)
-     */
-    var cluster$1 = function cluster$$1(config, ps, flags) {
-      return function () {
-        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            _ref$k = _ref.k,
-            k = _ref$k === undefined ? 3 : _ref$k,
-            _ref$vars = _ref.vars,
-            vars = _ref$vars === undefined ? config.vars : _ref$vars,
-            _ref$displayIDs = _ref.displayIDs,
-            displayIDs = _ref$displayIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$displayIDs,
-            _ref$palette = _ref.palette,
-            palette = _ref$palette === undefined ? schemeCategory10 : _ref$palette,
-            _ref$options = _ref.options,
-            options = _ref$options === undefined ? {} : _ref$options,
-            _ref$std = _ref.std,
-            std = _ref$std === undefined ? true : _ref$std,
-            _ref$hidden = _ref.hidden,
-            hidden = _ref$hidden === undefined ? true : _ref$hidden;
-
-        if (Array.isArray(palette)) {
-          var scheme$$1 = ordinal(palette);
-          palette = function palette(d) {
-            return scheme$$1(Number(d['cluster']));
-          };
-        } else {
-          palette = palette;
-        }
-
-        var data = [];
-        if (std === true) {
-          data = standardize(config.data);
-        } else {
-          data = config.data;
-        }
-
-        // setup object to filter variables that will be used in clustering
-        var cluster_vars = {};
-        vars.forEach(function (v) {
-          cluster_vars[v] = true;
-        });
-
-        // get data values in array of arrays for clustering
-        // (values from each row object captured in array)
-        var values$$1 = [];
-        data.forEach(function (d) {
-          var target = [];
-          Object.entries(d).forEach(function (_ref2) {
-            var _ref3 = slicedToArray(_ref2, 2),
-                key = _ref3[0],
-                value = _ref3[1];
-
-            // only take values from variables listed in function argument
-            if (cluster_vars[key] == true) {
-              target.push(Number(value));
-            }
-          });
-          values$$1.push(target);
-        });
-
-        // preform clustering and update config data
-        var result = kmeans(values$$1, k, options);
-        config.data.forEach(function (d, i) {
-          d.cluster = result.clusters[i].toString();
-        });
-        // console.log('kmeans++');
-        // console.log(result.iterations, result.centroids.map(c => c.error));
-        // console.log(result.centroids);
-
-        // hide cluster axis and show colors by default
-        if (hidden == true) {
-          Object.keys(config.partition).forEach(function (id) {
-            config.partition[id].push('cluster');
-          });
-        }
-
-        // format data, update charts
-        config.vars.push('cluster');
-        config.data = format_data(config.data);
-        ps.charts.forEach(function (pc) {
-          pc.data(config.data).render().createAxes();
-          // .updateAxes();
-        });
-
-        ps.charts.forEach(function (pc, i) {
-          // only color charts in displayIDs
-          if (displayIDs.includes(i)) {
-            pc.color(palette);
-          }
-          pc.hideAxis(config.partition[i]).render().updateAxes(0);
-        });
-
-        if (flags.grid) {
-          // add column
-          var cols = add_column(config.grid.getColumns(), 'cluster');
-          ps.gridUpdate({ columns: cols });
-        }
-
-        return this;
-      };
-    };
-
-    // normalize data values (scale: 0-1) for unbiased aggregate scores
-    var normalize = function normalize(data) {
-      // reformat data
-      var df = array_to_object(data);
-
-      // normalize values
-      Object.entries(df).forEach(function (_ref) {
-        var _ref2 = slicedToArray(_ref, 2),
-            key = _ref2[0],
-            col = _ref2[1];
-
-        df[key] = arr.norms(col);
-      });
-
-      // convert back to original data type
-      return object_to_array(df, data);
     };
 
     /**
@@ -45467,6 +42534,24 @@
       };
     };
 
+    // parcoords wrapper: mark a data element
+    var mark$1 = function mark(config, ps, flags) {
+      return function (d) {
+        ps.charts.forEach(function (pc) {
+          return pc.mark(d);
+        });
+      };
+    };
+
+    // parcoords wrapper: highlight a data element
+    var highlight$1 = function highlight(config, ps, flags) {
+      return function (d) {
+        ps.charts.forEach(function (pc) {
+          return pc.highlight(d);
+        });
+      };
+    };
+
     // parcoords wrapper: format dimensions (applies to all charts)
     var dimensions = function dimensions(config, ps, flags) {
       return function (d) {
@@ -45667,7 +42752,7 @@
       ps.attachGrid = attachGrid(config, ps, flags);
       ps.gridUpdate = gridUpdate(config, ps, flags);
       ps.linked = linked(config, ps, flags);
-      ps.cluster = cluster$1(config, ps, flags);
+      // ps.cluster = cluster(config, ps, flags);
       ps.weightedSum = weightedSum(config, ps, flags);
       ps.hideAxes = hideAxes(config, ps, flags);
       ps.showAxes = showAxes(config, ps, flags);
@@ -45677,7 +42762,7 @@
       ps.exportData = exportData(config, ps, flags);
       ps.resetSelections = resetSelections(config, ps, flags);
 
-      // parcoords methods (global)
+      // parcoords methods (apply to all charts)
       ps.alpha = alpha(config, ps, flags);
       ps.color = color$1(config, ps, flags);
       ps.alphaOnBrushed = alphaOnBrushed(config, ps, flags);
@@ -45685,8 +42770,8 @@
       ps.reorderable = reorderable$1(config, ps, flags);
       ps.composite = composite(config, ps, flags);
       ps.shadows = shadows$1(config, ps, flags);
-      // ps.mark = mark(config, ps, flags);
-      // ps.highlight = highlight(config, ps, flags);
+      ps.mark = mark$1(config, ps, flags);
+      ps.highlight = highlight$1(config, ps, flags);
       ps.dimensions = dimensions(config, ps, flags);
       ps.scale = scale$1(config, ps, flags);
       ps.flipAxes = flipAxes(config, ps, flags);
