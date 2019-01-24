@@ -1,14 +1,12 @@
 //css
 import './parallel-coordinates.css';
 
-//misc
-
 //api
 import init from './api/init';
 import attachGrid from './api/attachGrid';
 import gridUpdate from './api/gridUpdate';
 import linked from './api/linked';
-// import cluster from './api/cluster';
+import cluster from './api/cluster';
 import weightedSum from './api/weightedSum';
 import hideAxes from './api/hideAxes';
 import showAxes from './api/showAxes';
@@ -61,7 +59,7 @@ const Parasol = (data, userConfig) => {
   ps.attachGrid = attachGrid(config, ps, flags);
   ps.gridUpdate = gridUpdate(config, ps, flags);
   ps.linked = linked(config, ps, flags);
-  // ps.cluster = cluster(config, ps, flags);
+  ps.cluster = cluster(config, ps, flags);
   ps.weightedSum = weightedSum(config, ps, flags);
   ps.hideAxes = hideAxes(config, ps, flags);
   ps.showAxes = showAxes(config, ps, flags);
@@ -70,7 +68,6 @@ const Parasol = (data, userConfig) => {
   ps.removeData = removeData(config, ps, flags);
   ps.exportData = exportData(config, ps, flags);
   ps.resetSelections = resetSelections(config, ps, flags);
-
 
   // parcoords methods (apply to all charts)
   ps.alpha = alpha(config, ps, flags);

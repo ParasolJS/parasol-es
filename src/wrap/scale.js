@@ -4,7 +4,7 @@ const scale = (config, ps, flags) => function(axis, domain) {
   if (range[0] >= domain[0] && range[1] <= domain[1]) {
     ps.charts.forEach( pc => pc.scale(axis, domain) );
   } else {
-    throw Error('Domain Error: specified domain must be exceed axis extrema.')
+    throw Error('Domain Error: specified domain must exceed axis extrema.')
   }
   return this;
 }

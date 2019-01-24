@@ -9,7 +9,6 @@ import { difference } from 'lodash-es';
  */
 const removeData = (config, ps, flags) =>
   function(data) {
-    console.log('before:', config.data.length);
 
     // identify data
     let d = [];
@@ -23,7 +22,6 @@ const removeData = (config, ps, flags) =>
       throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
     }
     d = difference(config.data, d);
-    console.log(d);
 
     if (d.length > 0 && d.length < config.data.length) {
       // reset selections and update config
@@ -42,7 +40,6 @@ const removeData = (config, ps, flags) =>
       throw 'Error: No data selected.';
     }
 
-    console.log('after:', config.data.length);
     return this;
 
   };
