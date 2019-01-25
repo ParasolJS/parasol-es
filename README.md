@@ -1,7 +1,7 @@
 
 # Parasol
 
-![logo](https://github.com/joshhjacobson/parasol/blob/master/img/parasol_icon.png)
+![logo](https://github.com/joshhjacobson/parasol/blob/master/img/parasol_icon-black.png)
 
 [https://parasoljs.github.io/](https://parasoljs.github.io/)
 
@@ -109,6 +109,8 @@ npm run test:cover
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+The Parasol logo was designed by Bryce Hanson.
 
 ## Acknowledgments
 
