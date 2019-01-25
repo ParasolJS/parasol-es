@@ -1,7 +1,7 @@
 
 # Parasol
 
-![logo](https://github.com/joshhjacobson/parasol/blob/master/img/parasol_icon.png)
+![logo](https://github.com/joshhjacobson/parasol/blob/master/img/parasol_icon-black.png)
 
 [https://parasoljs.github.io/](https://parasoljs.github.io/)
 
