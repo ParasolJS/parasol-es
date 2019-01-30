@@ -1,6 +1,8 @@
 
 # Parasol
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/ParasolJS/parasol.svg)](https://greenkeeper.io/)
+
 ![logo](https://github.com/joshhjacobson/parasol/blob/master/img/parasol_icon-black.png)
 
 [https://parasoljs.github.io/](https://parasoljs.github.io/)
