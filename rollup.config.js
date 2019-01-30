@@ -24,7 +24,7 @@ export default {
             jsnext: true,
             main: true,
             browser: true,
-            extensions: ['.js']
+            extensions: ['.js', '.ts']
         }),
         commonjs(),
     ],

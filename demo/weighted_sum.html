@@ -29,7 +29,7 @@ d3.csv('data/cars.csv').then(function(data) {
 
   var ps = Parasol(data)('.parcoords')
             .weightedSum({ weights: weights })
-            // .hideAxis(['name'])
+            .hideAxes(['name'])
             .reorderable()
             .render()
 });

@@ -31,15 +31,9 @@ d3.csv('data/cars.csv').then(function(data) {
             .cluster({k: 4, displayIDs: [0,2], vars: cluster_vars});
 
   // update charts
-  // NOTE: this currently overrides hide(partition)...
-  // ps.charts.forEach(
-  //   (pc) => {
-  //     pc
-  //       .hideAxis(['name'])
-  //       .reorderable()
-  //       .render()
-  //       .updateAxes(0)
-  //   }
-  // )
+  ps
+    .hideAxes(['name'])
+    .reorderable()
+    .render();
 });
 </script>

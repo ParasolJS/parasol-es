@@ -32,18 +32,13 @@ d3.csv('data/cars.csv').then(function(data) {
             .linked();
 
   // update charts
-  // ps.charts.forEach(
-  //   (pc) => {
-  //     pc
-  //       .hideAxis(['name'])
-  //       .render()
-  //       .updateAxes(0)
-  //   }
-  // )
+  ps
+    .hideAxes(['name'])
+    .reorderable()
+    .render();
 
   d3.select('#reset_brushes').on('click', function() {
-    // reset first two plots
-    ps.globalBrushReset([0,1])
+    ps.brushReset()
   });
 
 });

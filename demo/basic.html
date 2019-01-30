@@ -22,30 +22,11 @@
 d3.csv('data/cars.csv').then(function(data) {
   // initialize chart closures
   var ps = Parasol(data)('.parcoords');
-  // add data and render each chart
-  ps.charts.forEach(
-    (pc) => {
-      pc
-        .hideAxis(['name'])
-        .render()
-        .updateAxes(0);
-    }
-  )
-
-  var partition = {
-    0: ['name', 'weight (lb)', '0-60 mph (s)'],
-    1: ['cylinders', 'power (hp)']
-  }
-  // ps.charts[0].hideAxis(['weight (lb)', '0-60 mph (s)', 'name', 'id']).render().updateAxes(500);
-  ps.hideAxes(partition);
 
   // individual chart manipulation with parcoords-es methods
-
   // ps.charts[0].flipAxes(['year']).render().updateAxes(0);
-  // ps.charts[0].flip(['cylinders']).render().updateAxes(0);
-
   ps.charts[0].reorderable().shadows().render();
   ps.charts[1].color("rgba(128,0,128,0.3)").render(); //transparent purple
-  ps.charts[2].alpha(0.6).render();
+  ps.charts[2].hideAxis(['name']).alpha(0.6).render().updateAxes(0);
 });
 </script>

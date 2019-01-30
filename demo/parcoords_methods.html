@@ -65,8 +65,8 @@ d3.csv('data/cars.csv').then(function(data) {
     .brushedColor('#fc5a50')
     .reorderable()
     .composite('darker')
-    // .dimensions(dimensions) // broken
-    // .scale('year', [30, 90])
+    .dimensions(dimensions) // broken
+    .scale('year', [30, 90])
     .flipAxes(['economy (mpg)', 'power (hp)'])
     .bundleDimension('cylinders')
     .bundlingStrength(0.4)

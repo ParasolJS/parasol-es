@@ -35,13 +35,13 @@ d3.csv('data/cars.csv').then(function(data) {
               1: ['displacement (cc)', 'power (hp)',
                   'weight (lb)', '0-60 mph (s)'],
               2: ['economy (mpg)', 'cylinders',
-                  'displacement (cc)']
+                  'displacement (cc)', 'year']
             })
 
   var partition = {
-    // 0: ['weight (lb)', '0-60 mph (s)'], // for some reason this breaks...
+    0: ['weight (lb)', '0-60 mph (s)'], // breaks after first plot
     1: ['displacement (cc)'],
-    2: ['cylinders', 'power (hp)']
+    2: ['year', 'power (hp)']
   }
 
   // wire-up buttons
