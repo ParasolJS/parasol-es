@@ -18,33 +18,30 @@ import add_column from '../util/add_column';
  * @param {bool} hidden: determines whether cluster axis will be displayed on charts (can be individually updated with hideAxis later)
  */
 const cluster = (config, ps, flags) =>
-  function ({
+  function({
     k = 3,
     vars = config.vars,
     displayIDs = [...Array(ps.charts.length).keys()],
     palette = schemeCategory10,
     options = {},
     std = true,
-    hidden = true
-  }={}) {
+    hidden = true,
+  } = {}) {
     if (Array.isArray(palette)) {
       const scheme = scaleOrdinal(palette);
       palette = d => scheme(Number(d['cluster']));
     }
-    else {
-      palette = palette;
-    }
 
     let data = [];
     if (std === true) {
-      	data = standardize(config.data);
+      data = standardize(config.data);
     } else {
-      	data = config.data;
+      data = config.data;
     }
 
     // setup object to filter variables that will be used in clustering
     const cluster_vars = {};
-    vars.forEach( v => {
+    vars.forEach(v => {
       cluster_vars[v] = true;
     });
 
@@ -73,7 +70,7 @@ const cluster = (config, ps, flags) =>
 
     // hide cluster axis and show colors by default
     if (hidden == true) {
-      Object.keys(config.partition).forEach( id => {
+      Object.keys(config.partition).forEach(id => {
         config.partition[id].push('cluster');
       });
     }
@@ -82,20 +79,18 @@ const cluster = (config, ps, flags) =>
     config.vars.push('cluster');
     config.data = format_data(config.data);
     ps.charts.forEach(pc => {
-      pc
-        .data(config.data)
+      pc.data(config.data)
         .render()
         .createAxes();
       // .updateAxes();
     });
 
-    ps.charts.forEach( (pc, i) => {
+    ps.charts.forEach((pc, i) => {
       // only color charts in displayIDs
       if (displayIDs.includes(i)) {
         pc.color(palette);
       }
-      pc
-        .hideAxis(config.partition[i])
+      pc.hideAxis(config.partition[i])
         .render()
         .updateAxes(0);
     });

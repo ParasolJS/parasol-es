@@ -82,7 +82,7 @@
       return [min, max];
     }
 
-    function sequence(start, stop, step) {
+    function range(start, stop, step) {
       start = +start, stop = +stop, step = (n = arguments.length) < 2 ? (stop = start, start = 0, 1) : n < 3 ? 1 : +step;
 
       var i = -1,
@@ -5090,7 +5090,7 @@
     var array$3 = Array.prototype;
 
     var map$2 = array$3.map;
-    var slice$5 = array$3.slice;
+    var slice$6 = array$3.slice;
 
     var implicit = {name: "implicit"};
 
@@ -5099,7 +5099,7 @@
           domain = [],
           unknown = implicit;
 
-      range = range == null ? [] : slice$5.call(range);
+      range = range == null ? [] : slice$6.call(range);
 
       function scale(d) {
         var key = d + "", i = index.get(key);
@@ -5119,7 +5119,7 @@
       };
 
       scale.range = function(_) {
-        return arguments.length ? (range = slice$5.call(_), scale) : range.slice();
+        return arguments.length ? (range = slice$6.call(_), scale) : range.slice();
       };
 
       scale.unknown = function(_) {
@@ -5160,7 +5160,7 @@
         start += (stop - start - step * (n - paddingInner)) * align;
         bandwidth = step * (1 - paddingInner);
         if (round) start = Math.round(start), bandwidth = Math.round(bandwidth);
-        var values = sequence(n).map(function(i) { return start + step * i; });
+        var values = range(n).map(function(i) { return start + step * i; });
         return ordinalRange(reverse ? values.reverse() : values);
       }
 
@@ -5267,15 +5267,15 @@
       };
     }
 
-    function bimap(domain, range, deinterpolate, reinterpolate) {
-      var d0 = domain[0], d1 = domain[1], r0 = range[0], r1 = range[1];
+    function bimap(domain, range$$1, deinterpolate, reinterpolate) {
+      var d0 = domain[0], d1 = domain[1], r0 = range$$1[0], r1 = range$$1[1];
       if (d1 < d0) d0 = deinterpolate(d1, d0), r0 = reinterpolate(r1, r0);
       else d0 = deinterpolate(d0, d1), r0 = reinterpolate(r0, r1);
       return function(x) { return r0(d0(x)); };
     }
 
-    function polymap(domain, range, deinterpolate, reinterpolate) {
-      var j = Math.min(domain.length, range.length) - 1,
+    function polymap(domain, range$$1, deinterpolate, reinterpolate) {
+      var j = Math.min(domain.length, range$$1.length) - 1,
           d = new Array(j),
           r = new Array(j),
           i = -1;
@@ -5283,12 +5283,12 @@
       // Reverse descending domains.
       if (domain[j] < domain[0]) {
         domain = domain.slice().reverse();
-        range = range.slice().reverse();
+        range$$1 = range$$1.slice().reverse();
       }
 
       while (++i < j) {
         d[i] = deinterpolate(domain[i], domain[i + 1]);
-        r[i] = reinterpolate(range[i], range[i + 1]);
+        r[i] = reinterpolate(range$$1[i], range$$1[i + 1]);
       }
 
       return function(x) {
@@ -5309,7 +5309,7 @@
     // reinterpolate(a, b)(t) takes a parameter t in [0,1] and returns the corresponding domain value x in [a,b].
     function continuous(deinterpolate, reinterpolate) {
       var domain = unit,
-          range = unit,
+          range$$1 = unit,
           interpolate$$1 = interpolateValue,
           clamp = false,
           piecewise$$1,
@@ -5317,17 +5317,17 @@
           input;
 
       function rescale() {
-        piecewise$$1 = Math.min(domain.length, range.length) > 2 ? polymap : bimap;
+        piecewise$$1 = Math.min(domain.length, range$$1.length) > 2 ? polymap : bimap;
         output = input = null;
         return scale;
       }
 
       function scale(x) {
-        return (output || (output = piecewise$$1(domain, range, clamp ? deinterpolateClamp(deinterpolate) : deinterpolate, interpolate$$1)))(+x);
+        return (output || (output = piecewise$$1(domain, range$$1, clamp ? deinterpolateClamp(deinterpolate) : deinterpolate, interpolate$$1)))(+x);
       }
 
       scale.invert = function(y) {
-        return (input || (input = piecewise$$1(range, domain, deinterpolateLinear, clamp ? reinterpolateClamp(reinterpolate) : reinterpolate)))(+y);
+        return (input || (input = piecewise$$1(range$$1, domain, deinterpolateLinear, clamp ? reinterpolateClamp(reinterpolate) : reinterpolate)))(+y);
       };
 
       scale.domain = function(_) {
@@ -5335,11 +5335,11 @@
       };
 
       scale.range = function(_) {
-        return arguments.length ? (range = slice$5.call(_), rescale()) : range.slice();
+        return arguments.length ? (range$$1 = slice$6.call(_), rescale()) : range$$1.slice();
       };
 
       scale.rangeRound = function(_) {
-        return range = slice$5.call(_), interpolate$$1 = interpolateRound, rescale();
+        return range$$1 = slice$6.call(_), interpolate$$1 = interpolateRound, rescale();
       };
 
       scale.clamp = function(_) {
@@ -5630,6 +5630,8 @@
     var saturday = weekday(6);
 
     var sundays = sunday.range;
+    var mondays = monday.range;
+    var thursdays = thursday.range;
 
     var month = newInterval(function(date) {
       date.setDate(1);
@@ -5719,6 +5721,8 @@
     var utcSaturday = utcWeekday(6);
 
     var utcSundays = utcSunday.range;
+    var utcMondays = utcMonday.range;
+    var utcThursdays = utcThursday.range;
 
     var utcMonth = newInterval(function(date) {
       date.setUTCDate(1);
@@ -7484,9 +7488,9 @@
         return [];
       }
       var domain = scale.domain();
-      var range = scale.range();
+      var range$$1 = scale.range();
       var found = [];
-      range.forEach(function (d, i) {
+      range$$1.forEach(function (d, i) {
         if (d >= selection$$1[0] && d <= selection$$1[1]) {
           found.push(domain[i]);
         }
@@ -8146,9 +8150,9 @@
               acc[cur] = [];
             } else {
               acc[cur] = axisBrushes.reduce(function (d, p, i) {
-                var range = brushSelection(document.getElementById('brush-' + pos + '-' + i));
-                if (range !== null) {
-                  d = d.push(range);
+                var range$$1 = brushSelection(document.getElementById('brush-' + pos + '-' + i));
+                if (range$$1 !== null) {
+                  d = d.push(range$$1);
                 }
 
                 return d;
@@ -37026,7 +37030,7 @@
      * _.range(0);
      * // => []
      */
-    var range$1 = createRange();
+    var range$2 = createRange();
 
     /**
      * This method is like `_.range` except that it populates values in
@@ -37781,7 +37785,7 @@
      * @param {number} [end=array.length] The end position.
      * @returns {Array} Returns the slice of `array`.
      */
-    function slice$7(array, start, end) {
+    function slice$8(array, start, end) {
       var length = array == null ? 0 : array.length;
       if (!length) {
         return [];
@@ -40612,7 +40616,7 @@
       initial, intersection: intersection$1, intersectionBy, intersectionWith, join,
       last, lastIndexOf, nth, pull, pullAll,
       pullAllBy, pullAllWith, pullAt, remove: remove$1, reverse: reverse$1,
-      slice: slice$7, sortedIndex, sortedIndexBy, sortedIndexOf, sortedLastIndex,
+      slice: slice$8, sortedIndex, sortedIndexBy, sortedIndexOf, sortedLastIndex,
       sortedLastIndexBy, sortedLastIndexOf, sortedUniq, sortedUniqBy, tail,
       take, takeRight, takeRightWhile, takeWhile, union,
       unionBy, unionWith, uniq, uniqBy, uniqWith,
@@ -40700,7 +40704,7 @@
       defaultTo, flow, flowRight, identity: identity$9, iteratee,
       matches, matchesProperty, method, methodOf, mixin,
       noop: noop$4, nthArg, over, overEvery, overSome,
-      property, propertyOf, range: range$1, rangeRight, stubArray,
+      property, propertyOf, range: range$2, rangeRight, stubArray,
       stubFalse, stubObject, stubString, stubTrue, times,
       toPath, uniqueId
     };
@@ -41461,13 +41465,13 @@
     };
 
     /**
-       * Creates a new instance of the grid.
-       * @class SlickGrid
-       * @constructor
-       * @param {string} container:   DOM element in which grid will be placed.
-       * @param {array}  columns:    An array of column definitions (objects).
-       * @param {object} options:     SlickGrid options.
-    **/
+     * Creates a new instance of the grid.
+     * @class SlickGrid
+     * @constructor
+     * @param {string} container:   DOM element in which grid will be placed.
+     * @param {array}  columns:    An array of column definitions (objects).
+     * @param {object} options:     SlickGrid options.
+     **/
     var attachGrid = function attachGrid(config, ps, flags) {
       return function (_ref) {
         var container = _ref.container,
@@ -41559,10 +41563,10 @@
     };
 
     /**
-       * Update data displayed in grid.
-       * @param {array}  data:    array of objects.
-       * @param {array} columns:  column definitions.
-    **/
+     * Update data displayed in grid.
+     * @param {array}  data:    array of objects.
+     * @param {array} columns:  column definitions.
+     **/
     var gridUpdate = function gridUpdate(config, ps, flags) {
       return function () {
         var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
@@ -41692,10 +41696,10 @@
     };
 
     /**
-       * Link brush activity between specified charts, and grid if it exists.
-       *
-       * @param {array} chartIDs:   charts to be linked (defaults to all).
-    **/
+     * Link brush activity between specified charts, and grid if it exists.
+     *
+     * @param {array} chartIDs:   charts to be linked (defaults to all).
+     **/
     var linked = function linked(config, ps, flags) {
       return function () {
         var chartIDs = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [].concat(toConsumableArray(Array(ps.charts.length).keys()));
@@ -41715,7 +41719,6 @@
 
         // connect grid
         if (flags.grid) {
-
           // highlight row in chart
           config.grid.onMouseEnter.subscribe(function (e, args) {
             var i = config.grid.getCellFromEvent(e).row;
@@ -41753,6 +41756,7 @@
             }
           });
         }
+
         return this;
       };
     };
@@ -45468,7 +45472,7 @@
           probabilities: probabilities[0]
         });
 
-        const candidates = X.selection(candidateIdx, range$2(X[0].length));
+        const candidates = X.selection(candidateIdx, range$3(X[0].length));
         const distanceToCandidates = euclidianDistances(candidates, X);
 
         let bestCandidate;
@@ -45505,7 +45509,7 @@
       return result;
     }
 
-    function range$2(l) {
+    function range$3(l) {
       let r = [];
       for (let i = 0; i < l; i++) {
         r.push(i);
@@ -45905,8 +45909,6 @@
           palette = function palette(d) {
             return scheme$$1(Number(d['cluster']));
           };
-        } else {
-          palette = palette;
         }
 
         var data = [];
@@ -46087,7 +46089,6 @@
      */
     var hideAxes = function hideAxes(config, ps, flags) {
       return function (partition) {
-
         if (Array.isArray(partition)) {
           // append array to every key in config.partition
           Object.keys(config.partition).forEach(function (id) {
@@ -46129,7 +46130,6 @@
      */
     var showAxes = function showAxes(config, ps, flags) {
       return function (partition) {
-
         if (typeof partition === 'undefined') {
           // show all axes on all charts (empty partition)
           Object.keys(config.partition).forEach(function (id) {
@@ -46177,7 +46177,6 @@
      */
     var setAxesLayout = function setAxesLayout(config, ps, flags) {
       return function (layout) {
-
         if (isPlainObject(layout)) {
           // take difference of all variables and layout variables
           // i.e. show only those which appear in both data and layout
@@ -46217,7 +46216,6 @@
      */
     var keepData = function keepData(config, ps, flags) {
       return function (data) {
-
         // identify data
         var d = [];
         if (data == 'brushed') {
@@ -46227,7 +46225,7 @@
         } else if (data == 'both') {
           d = config.selections();
         } else {
-          throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
+          throw "Please specify one of {'brushed', 'marked', 'both'}";
         }
 
         if (d.length > 0) {
@@ -46260,7 +46258,6 @@
      */
     var removeData = function removeData(config, ps, flags) {
       return function (data) {
-
         // identify data
         var d = [];
         if (data == 'brushed') {
@@ -46270,7 +46267,7 @@
         } else if (data == 'both') {
           d = config.selections();
         } else {
-          throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
+          throw "Please specify one of {'brushed', 'marked', 'both'}";
         }
         d = difference(config.data, d);
 
@@ -46513,7 +46510,7 @@
         } else if (selection$$1 == 'both') {
           d = config.selections();
         } else {
-          throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
+          throw "Please specify one of {'brushed', 'marked', 'both'}";
         }
 
         if (d.length > 0) {
@@ -46548,7 +46545,7 @@
           ps.brushReset();
           ps.unmark();
         } else {
-          throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
+          throw "Please specify one of {'brushed', 'marked', 'both'}";
         }
       };
     };
@@ -46657,7 +46654,7 @@
       };
     };
 
-    // parcoords wrapper: format dimensions (applies to all charts)
+    // parcoords wrapper: format dimensions 
     var dimensions = function dimensions(config, ps, flags) {
       return function (d) {
         ps.charts.forEach(function (pc) {
@@ -46734,21 +46731,19 @@
 
     // parcoords wrapper: reset all brushes and preform necessary updates
     var brushReset$5 = function brushReset(config, ps, flags) {
-        return function () {
-            ps.charts.forEach(function (pc) {
-                return pc.brushReset();
-            });
+      return function () {
+        ps.charts.forEach(function (pc) {
+          return pc.brushReset();
+        });
 
-            // NOTE: if charts are linked and at least one is not reset, then none will be reset
+        // NOTE: brushed data in config is updated by sync() as consequence of pc.brushReset()
+        // currently need to force due to issue with ParCoords.selected() returning entire dataset if brush extents are empty
+        config.brushed = [];
 
-            // NOTE: brushed data in config is updated by sync() as consequence of pc.brushReset()
-            // currently need to force due to issue with ParCoords.selected() returning entire dataset if brush extents are empty
-            config.brushed = [];
-
-            if (flags.grid) {
-                ps.gridUpdate();
-            }
-        };
+        if (flags.grid) {
+          ps.gridUpdate();
+        }
+      };
     };
 
     // parcoords wrapper: reset all marks and preform necessary updates
@@ -46765,7 +46760,7 @@
       };
     };
 
-    // parcoords wrapper: reset all highlights 
+    // parcoords wrapper: reset all highlights
     var unhighlight$1 = function unhighlight(config, ps, flags) {
       return function () {
         ps.charts.forEach(function (pc) {
@@ -46832,7 +46827,7 @@
       };
     };
 
-    var version$2 = "0.0.1";
+    var version$2 = "1.0.0";
 
     //css
 

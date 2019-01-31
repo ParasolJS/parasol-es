@@ -7,7 +7,6 @@ import { isPlainObject, difference } from 'lodash-es';
  */
 const showAxes = (config, ps, flags) =>
   function(partition) {
-
     if (typeof partition === 'undefined') {
       // show all axes on all charts (empty partition)
       Object.keys(config.partition).forEach(function(id) {
@@ -22,8 +21,11 @@ const showAxes = (config, ps, flags) =>
       // take difference of values for each key that is also in config.partition
       // (i.e. remove from hidden)
       Object.entries(partition).forEach(([key, values]) => {
-        if(config.partition[key]) {
-          config.partition[key] = difference(config.partition[key], partition[key]);
+        if (config.partition[key]) {
+          config.partition[key] = difference(
+            config.partition[key],
+            partition[key]
+          );
         }
       });
     } else {

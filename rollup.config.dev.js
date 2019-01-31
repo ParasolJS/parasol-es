@@ -20,23 +20,6 @@ export default {
         }),
         localResolve(),
         postcss({ extract: 'dist/parcoords.css' }),
-        // babel(babelrc()),
-        // babel({runtimeHelpers: true}),
-        // babel({
-        //   babelrc: false,
-        //   presets: [
-        //     ['env', {
-        //       targets: {
-        //         browsers: ['last 2 versions']
-        //       },
-        //       modules: false
-        //     }]
-        //   ],
-        //   plugins: [
-        //     ['transform-runtime', {helpers: false, polyfill: false}],
-        //     'external-helpers'
-        //   ]
-        // }),
         babel({
           runtimeHelpers: true,
           exclude: 'node_modules/**'
@@ -50,13 +33,7 @@ export default {
         }),
         commonjs({
           include: ['node_modules/**'],
-          exclude: ['node_modules/lodash-es/**'],
-          // namedExports: {
-          //   // 'node_modules/slickgrid-es6/dist/slick.es6.min.js': ['Slickgrid']
-          //   'node_modules/slickgrid-es6/dist/slick.es6.min.js': [
-          //     'Slick', 'Grid', 'FrozenGrid', 'Data', 'Plugins', 'Editors', 'Formatters'
-          //   ]
-          // }
+          exclude: ['node_modules/lodash-es/**']
         }),
         serve({
             open: true,

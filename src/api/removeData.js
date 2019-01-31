@@ -9,7 +9,6 @@ import { difference } from 'lodash-es';
  */
 const removeData = (config, ps, flags) =>
   function(data) {
-
     // identify data
     let d = [];
     if (data == 'brushed') {
@@ -19,7 +18,7 @@ const removeData = (config, ps, flags) =>
     } else if (data == 'both') {
       d = config.selections();
     } else {
-      throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
+      throw "Please specify one of {'brushed', 'marked', 'both'}";
     }
     d = difference(config.data, d);
 
@@ -29,7 +28,7 @@ const removeData = (config, ps, flags) =>
 
       // update data, charts, and grid
       config.data = d;
-      ps.charts.forEach( pc => {
+      ps.charts.forEach(pc => {
         pc.data(d).render.default();
         pc.brushReset();
       });
@@ -41,7 +40,6 @@ const removeData = (config, ps, flags) =>
     }
 
     return this;
-
   };
 
 export default removeData;
