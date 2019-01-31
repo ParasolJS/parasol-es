@@ -15,8 +15,9 @@
 //   }
 // export default reorderable;
 
-const reorderable = (config, ps, flags) => function() {
-  ps.charts.forEach( pc => pc.reorderable() );
-  return this;
-}
+const reorderable = (config, ps, flags) =>
+  function() {
+    ps.charts.forEach(pc => pc.reorderable());
+    return this;
+  };
 export default reorderable;

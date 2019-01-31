@@ -14,7 +14,7 @@ const resetSelections = (config, ps, flags) => selection => {
     ps.brushReset();
     ps.unmark();
   } else {
-    throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
+    throw "Please specify one of {'brushed', 'marked', 'both'}";
   }
 };
 

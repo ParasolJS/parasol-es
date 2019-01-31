@@ -1,7 +1,7 @@
 {
-  "name": "parasol",
-  "version": "0.0.1",
-  "description": "ES6 module for multiobjective optimization problems, based on d3-v5 and parcoords-es modules",
+  "name": "parasol-es",
+  "version": "1.0.0",
+  "description": "ES6 module for interactive visualization of multi-objective optimization problems, based on d3-v5 and parcoords-es modules",
   "main": "dist/parasol.js",
   "module": "dist/parasol.esm.js",
   "jsnext:main": "dist/parasol.esm.js",
@@ -26,10 +26,6 @@
     "prettier": "prettier --single-quote --trailing-comma es5 --write \"{src,__{demo,dist}__}/**/*.js\"",
     "build": "rollup -c",
     "dev": "rollup -c rollup.config.dev.js -w",
-    "watch": "rollup -c -w",
-    "test": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text mocha test/*.js",
-    "test:watch": "nyc mocha --reporter min --watch",
-    "coverage": "nyc report --reporter=text-lcov | coveralls",
     "docs": "jsdoc src -r -d docs"
   },
   "files": [
@@ -51,9 +47,9 @@
   "author": "Josh Jacobson <joshuah.jacobson@gmail.com> (http://joshhjacobson.github.io)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ParasolJS/parasol/issues"
+    "url": "https://github.com/ParasolJS/parasol-es/issues"
   },
-  "homepage": "https://github.com/ParasolJS/parasol#readme",
+  "homepage": "https://github.com/ParasolJS/parasol-es#readme",
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",

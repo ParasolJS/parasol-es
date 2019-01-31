@@ -7,7 +7,6 @@
  */
 const keepData = (config, ps, flags) =>
   function(data) {
-
     // identify data
     let d = [];
     if (data == 'brushed') {
@@ -17,7 +16,7 @@ const keepData = (config, ps, flags) =>
     } else if (data == 'both') {
       d = config.selections();
     } else {
-      throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
+      throw "Please specify one of {'brushed', 'marked', 'both'}";
     }
 
     if (d.length > 0) {
@@ -26,7 +25,7 @@ const keepData = (config, ps, flags) =>
 
       // update data, charts, and grid
       config.data = d;
-      ps.charts.forEach( pc => {
+      ps.charts.forEach(pc => {
         pc.data(d).render.default();
         pc.brushReset();
       });
@@ -38,7 +37,6 @@ const keepData = (config, ps, flags) =>
     }
 
     return this;
-
   };
 
 export default keepData;

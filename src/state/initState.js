@@ -11,7 +11,9 @@ const initState = (data, userConfig) => {
   config.partition = {}; // { chart id: [hidden vars]} built in init.js
 
   // assign each data element an ID for slickgrid and other analyses
-  config.data.forEach( (d,i) => { d.id = d.id || i; });
+  config.data.forEach((d, i) => {
+    d.id = d.id || i;
+  });
   config.data = format_data(config.data);
 
   // NOTE: "id" col hidden globally by default in init.js

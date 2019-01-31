@@ -1,7 +1,7 @@
 
 # Parasol
 
-![logo](https://github.com/joshhjacobson/parasol/blob/master/img/parasol_icon-black.png)
+![logo](https://github.com/ParasolJS/parasol-es/blob/master/img/parasol_icon-black.png)
 
 [https://parasoljs.github.io/](https://parasoljs.github.io/)
 
@@ -9,15 +9,14 @@ Parasol is a JavaScript library for visualization of multi-objective optimizatio
 
 This library is based on D3 V5 API and extends upon [parcoords-es](https://github.com/BigFatDog/parcoords-es).
 
-<p align="center">
   <!-- <a href="https://www.npmjs.com/package/rollup">
     <img src="https://img.shields.io/npm/v/rollup.svg"
          alt="npm version">
   </a> -->
-  <a href="https://travis-ci.org/joshhjacobson/parasol">
+  <!-- <a href="https://travis-ci.org/joshhjacobson/parasol">
     <img src="https://api.travis-ci.org/joshhjacobson/parasol.svg?branch=master?style=flat-square"
          alt="build status">
-  </a>
+  </a> -->
   <!-- <a href="https://codecov.io/gh/prettier/prettier">
     <img alt="Codecov Coverage Status" src="https://img.shields.io/codecov/c/github/prettier/prettier.svg?style=flat-square">
   </a> -->
@@ -29,35 +28,31 @@ This library is based on D3 V5 API and extends upon [parcoords-es](https://githu
     <img src="https://packagephobia.now.sh/badge?p=rollup"
          alt="install size">
   </a> -->
-  <a href="https://github.com/joshhjacobson/parasol/blob/master/LICENSE.md">
-    <img src="https://img.shields.io/npm/l/parasol.svg?style=flat-square"
-         alt="license">
-  </a>
-  <a href="#badge">
-   <img alt="code style: prettier" src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square">
- </a>
-</p>
+
+  [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+  [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
 ## Resources
 
-* [API Reference](https://github.com/ParasolJS/parasol/wiki/API-Reference)
-* [Release Notes](https://github.com/ParasolJS/parasol/releases)
-* [Getting Started](https://github.com/ParasolJS/parasol/wiki/Tutorial-1:-Getting-started)
+* [API Reference](https://github.com/ParasolJS/parasol-es/wiki/API-Reference)
+* [Release Notes](https://github.com/ParasolJS/parasol-es/releases)
+* [Getting Started](https://github.com/ParasolJS/parasol-es/wiki/Tutorial-1:-Getting-started)
 * [Examples](https://parasoljs.github.io/)
-* [Wiki](https://github.com/ParasolJS/parasol/wiki)
+* [Issues](https://github.com/ParasolJS/parasol-es/issues)
+* [Wiki](https://github.com/ParasolJS/parasol-es/wiki)
 
 ## Usage
 ### Node/ES6
 1. Install Parasol in your project:
 ```
-npm install parasol-js --save
+npm install parasol-es --save
 ```
 
 2. Import the module:
 
 ```
-import 'parasol-js/parcoords.css';
-import Parasol from 'parasol-js';
+import 'parasol-es/parcoords.css';
+import Parasol from 'parasol-es';
 
 const ps = Parasol()....
 ```

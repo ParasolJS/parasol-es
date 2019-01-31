@@ -7,13 +7,15 @@ import { isPlainObject, difference } from 'lodash-es';
  */
 const setAxesLayout = (config, ps, flags) =>
   function(layout) {
-
     if (isPlainObject(layout)) {
       // take difference of all variables and layout variables
       // i.e. show only those which appear in both data and layout
       Object.entries(layout).forEach(([key, values]) => {
-        if(config.partition[key]) {
-          config.partition[key] = difference(config.vars.concat('id'), layout[key]);
+        if (config.partition[key]) {
+          config.partition[key] = difference(
+            config.vars.concat('id'),
+            layout[key]
+          );
         }
       });
     } else {

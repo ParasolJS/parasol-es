@@ -17,7 +17,7 @@ const sync = (config, ps, flags) =>
       config.brushed = [];
       // update data in grid
       if (flags.grid) {
-      	ps.gridUpdate(config.data);
+        ps.gridUpdate(config.data);
       }
     } else {
       const brushed = intersection(...brush_extents);
@@ -35,7 +35,7 @@ const sync = (config, ps, flags) =>
       // update data in grid
       // NOTE: once pc.selected fixed, remove arg from gridUpdate
       if (flags.grid) {
-      	ps.gridUpdate({ data: brushed });
+        ps.gridUpdate({ data: brushed });
       }
     }
   };
