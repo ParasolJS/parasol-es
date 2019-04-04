@@ -1,4 +1,4 @@
-import sync from './sync';
+import sync from '../util/sync';
 
 /**
  * Link brush activity between specified charts, and grid if it exists.
