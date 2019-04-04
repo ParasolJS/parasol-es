@@ -29,6 +29,7 @@ This library is based on D3 V5 API and extends upon [parcoords-es](https://githu
          alt="install size">
   </a> -->
 
+  [![npm version](https://img.shields.io/npm/v/parasol-es.svg?style=flat-square)](https://www.npmjs.com/package/parasol-es)
   [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg?style=flat-square)](https://opensource.org/licenses/MIT)
   [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
@@ -40,6 +41,9 @@ This library is based on D3 V5 API and extends upon [parcoords-es](https://githu
 * [Examples](https://parasoljs.github.io/)
 * [Issues](https://github.com/ParasolJS/parasol-es/issues)
 * [Wiki](https://github.com/ParasolJS/parasol-es/wiki)
+
+## References
+Raseman, W.J., Jacobson, J., Kasprzyk, J.R., 2019. *Parasol: an open source, interactive parallel coordinates library for multi-objective decision making.* Environmental Modelling & Software 116, 153–163. https://doi.org/10.1016/j.envsoft.2019.03.005
 
 ## Usage
 ### Node/ES6
