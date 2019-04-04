@@ -46,18 +46,17 @@ d3.csv('data/cars.csv').then(function(data) {
   });
 
   // divide data into two plots
-  // TODO: change these partitions so there is no redundant data between plots
-  var partition = {
-    0: ['name', 'displacement (cc)'],
-    1: ['name', 'cylinders', 'power (hp)']
-  }
+  var layout = {
+      0: ['power (hp)', 'weight (lb)', '0-60 mph (s)', 'year'],
+      1: ['economy (mpg)', 'cylinders', 'displacement (cc)']
+    }
 
   // create Parasol object, add grid, link, and perform clustering
   var ps = Parasol(data)('.parcoords')
             .attachGrid({container: '#grid'})
             .linked()
             .cluster({k: k, vars: cluster_vars, hidden: true})
-            .hideAxes(partition)
+            .setAxesLayout(layout)
             .alpha(0.2)  // change transparency
             .reorderable()  // make axes dynamically reorderable
             .render()

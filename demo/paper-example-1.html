@@ -50,19 +50,14 @@ d3.csv('data/cars.csv').then(function(data) {
   var ps = Parasol(data)('.parcoords');
 
   // initially, all data is shown on both plots. determine which data to hide on each plot
-  var axes_to_hide = {
-      0: ['economy (mpg)', 'cylinders', 'displacement (cc)'],  // hidden from first plot
-      1: ['name', 'power (hp)']   // hidden from second plot
+  var layout = {
+      0: ['power (hp)', 'weight (lb)', '0-60 mph (s)', 'year'],
+      1: ['economy (mpg)', 'cylinders', 'displacement (cc)']
     }
-  // var layout = {
-  //     0: ['power (hp)', 'weight (lb)', '0-60 mph (s)'],
-  //     1: ['economy (mpg)', 'cylinders']
-  //   }
 
   // apply Parasol API
   ps.linked()
-    .hideAxes(axes_to_hide)
-    // .setAxesLayout(layout)  // TODO: replace hideAxes() with setAxesLayout()
+    .setAxesLayout(layout)
     .alpha(0.5)
     .reorderable()
     .color(function(data) { return green_gradient(data['economy (mpg)']); })  // quantitative color scale
