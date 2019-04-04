@@ -82,7 +82,7 @@
       return [min, max];
     }
 
-    function range(start, stop, step) {
+    function sequence(start, stop, step) {
       start = +start, stop = +stop, step = (n = arguments.length) < 2 ? (stop = start, start = 0, 1) : n < 3 ? 1 : +step;
 
       var i = -1,
@@ -5090,7 +5090,7 @@
     var array$3 = Array.prototype;
 
     var map$2 = array$3.map;
-    var slice$6 = array$3.slice;
+    var slice$5 = array$3.slice;
 
     var implicit = {name: "implicit"};
 
@@ -5099,7 +5099,7 @@
           domain = [],
           unknown = implicit;
 
-      range = range == null ? [] : slice$6.call(range);
+      range = range == null ? [] : slice$5.call(range);
 
       function scale(d) {
         var key = d + "", i = index.get(key);
@@ -5119,7 +5119,7 @@
       };
 
       scale.range = function(_) {
-        return arguments.length ? (range = slice$6.call(_), scale) : range.slice();
+        return arguments.length ? (range = slice$5.call(_), scale) : range.slice();
       };
 
       scale.unknown = function(_) {
@@ -5160,7 +5160,7 @@
         start += (stop - start - step * (n - paddingInner)) * align;
         bandwidth = step * (1 - paddingInner);
         if (round) start = Math.round(start), bandwidth = Math.round(bandwidth);
-        var values = range(n).map(function(i) { return start + step * i; });
+        var values = sequence(n).map(function(i) { return start + step * i; });
         return ordinalRange(reverse ? values.reverse() : values);
       }
 
@@ -5267,15 +5267,15 @@
       };
     }
 
-    function bimap(domain, range$$1, deinterpolate, reinterpolate) {
-      var d0 = domain[0], d1 = domain[1], r0 = range$$1[0], r1 = range$$1[1];
+    function bimap(domain, range, deinterpolate, reinterpolate) {
+      var d0 = domain[0], d1 = domain[1], r0 = range[0], r1 = range[1];
       if (d1 < d0) d0 = deinterpolate(d1, d0), r0 = reinterpolate(r1, r0);
       else d0 = deinterpolate(d0, d1), r0 = reinterpolate(r0, r1);
       return function(x) { return r0(d0(x)); };
     }
 
-    function polymap(domain, range$$1, deinterpolate, reinterpolate) {
-      var j = Math.min(domain.length, range$$1.length) - 1,
+    function polymap(domain, range, deinterpolate, reinterpolate) {
+      var j = Math.min(domain.length, range.length) - 1,
           d = new Array(j),
           r = new Array(j),
           i = -1;
@@ -5283,12 +5283,12 @@
       // Reverse descending domains.
       if (domain[j] < domain[0]) {
         domain = domain.slice().reverse();
-        range$$1 = range$$1.slice().reverse();
+        range = range.slice().reverse();
       }
 
       while (++i < j) {
         d[i] = deinterpolate(domain[i], domain[i + 1]);
-        r[i] = reinterpolate(range$$1[i], range$$1[i + 1]);
+        r[i] = reinterpolate(range[i], range[i + 1]);
       }
 
       return function(x) {
@@ -5309,7 +5309,7 @@
     // reinterpolate(a, b)(t) takes a parameter t in [0,1] and returns the corresponding domain value x in [a,b].
     function continuous(deinterpolate, reinterpolate) {
       var domain = unit,
-          range$$1 = unit,
+          range = unit,
           interpolate$$1 = interpolateValue,
           clamp = false,
           piecewise$$1,
@@ -5317,17 +5317,17 @@
           input;
 
       function rescale() {
-        piecewise$$1 = Math.min(domain.length, range$$1.length) > 2 ? polymap : bimap;
+        piecewise$$1 = Math.min(domain.length, range.length) > 2 ? polymap : bimap;
         output = input = null;
         return scale;
       }
 
       function scale(x) {
-        return (output || (output = piecewise$$1(domain, range$$1, clamp ? deinterpolateClamp(deinterpolate) : deinterpolate, interpolate$$1)))(+x);
+        return (output || (output = piecewise$$1(domain, range, clamp ? deinterpolateClamp(deinterpolate) : deinterpolate, interpolate$$1)))(+x);
       }
 
       scale.invert = function(y) {
-        return (input || (input = piecewise$$1(range$$1, domain, deinterpolateLinear, clamp ? reinterpolateClamp(reinterpolate) : reinterpolate)))(+y);
+        return (input || (input = piecewise$$1(range, domain, deinterpolateLinear, clamp ? reinterpolateClamp(reinterpolate) : reinterpolate)))(+y);
       };
 
       scale.domain = function(_) {
@@ -5335,11 +5335,11 @@
       };
 
       scale.range = function(_) {
-        return arguments.length ? (range$$1 = slice$6.call(_), rescale()) : range$$1.slice();
+        return arguments.length ? (range = slice$5.call(_), rescale()) : range.slice();
       };
 
       scale.rangeRound = function(_) {
-        return range$$1 = slice$6.call(_), interpolate$$1 = interpolateRound, rescale();
+        return range = slice$5.call(_), interpolate$$1 = interpolateRound, rescale();
       };
 
       scale.clamp = function(_) {
@@ -5556,7 +5556,6 @@
         return (end - start) / k;
       });
     };
-    var milliseconds = millisecond.range;
 
     var durationSecond = 1e3;
     var durationMinute = 6e4;
@@ -5573,7 +5572,6 @@
     }, function(date) {
       return date.getUTCSeconds();
     });
-    var seconds = second.range;
 
     var minute = newInterval(function(date) {
       date.setTime(Math.floor(date / durationMinute) * durationMinute);
@@ -5584,7 +5582,6 @@
     }, function(date) {
       return date.getMinutes();
     });
-    var minutes = minute.range;
 
     var hour = newInterval(function(date) {
       var offset = date.getTimezoneOffset() * durationMinute % durationHour;
@@ -5597,7 +5594,6 @@
     }, function(date) {
       return date.getHours();
     });
-    var hours = hour.range;
 
     var day = newInterval(function(date) {
       date.setHours(0, 0, 0, 0);
@@ -5608,7 +5604,6 @@
     }, function(date) {
       return date.getDate() - 1;
     });
-    var days = day.range;
 
     function weekday(i) {
       return newInterval(function(date) {
@@ -5643,7 +5638,6 @@
     }, function(date) {
       return date.getMonth();
     });
-    var months = month.range;
 
     var year = newInterval(function(date) {
       date.setMonth(0, 1);
@@ -5666,7 +5660,6 @@
         date.setFullYear(date.getFullYear() + step * k);
       });
     };
-    var years = year.range;
 
     var utcMinute = newInterval(function(date) {
       date.setUTCSeconds(0, 0);
@@ -5677,7 +5670,6 @@
     }, function(date) {
       return date.getUTCMinutes();
     });
-    var utcMinutes = utcMinute.range;
 
     var utcHour = newInterval(function(date) {
       date.setUTCMinutes(0, 0, 0);
@@ -5688,7 +5680,6 @@
     }, function(date) {
       return date.getUTCHours();
     });
-    var utcHours = utcHour.range;
 
     var utcDay = newInterval(function(date) {
       date.setUTCHours(0, 0, 0, 0);
@@ -5699,7 +5690,6 @@
     }, function(date) {
       return date.getUTCDate() - 1;
     });
-    var utcDays = utcDay.range;
 
     function utcWeekday(i) {
       return newInterval(function(date) {
@@ -5734,7 +5724,6 @@
     }, function(date) {
       return date.getUTCMonth();
     });
-    var utcMonths = utcMonth.range;
 
     var utcYear = newInterval(function(date) {
       date.setUTCMonth(0, 1);
@@ -5757,7 +5746,6 @@
         date.setUTCFullYear(date.getUTCFullYear() + step * k);
       });
     };
-    var utcYears = utcYear.range;
 
     function localDate(d) {
       if (0 <= d.y && d.y < 100) {
@@ -7488,9 +7476,9 @@
         return [];
       }
       var domain = scale.domain();
-      var range$$1 = scale.range();
+      var range = scale.range();
       var found = [];
-      range$$1.forEach(function (d, i) {
+      range.forEach(function (d, i) {
         if (d >= selection$$1[0] && d <= selection$$1[1]) {
           found.push(domain[i]);
         }
@@ -7585,7 +7573,9 @@
           config.brushed = false;
           if (pc.g() !== undefined && pc.g() !== null) {
             pc.g().selectAll('.brush').each(function (d) {
-              select(this).call(brushes[d].move, null);
+              if (brushes[d] !== undefined) {
+                select(this).call(brushes[d].move, null);
+              }
             });
             pc.renderBrushed();
           }
@@ -8150,9 +8140,9 @@
               acc[cur] = [];
             } else {
               acc[cur] = axisBrushes.reduce(function (d, p, i) {
-                var range$$1 = brushSelection(document.getElementById('brush-' + pos + '-' + i));
-                if (range$$1 !== null) {
-                  d = d.push(range$$1);
+                var range = brushSelection(document.getElementById('brush-' + pos + '-' + i));
+                if (range !== null) {
+                  d = d.push(range);
                 }
 
                 return d;
@@ -9594,11 +9584,11 @@
       };
     };
 
-    var computeRealCentroids = function computeRealCentroids(dimensions, position) {
+    var computeRealCentroids = function computeRealCentroids(config, position) {
       return function (row) {
-        return Object.keys(dimensions).map(function (d) {
+        return Object.keys(config.dimensions).map(function (d) {
           var x = position(d);
-          var y = dimensions[d].yscale(row[d]);
+          var y = config.dimensions[d].yscale(row[d]);
           return [x, y];
         });
       };
@@ -11482,7 +11472,7 @@
       };
     };
 
-    var version$1 = "2.2.7";
+    var version$1 = "2.2.8";
 
     var DefaultConfig = {
       data: [],
@@ -11794,7 +11784,7 @@
       pc.renderMarked.default = renderMarkedDefault(config, pc, ctx, position);
       pc.renderMarked.queue = renderMarkedQueue(config, markedQueue);
 
-      pc.compute_real_centroids = computeRealCentroids(config.dimensions, position);
+      pc.compute_real_centroids = computeRealCentroids(config, position);
       pc.shadows = shadows(flags, pc);
       pc.axisDots = axisDots(config, pc, position);
       pc.clear = clear(config, pc, ctx, brush$$1);
@@ -27923,7 +27913,7 @@
     }
 
     /** Used to detect strings that need a more robust regexp to match words. */
-    var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2,}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
+    var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
 
     /**
      * Checks if `string` contains a word composed of Unicode symbols.
@@ -30877,9 +30867,11 @@
      * @returns {*} Returns the property value.
      */
     function safeGet(object, key) {
-      return key == '__proto__'
-        ? undefined
-        : object[key];
+      if (key == '__proto__') {
+        return;
+      }
+
+      return object[key];
     }
 
     /**
@@ -30970,7 +30962,7 @@
           if (isArguments(objValue)) {
             newValue = toPlainObject(objValue);
           }
-          else if (!isObject(objValue) || (srcIndex && isFunction(objValue))) {
+          else if (!isObject(objValue) || isFunction(objValue)) {
             newValue = initCloneObject(srcValue);
           }
         }
@@ -37030,7 +37022,7 @@
      * _.range(0);
      * // => []
      */
-    var range$2 = createRange();
+    var range$1 = createRange();
 
     /**
      * This method is like `_.range` except that it populates values in
@@ -37785,7 +37777,7 @@
      * @param {number} [end=array.length] The end position.
      * @returns {Array} Returns the slice of `array`.
      */
-    function slice$8(array, start, end) {
+    function slice$7(array, start, end) {
       var length = array == null ? 0 : array.length;
       if (!length) {
         return [];
@@ -40616,7 +40608,7 @@
       initial, intersection: intersection$1, intersectionBy, intersectionWith, join,
       last, lastIndexOf, nth, pull, pullAll,
       pullAllBy, pullAllWith, pullAt, remove: remove$1, reverse: reverse$1,
-      slice: slice$8, sortedIndex, sortedIndexBy, sortedIndexOf, sortedLastIndex,
+      slice: slice$7, sortedIndex, sortedIndexBy, sortedIndexOf, sortedLastIndex,
       sortedLastIndexBy, sortedLastIndexOf, sortedUniq, sortedUniqBy, tail,
       take, takeRight, takeRightWhile, takeWhile, union,
       unionBy, unionWith, uniq, uniqBy, uniqWith,
@@ -40704,7 +40696,7 @@
       defaultTo, flow, flowRight, identity: identity$9, iteratee,
       matches, matchesProperty, method, methodOf, mixin,
       noop: noop$4, nthArg, over, overEvery, overSome,
-      property, propertyOf, range: range$2, rangeRight, stubArray,
+      property, propertyOf, range: range$1, rangeRight, stubArray,
       stubFalse, stubObject, stubString, stubTrue, times,
       toPath, uniqueId
     };
@@ -40855,7 +40847,7 @@
      */
 
     /** Used as the semantic version number. */
-    var VERSION = '4.17.10';
+    var VERSION = '4.17.11';
 
     /** Used to compose bitmasks for function metadata. */
     var WRAP_BIND_KEY_FLAG$6 = 2;
@@ -45472,7 +45464,7 @@
           probabilities: probabilities[0]
         });
 
-        const candidates = X.selection(candidateIdx, range$3(X[0].length));
+        const candidates = X.selection(candidateIdx, range$2(X[0].length));
         const distanceToCandidates = euclidianDistances(candidates, X);
 
         let bestCandidate;
@@ -45509,7 +45501,7 @@
       return result;
     }
 
-    function range$3(l) {
+    function range$2(l) {
       let r = [];
       for (let i = 0; i < l; i++) {
         r.push(i);

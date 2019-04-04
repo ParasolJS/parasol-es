@@ -24,8 +24,8 @@
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
     "prettier": "prettier --single-quote --trailing-comma es5 --write \"{src,__{demo,dist}__}/**/*.js\"",
-    "build": "rollup -c",
     "dev": "rollup -c rollup.config.dev.js -w",
+    "build": "rollup -c",
     "docs": "jsdoc src -r -d docs"
   },
   "files": [
