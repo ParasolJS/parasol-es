@@ -88,7 +88,7 @@
     "ml-distance-euclidean": "^2.0.0",
     "ml-kmeans": "^4.2.1",
     "ml-xsadd": "^2.0.0",
-    "parcoord-es": "github:jrkasprzyk/parcoords-es",
+    "parcoord-es": "github:jrkasprzyk/parcoords-es#bb2c9646f964020fcd2b8f821eace3e228c96143",
     "random": "^2.0.12",
     "slickgrid-es6": "^3.0.1"
   }
