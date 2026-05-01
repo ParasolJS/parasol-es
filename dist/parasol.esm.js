@@ -1,9 +1,9 @@
-import { selectAll, scaleOrdinal, schemeCategory10, csvFormat as csvFormat$1, keys, dispatch } from 'd3';
+import { selectAll, schemeCategory10, scaleOrdinal, dispatch } from 'd3';
 import ParCoords from 'parcoord-es';
 import SlickGrid from 'slickgrid-es6';
 import { difference, union, intersection, includes, isPlainObject } from 'lodash-es';
-import { csvFormat, csvParse } from 'd3-dsv';
 import kmeans from 'ml-kmeans';
+import { csvParse, csvFormat } from 'd3-dsv';
 
 /**
  * Setup a new visualization.
@@ -18,23 +18,23 @@ var init = function init(config) {
    * @param selection a d3 selection
    * @returns {ps} instance for chained api, compatible with parcoords api
    */
-  var ps = function ps(selection) {
-    selection = ps.selection = selectAll(selection);
+  var _ps = function ps(selection) {
+    selection = _ps.selection = selectAll(selection);
 
     // store pc charts in array
-    ps.charts = [];
+    _ps.charts = [];
     selection.each(function (d, i) {
-      ps.charts[i] = ParCoords(config.chartOptions)(this).data(config.data).hideAxis(['id']).alpha(0.4).render().mode('queue').brushMode('1D-axes'); //1D-axes must be used with linking
+      _ps.charts[i] = ParCoords(config.chartOptions)(this).data(config.data).hideAxis(['id']).alpha(0.4).render().mode('queue').brushMode('1D-axes'); //1D-axes must be used with linking
 
       // add "id" to partition globally
       config.partition[i] = ['id'];
     });
 
     // for chained api
-    return ps;
+    return _ps;
   };
   // for partial-application style programming
-  return ps;
+  return _ps;
 };
 
 var as_float = function as_float(x) {
@@ -53,24 +53,20 @@ var as_float = function as_float(x) {
 var attachGrid = function attachGrid(config, ps, flags) {
   return function (_ref) {
     var container = _ref.container,
-        _ref$columns = _ref.columns,
-        columns = _ref$columns === undefined ? null : _ref$columns,
-        _ref$options = _ref.options,
-        options = _ref$options === undefined ? null : _ref$options;
-
+      _ref$columns = _ref.columns,
+      columns = _ref$columns === void 0 ? null : _ref$columns,
+      _ref$options = _ref.options,
+      options = _ref$options === void 0 ? null : _ref$options;
     flags.grid = true;
-
     var checkboxSelector = new SlickGrid.Plugins.CheckboxSelectColumn({
       cssClass: 'slick-cell-checkboxsel'
     });
-
     if (columns === null) {
       // place id col on left
       var column_keys = config.vars;
       column_keys = difference(column_keys, ['id']);
       // NOTE: remove line below to remove id col from grid
       column_keys.unshift('id');
-
       columns = column_keys.map(function (key, i) {
         return {
           id: key,
@@ -81,7 +77,6 @@ var attachGrid = function attachGrid(config, ps, flags) {
       });
       columns.unshift(checkboxSelector.getColumnDefinition());
     }
-
     if (options === null) {
       options = {
         enableCellNavigation: true,
@@ -97,8 +92,9 @@ var attachGrid = function attachGrid(config, ps, flags) {
     config.dataView = new SlickGrid.Data.DataView();
     config.dataView.setItems(config.data);
     config.grid = new SlickGrid.Grid(container, config.dataView, columns, options);
-
-    config.grid.setSelectionModel(new SlickGrid.Plugins.RowSelectionModel({ selectActiveRow: false }));
+    config.grid.setSelectionModel(new SlickGrid.Plugins.RowSelectionModel({
+      selectActiveRow: false
+    }));
     config.grid.registerPlugin(checkboxSelector);
 
     // wire up model events to drive the grid
@@ -106,7 +102,6 @@ var attachGrid = function attachGrid(config, ps, flags) {
       config.grid.updateRowCount();
       config.grid.render();
     });
-
     config.dataView.onRowsChanged.subscribe(function (e, args) {
       config.grid.invalidateRows(args.rows);
       config.grid.render();
@@ -120,8 +115,6 @@ var attachGrid = function attachGrid(config, ps, flags) {
       return c.name;
     });
     sortcol.shift();
-    var sortdir = 1;
-
     var comparer = function comparer(a, b) {
       var x = as_float(a[sortcol]);
       var y = as_float(b[sortcol]);
@@ -130,12 +123,10 @@ var attachGrid = function attachGrid(config, ps, flags) {
 
     // click header to sort grid column
     config.grid.onSort.subscribe(function (e, args) {
-      sortdir = args.sortAsc ? 1 : -1;
+      args.sortAsc ? 1 : -1;
       sortcol = args.sortCol.field;
-
       config.dataView.sort(comparer, args.sortAsc);
     });
-
     return this;
   };
 };
@@ -148,11 +139,10 @@ var attachGrid = function attachGrid(config, ps, flags) {
 var gridUpdate = function gridUpdate(config, ps, flags) {
   return function () {
     var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-        _ref$data = _ref.data,
-        data = _ref$data === undefined ? null : _ref$data,
-        _ref$columns = _ref.columns,
-        columns = _ref$columns === undefined ? null : _ref$columns;
-
+      _ref$data = _ref.data,
+      data = _ref$data === void 0 ? null : _ref$data,
+      _ref$columns = _ref.columns,
+      columns = _ref$columns === void 0 ? null : _ref$columns;
     if (columns !== null) {
       config.grid.setColumns(columns);
       config.grid.render();
@@ -168,21 +158,48 @@ var gridUpdate = function gridUpdate(config, ps, flags) {
     if (config.marked.length) {
       data = union(data, config.marked);
     }
-
     var comparer = function comparer(a, b) {
       var x = as_float(a['id']);
       var y = as_float(b['id']);
       return x == y ? 0 : x > y ? 1 : -1;
     };
-
     config.dataView.beginUpdate();
     config.dataView.setItems(data);
     config.dataView.sort(comparer, true);
     config.dataView.endUpdate();
-
     return this;
   };
 };
+
+function _arrayLikeToArray(r, a) {
+  (null == a || a > r.length) && (a = r.length);
+  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+  return n;
+}
+
+function _arrayWithoutHoles(r) {
+  if (Array.isArray(r)) return _arrayLikeToArray(r);
+}
+
+function _iterableToArray(r) {
+  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+}
+
+function _unsupportedIterableToArray(r, a) {
+  if (r) {
+    if ("string" == typeof r) return _arrayLikeToArray(r, a);
+    var t = {}.toString.call(r).slice(8, -1);
+    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+  }
+}
+
+function _nonIterableSpread() {
+  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+
+function _toConsumableArray(r) {
+  return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
+}
 
 // synchronize data between linked components
 var sync = function sync(config, ps, flags) {
@@ -194,7 +211,7 @@ var sync = function sync(config, ps, flags) {
     });
 
     //check edge case where all brushes individually clicked away
-    if (union.apply(undefined, brush_extents).length == 0) {
+    if (union.apply(void 0, brush_extents).length == 0) {
       ps.linked.forEach(function (pc) {
         pc.brushReset();
       });
@@ -204,7 +221,7 @@ var sync = function sync(config, ps, flags) {
         ps.gridUpdate(config.data);
       }
     } else {
-      var brushed = intersection.apply(undefined, brush_extents);
+      var brushed = intersection.apply(void 0, brush_extents);
       ps.linked.forEach(function (pc) {
         pc.brushed(brushed).render();
       });
@@ -219,58 +236,12 @@ var sync = function sync(config, ps, flags) {
       // update data in grid
       // NOTE: once pc.selected fixed, remove arg from gridUpdate
       if (flags.grid) {
-        ps.gridUpdate({ data: brushed });
+        ps.gridUpdate({
+          data: brushed
+        });
       }
     }
   };
-};
-
-var slicedToArray = function () {
-  function sliceIterator(arr, i) {
-    var _arr = [];
-    var _n = true;
-    var _d = false;
-    var _e = undefined;
-
-    try {
-      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
-        _arr.push(_s.value);
-
-        if (i && _arr.length === i) break;
-      }
-    } catch (err) {
-      _d = true;
-      _e = err;
-    } finally {
-      try {
-        if (!_n && _i["return"]) _i["return"]();
-      } finally {
-        if (_d) throw _e;
-      }
-    }
-
-    return _arr;
-  }
-
-  return function (arr, i) {
-    if (Array.isArray(arr)) {
-      return arr;
-    } else if (Symbol.iterator in Object(arr)) {
-      return sliceIterator(arr, i);
-    } else {
-      throw new TypeError("Invalid attempt to destructure non-iterable instance");
-    }
-  };
-}();
-
-var toConsumableArray = function (arr) {
-  if (Array.isArray(arr)) {
-    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-    return arr2;
-  } else {
-    return Array.from(arr);
-  }
 };
 
 /**
@@ -280,8 +251,7 @@ var toConsumableArray = function (arr) {
  **/
 var linked = function linked(config, ps, flags) {
   return function () {
-    var chartIDs = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [].concat(toConsumableArray(Array(ps.charts.length).keys()));
-
+    var chartIDs = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _toConsumableArray(Array(ps.charts.length).keys());
     // force numeric type for indexing
     chartIDs = chartIDs.map(Number);
 
@@ -290,7 +260,6 @@ var linked = function linked(config, ps, flags) {
     chartIDs.forEach(function (i, j) {
       ps.linked[j] = ps.charts[i];
     });
-
     ps.linked.forEach(function (pc) {
       pc.on('brush', sync(config, ps, flags));
     });
@@ -334,10 +303,46 @@ var linked = function linked(config, ps, flags) {
         }
       });
     }
-
     return this;
   };
 };
+
+function _arrayWithHoles(r) {
+  if (Array.isArray(r)) return r;
+}
+
+function _iterableToArrayLimit(r, l) {
+  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+  if (null != t) {
+    var e,
+      n,
+      i,
+      u,
+      a = [],
+      f = true,
+      o = false;
+    try {
+      if (i = (t = t.call(r)).next, 0 === l) ; else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+    } catch (r) {
+      o = true, n = r;
+    } finally {
+      try {
+        if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return;
+      } finally {
+        if (o) throw n;
+      }
+    }
+    return a;
+  }
+}
+
+function _nonIterableRest() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+
+function _slicedToArray(r, e) {
+  return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+}
 
 // wrangling tools to manipulate data for processing values
 
@@ -358,10 +363,9 @@ var array_to_object = function array_to_object(data) {
 var object_to_array = function object_to_array(df, data) {
   var result = [];
   Object.entries(df).forEach(function (_ref) {
-    var _ref2 = slicedToArray(_ref, 2),
-        key = _ref2[0],
-        values = _ref2[1];
-
+    var _ref2 = _slicedToArray(_ref, 2),
+      key = _ref2[0],
+      values = _ref2[1];
     values.forEach(function (val, i) {
       result[i] = result[i] || {};
       // get original string if value is NaN
@@ -380,41 +384,32 @@ var arr = {
   max: function max(array) {
     return Math.max.apply(null, array);
   },
-
   min: function min(array) {
     return Math.min.apply(null, array);
   },
-
   range: function range(array) {
     return arr.max(array) - arr.min(array);
   },
-
   extents: function extents(array) {
     return [arr.min(array), arr.max(array)];
   },
-
   sum: function sum(array) {
     var num = 0;
-    for (var i = 0, l = array.length; i < l; i++) {
-      num += array[i];
-    }return num;
+    for (var i = 0, l = array.length; i < l; i++) num += array[i];
+    return num;
   },
-
   mean: function mean(array) {
     return arr.sum(array) / array.length;
   },
-
   variance: function variance(array) {
     var mean = arr.mean(array);
     return arr.mean(array.map(function (num) {
       return Math.pow(num - mean, 2);
     }));
   },
-
   standardDeviation: function standardDeviation(array) {
     return Math.sqrt(arr.variance(array));
   },
-
   zScores: function zScores(array) {
     var mean = arr.mean(array);
     var standardDeviation = arr.standardDeviation(array);
@@ -422,7 +417,6 @@ var arr = {
       return (num - mean) / standardDeviation;
     });
   },
-
   norms: function norms(array) {
     var extents = arr.extents(array);
     return array.map(function (num) {
@@ -446,7 +440,15 @@ var standardize = function standardize(data) {
 };
 
 // format data values as strings
-
+// const parcoords_format = d => {
+// 	d.forEach(
+// 		(d_obj) => {
+// 			Object.entries(d_obj).forEach(
+// 				([key, value]) =>  {
+// 					d_obj[key] = value.toString();
+// 				});
+// 		});
+// };
 var format_data = function format_data(data) {
   return csvParse(csvFormat(data));
 };
@@ -486,28 +488,26 @@ var add_column = function add_column(columns, col_name) {
 var cluster = function cluster(config, ps, flags) {
   return function () {
     var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-        _ref$k = _ref.k,
-        k = _ref$k === undefined ? 3 : _ref$k,
-        _ref$vars = _ref.vars,
-        vars = _ref$vars === undefined ? config.vars : _ref$vars,
-        _ref$displayIDs = _ref.displayIDs,
-        displayIDs = _ref$displayIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$displayIDs,
-        _ref$palette = _ref.palette,
-        palette = _ref$palette === undefined ? schemeCategory10 : _ref$palette,
-        _ref$options = _ref.options,
-        options = _ref$options === undefined ? {} : _ref$options,
-        _ref$std = _ref.std,
-        std = _ref$std === undefined ? true : _ref$std,
-        _ref$hidden = _ref.hidden,
-        hidden = _ref$hidden === undefined ? true : _ref$hidden;
-
+      _ref$k = _ref.k,
+      k = _ref$k === void 0 ? 3 : _ref$k,
+      _ref$vars = _ref.vars,
+      vars = _ref$vars === void 0 ? config.vars : _ref$vars,
+      _ref$displayIDs = _ref.displayIDs,
+      displayIDs = _ref$displayIDs === void 0 ? _toConsumableArray(Array(ps.charts.length).keys()) : _ref$displayIDs,
+      _ref$palette = _ref.palette,
+      palette = _ref$palette === void 0 ? schemeCategory10 : _ref$palette,
+      _ref$options = _ref.options,
+      options = _ref$options === void 0 ? {} : _ref$options,
+      _ref$std = _ref.std,
+      std = _ref$std === void 0 ? true : _ref$std,
+      _ref$hidden = _ref.hidden,
+      hidden = _ref$hidden === void 0 ? true : _ref$hidden;
     if (Array.isArray(palette)) {
       var scheme = scaleOrdinal(palette);
       palette = function palette(d) {
         return scheme(Number(d['cluster']));
       };
     }
-
     var data = [];
     if (std === true) {
       data = standardize(config.data);
@@ -527,10 +527,9 @@ var cluster = function cluster(config, ps, flags) {
     data.forEach(function (d) {
       var target = [];
       Object.entries(d).forEach(function (_ref2) {
-        var _ref3 = slicedToArray(_ref2, 2),
-            key = _ref3[0],
-            value = _ref3[1];
-
+        var _ref3 = _slicedToArray(_ref2, 2),
+          key = _ref3[0],
+          value = _ref3[1];
         // only take values from variables listed in function argument
         if (cluster_vars[key] == true) {
           target.push(Number(value));
@@ -562,7 +561,6 @@ var cluster = function cluster(config, ps, flags) {
       pc.data(config.data).render().createAxes();
       // .updateAxes();
     });
-
     ps.charts.forEach(function (pc, i) {
       // only color charts in displayIDs
       if (displayIDs.includes(i)) {
@@ -570,13 +568,13 @@ var cluster = function cluster(config, ps, flags) {
       }
       pc.hideAxis(config.partition[i]).render().updateAxes(0);
     });
-
     if (flags.grid) {
       // add column
       var cols = add_column(config.grid.getColumns(), 'cluster');
-      ps.gridUpdate({ columns: cols });
+      ps.gridUpdate({
+        columns: cols
+      });
     }
-
     return this;
   };
 };
@@ -588,10 +586,9 @@ var normalize = function normalize(data) {
 
   // normalize values
   Object.entries(df).forEach(function (_ref) {
-    var _ref2 = slicedToArray(_ref, 2),
-        key = _ref2[0],
-        col = _ref2[1];
-
+    var _ref2 = _slicedToArray(_ref, 2),
+      key = _ref2[0],
+      col = _ref2[1];
     df[key] = arr.norms(col);
   });
 
@@ -610,16 +607,14 @@ var normalize = function normalize(data) {
 var weightedSum = function weightedSum(config, ps, flags) {
   return function (_ref) {
     var weights = _ref.weights,
-        _ref$displayIDs = _ref.displayIDs,
-        displayIDs = _ref$displayIDs === undefined ? [].concat(toConsumableArray(Array(ps.charts.length).keys())) : _ref$displayIDs,
-        _ref$norm = _ref.norm,
-        norm = _ref$norm === undefined ? true : _ref$norm;
-
+      _ref$displayIDs = _ref.displayIDs,
+      displayIDs = _ref$displayIDs === void 0 ? _toConsumableArray(Array(ps.charts.length).keys()) : _ref$displayIDs,
+      _ref$norm = _ref.norm,
+      norm = _ref$norm === void 0 ? true : _ref$norm;
     // NOTE: if data is re-scored, old score will not affect new score unless it is given a weight itself in the 'weights' object
 
     // force numeric type for indexing
     displayIDs = displayIDs.map(Number);
-
     var data = [];
     if (norm === true) {
       data = normalize(config.data);
@@ -634,10 +629,9 @@ var weightedSum = function weightedSum(config, ps, flags) {
       Object.entries(d).forEach(
       // find cumulative sum of weight times value
       function (_ref2) {
-        var _ref3 = slicedToArray(_ref2, 2),
-            key = _ref3[0],
-            val = _ref3[1];
-
+        var _ref3 = _slicedToArray(_ref2, 2),
+          key = _ref3[0],
+          val = _ref3[1];
         if (weights[key]) {
           d_weight += val * weights[key];
         }
@@ -672,9 +666,10 @@ var weightedSum = function weightedSum(config, ps, flags) {
     if (flags.grid) {
       // add column
       var cols = add_column(config.grid.getColumns(), 'weighted sum');
-      ps.gridUpdate({ columns: cols });
+      ps.gridUpdate({
+        columns: cols
+      });
     }
-
     return this;
   };
 };
@@ -694,10 +689,9 @@ var hideAxes = function hideAxes(config, ps, flags) {
     } else if (isPlainObject(partition)) {
       // take union of values for each key that is also in config.partition
       Object.entries(partition).forEach(function (_ref) {
-        var _ref2 = slicedToArray(_ref, 2),
-            key = _ref2[0],
-            values = _ref2[1];
-
+        var _ref2 = _slicedToArray(_ref, 2),
+          key = _ref2[0];
+          _ref2[1];
         if (config.partition[key]) {
           config.partition[key] = union(config.partition[key], partition[key]);
         }
@@ -708,14 +702,12 @@ var hideAxes = function hideAxes(config, ps, flags) {
 
     // iterate over partition keys and hide all variables in value array
     Object.entries(config.partition).forEach(function (_ref3) {
-      var _ref4 = slicedToArray(_ref3, 2),
-          chartID = _ref4[0],
-          vars = _ref4[1];
-
+      var _ref4 = _slicedToArray(_ref3, 2),
+        chartID = _ref4[0],
+        vars = _ref4[1];
       ps.charts[chartID].hideAxis(vars);
       ps.charts[chartID].render().updateAxes(500);
     });
-
     return this;
   };
 };
@@ -741,10 +733,9 @@ var showAxes = function showAxes(config, ps, flags) {
       // take difference of values for each key that is also in config.partition
       // (i.e. remove from hidden)
       Object.entries(partition).forEach(function (_ref) {
-        var _ref2 = slicedToArray(_ref, 2),
-            key = _ref2[0],
-            values = _ref2[1];
-
+        var _ref2 = _slicedToArray(_ref, 2),
+          key = _ref2[0];
+          _ref2[1];
         if (config.partition[key]) {
           config.partition[key] = difference(config.partition[key], partition[key]);
         }
@@ -755,14 +746,12 @@ var showAxes = function showAxes(config, ps, flags) {
 
     // iterate over partition keys and hide only remaining variables in value array
     Object.entries(config.partition).forEach(function (_ref3) {
-      var _ref4 = slicedToArray(_ref3, 2),
-          chartID = _ref4[0],
-          vars = _ref4[1];
-
+      var _ref4 = _slicedToArray(_ref3, 2),
+        chartID = _ref4[0],
+        vars = _ref4[1];
       ps.charts[chartID].hideAxis(vars);
       ps.charts[chartID].render().updateAxes(500);
     });
-
     return this;
   };
 };
@@ -778,10 +767,9 @@ var setAxesLayout = function setAxesLayout(config, ps, flags) {
       // take difference of all variables and layout variables
       // i.e. show only those which appear in both data and layout
       Object.entries(layout).forEach(function (_ref) {
-        var _ref2 = slicedToArray(_ref, 2),
-            key = _ref2[0],
-            values = _ref2[1];
-
+        var _ref2 = _slicedToArray(_ref, 2),
+          key = _ref2[0];
+          _ref2[1];
         if (config.partition[key]) {
           config.partition[key] = difference(config.vars.concat('id'), layout[key]);
         }
@@ -792,14 +780,12 @@ var setAxesLayout = function setAxesLayout(config, ps, flags) {
 
     // iterate over partition keys and hide only remaining variables in value array
     Object.entries(config.partition).forEach(function (_ref3) {
-      var _ref4 = slicedToArray(_ref3, 2),
-          chartID = _ref4[0],
-          vars = _ref4[1];
-
+      var _ref4 = _slicedToArray(_ref3, 2),
+        chartID = _ref4[0],
+        vars = _ref4[1];
       ps.charts[chartID].hideAxis(vars);
       ps.charts[chartID].render().updateAxes(0);
     });
-
     return this;
   };
 };
@@ -824,7 +810,6 @@ var keepData = function keepData(config, ps, flags) {
     } else {
       throw "Please specify one of {'brushed', 'marked', 'both'}";
     }
-
     if (d.length > 0) {
       // reset selections and update config
       ps.resetSelections('both');
@@ -832,7 +817,7 @@ var keepData = function keepData(config, ps, flags) {
       // update data, charts, and grid
       config.data = d;
       ps.charts.forEach(function (pc) {
-        pc.data(d).render.default();
+        pc.data(d).render["default"]();
         pc.brushReset();
       });
       if (flags.grid) {
@@ -841,7 +826,6 @@ var keepData = function keepData(config, ps, flags) {
     } else {
       throw 'Error: No data selected.';
     }
-
     return this;
   };
 };
@@ -867,7 +851,6 @@ var removeData = function removeData(config, ps, flags) {
       throw "Please specify one of {'brushed', 'marked', 'both'}";
     }
     d = difference(config.data, d);
-
     if (d.length > 0 && d.length < config.data.length) {
       // reset selections and update config
       ps.resetSelections('both');
@@ -875,7 +858,7 @@ var removeData = function removeData(config, ps, flags) {
       // update data, charts, and grid
       config.data = d;
       ps.charts.forEach(function (pc) {
-        pc.data(d).render.default();
+        pc.data(d).render["default"]();
         pc.brushReset();
       });
       if (flags.grid) {
@@ -884,18 +867,14 @@ var removeData = function removeData(config, ps, flags) {
     } else {
       throw 'Error: No data selected.';
     }
-
     return this;
   };
 };
 
-var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
-function createCommonjsModule(fn, module) {
-	return module = { exports: {} }, fn(module, module.exports), module.exports;
-}
+var FileSaver = {exports: {}};
 
-var FileSaver = createCommonjsModule(function (module) {
 /* FileSaver.js
  * A saveAs() FileSaver implementation.
  * 1.3.2
@@ -906,173 +885,183 @@ var FileSaver = createCommonjsModule(function (module) {
  *   See https://github.com/eligrey/FileSaver.js/blob/master/LICENSE.md
  */
 
-/*global self */
-/*jslint bitwise: true, indent: 4, laxbreak: true, laxcomma: true, smarttabs: true, plusplus: true */
+(function (module) {
+	/*global self */
+	/*jslint bitwise: true, indent: 4, laxbreak: true, laxcomma: true, smarttabs: true, plusplus: true */
 
-/*! @source http://purl.eligrey.com/github/FileSaver.js/blob/master/FileSaver.js */
+	/*! @source http://purl.eligrey.com/github/FileSaver.js/blob/master/FileSaver.js */
 
-var saveAs = saveAs || function (view) {
-	// IE <10 is explicitly unsupported
-
-	if (typeof view === "undefined" || typeof navigator !== "undefined" && /MSIE [1-9]\./.test(navigator.userAgent)) {
-		return;
-	}
-	var doc = view.document
-	// only get URL when necessary in case Blob.js hasn't overridden it yet
-	,
-	    get_URL = function get_URL() {
-		return view.URL || view.webkitURL || view;
-	},
-	    save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a"),
-	    can_use_save_link = "download" in save_link,
-	    click = function click(node) {
-		var event = new MouseEvent("click");
-		node.dispatchEvent(event);
-	},
-	    is_safari = /constructor/i.test(view.HTMLElement) || view.safari,
-	    is_chrome_ios = /CriOS\/[\d]+/.test(navigator.userAgent),
-	    throw_outside = function throw_outside(ex) {
-		(view.setImmediate || view.setTimeout)(function () {
-			throw ex;
-		}, 0);
-	},
-	    force_saveable_type = "application/octet-stream"
-	// the Blob API is fundamentally broken as there is no "downloadfinished" event to subscribe to
-	,
-	    arbitrary_revoke_timeout = 1000 * 40 // in ms
-	,
-	    revoke = function revoke(file) {
-		var revoker = function revoker() {
-			if (typeof file === "string") {
-				// file is an object URL
-				get_URL().revokeObjectURL(file);
-			} else {
-				// file is a File
-				file.remove();
-			}
-		};
-		setTimeout(revoker, arbitrary_revoke_timeout);
-	},
-	    dispatch$$1 = function dispatch$$1(filesaver, event_types, event) {
-		event_types = [].concat(event_types);
-		var i = event_types.length;
-		while (i--) {
-			var listener = filesaver["on" + event_types[i]];
-			if (typeof listener === "function") {
-				try {
-					listener.call(filesaver, event || filesaver);
-				} catch (ex) {
-					throw_outside(ex);
-				}
-			}
-		}
-	},
-	    auto_bom = function auto_bom(blob) {
-		// prepend BOM for UTF-8 XML and text/* types (including HTML)
-		// note: your browser will automatically convert UTF-16 U+FEFF to EF BB BF
-		if (/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(blob.type)) {
-			return new Blob([String.fromCharCode(0xFEFF), blob], { type: blob.type });
-		}
-		return blob;
-	},
-	    FileSaver = function FileSaver(blob, name, no_auto_bom) {
-		if (!no_auto_bom) {
-			blob = auto_bom(blob);
-		}
-		// First try a.download, then web filesystem, then object URLs
-		var filesaver = this,
-		    type = blob.type,
-		    force = type === force_saveable_type,
-		    object_url,
-		    dispatch_all = function dispatch_all() {
-			dispatch$$1(filesaver, "writestart progress write writeend".split(" "));
-		}
-		// on any filesys errors revert to saving with object URLs
-		,
-		    fs_error = function fs_error() {
-			if ((is_chrome_ios || force && is_safari) && view.FileReader) {
-				// Safari doesn't allow downloading of blob urls
-				var reader = new FileReader();
-				reader.onloadend = function () {
-					var url = is_chrome_ios ? reader.result : reader.result.replace(/^data:[^;]*;/, 'data:attachment/file;');
-					var popup = view.open(url, '_blank');
-					if (!popup) view.location.href = url;
-					url = undefined; // release reference before dispatching
-					filesaver.readyState = filesaver.DONE;
-					dispatch_all();
-				};
-				reader.readAsDataURL(blob);
-				filesaver.readyState = filesaver.INIT;
-				return;
-			}
-			// don't create more object URLs than needed
-			if (!object_url) {
-				object_url = get_URL().createObjectURL(blob);
-			}
-			if (force) {
-				view.location.href = object_url;
-			} else {
-				var opened = view.open(object_url, "_blank");
-				if (!opened) {
-					// Apple does not allow window.open, see https://developer.apple.com/library/safari/documentation/Tools/Conceptual/SafariExtensionGuide/WorkingwithWindowsandTabs/WorkingwithWindowsandTabs.html
-					view.location.href = object_url;
-				}
-			}
-			filesaver.readyState = filesaver.DONE;
-			dispatch_all();
-			revoke(object_url);
-		};
-		filesaver.readyState = filesaver.INIT;
-
-		if (can_use_save_link) {
-			object_url = get_URL().createObjectURL(blob);
-			setTimeout(function () {
-				save_link.href = object_url;
-				save_link.download = name;
-				click(save_link);
-				dispatch_all();
-				revoke(object_url);
-				filesaver.readyState = filesaver.DONE;
-			});
+	var saveAs = saveAs || (function(view) {
+		// IE <10 is explicitly unsupported
+		if (typeof view === "undefined" || typeof navigator !== "undefined" && /MSIE [1-9]\./.test(navigator.userAgent)) {
 			return;
 		}
-
-		fs_error();
-	},
-	    FS_proto = FileSaver.prototype,
-	    saveAs = function saveAs(blob, name, no_auto_bom) {
-		return new FileSaver(blob, name || blob.name || "download", no_auto_bom);
-	};
-	// IE 10+ (native saveAs)
-	if (typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob) {
-		return function (blob, name, no_auto_bom) {
-			name = name || blob.name || "download";
-
-			if (!no_auto_bom) {
-				blob = auto_bom(blob);
+		var
+			  doc = view.document
+			  // only get URL when necessary in case Blob.js hasn't overridden it yet
+			, get_URL = function() {
+				return view.URL || view.webkitURL || view;
 			}
-			return navigator.msSaveOrOpenBlob(blob, name);
-		};
-	}
+			, save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a")
+			, can_use_save_link = "download" in save_link
+			, click = function(node) {
+				var event = new MouseEvent("click");
+				node.dispatchEvent(event);
+			}
+			, is_safari = /constructor/i.test(view.HTMLElement) || view.safari
+			, is_chrome_ios =/CriOS\/[\d]+/.test(navigator.userAgent)
+			, throw_outside = function(ex) {
+				(view.setImmediate || view.setTimeout)(function() {
+					throw ex;
+				}, 0);
+			}
+			, force_saveable_type = "application/octet-stream"
+			// the Blob API is fundamentally broken as there is no "downloadfinished" event to subscribe to
+			, arbitrary_revoke_timeout = 1000 * 40 // in ms
+			, revoke = function(file) {
+				var revoker = function() {
+					if (typeof file === "string") { // file is an object URL
+						get_URL().revokeObjectURL(file);
+					} else { // file is a File
+						file.remove();
+					}
+				};
+				setTimeout(revoker, arbitrary_revoke_timeout);
+			}
+			, dispatch = function(filesaver, event_types, event) {
+				event_types = [].concat(event_types);
+				var i = event_types.length;
+				while (i--) {
+					var listener = filesaver["on" + event_types[i]];
+					if (typeof listener === "function") {
+						try {
+							listener.call(filesaver, event || filesaver);
+						} catch (ex) {
+							throw_outside(ex);
+						}
+					}
+				}
+			}
+			, auto_bom = function(blob) {
+				// prepend BOM for UTF-8 XML and text/* types (including HTML)
+				// note: your browser will automatically convert UTF-16 U+FEFF to EF BB BF
+				if (/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(blob.type)) {
+					return new Blob([String.fromCharCode(0xFEFF), blob], {type: blob.type});
+				}
+				return blob;
+			}
+			, FileSaver = function(blob, name, no_auto_bom) {
+				if (!no_auto_bom) {
+					blob = auto_bom(blob);
+				}
+				// First try a.download, then web filesystem, then object URLs
+				var
+					  filesaver = this
+					, type = blob.type
+					, force = type === force_saveable_type
+					, object_url
+					, dispatch_all = function() {
+						dispatch(filesaver, "writestart progress write writeend".split(" "));
+					}
+					// on any filesys errors revert to saving with object URLs
+					, fs_error = function() {
+						if ((is_chrome_ios || (force && is_safari)) && view.FileReader) {
+							// Safari doesn't allow downloading of blob urls
+							var reader = new FileReader();
+							reader.onloadend = function() {
+								var url = is_chrome_ios ? reader.result : reader.result.replace(/^data:[^;]*;/, 'data:attachment/file;');
+								var popup = view.open(url, '_blank');
+								if(!popup) view.location.href = url;
+								url=undefined; // release reference before dispatching
+								filesaver.readyState = filesaver.DONE;
+								dispatch_all();
+							};
+							reader.readAsDataURL(blob);
+							filesaver.readyState = filesaver.INIT;
+							return;
+						}
+						// don't create more object URLs than needed
+						if (!object_url) {
+							object_url = get_URL().createObjectURL(blob);
+						}
+						if (force) {
+							view.location.href = object_url;
+						} else {
+							var opened = view.open(object_url, "_blank");
+							if (!opened) {
+								// Apple does not allow window.open, see https://developer.apple.com/library/safari/documentation/Tools/Conceptual/SafariExtensionGuide/WorkingwithWindowsandTabs/WorkingwithWindowsandTabs.html
+								view.location.href = object_url;
+							}
+						}
+						filesaver.readyState = filesaver.DONE;
+						dispatch_all();
+						revoke(object_url);
+					}
+				;
+				filesaver.readyState = filesaver.INIT;
 
-	FS_proto.abort = function () {};
-	FS_proto.readyState = FS_proto.INIT = 0;
-	FS_proto.WRITING = 1;
-	FS_proto.DONE = 2;
+				if (can_use_save_link) {
+					object_url = get_URL().createObjectURL(blob);
+					setTimeout(function() {
+						save_link.href = object_url;
+						save_link.download = name;
+						click(save_link);
+						dispatch_all();
+						revoke(object_url);
+						filesaver.readyState = filesaver.DONE;
+					});
+					return;
+				}
 
-	FS_proto.error = FS_proto.onwritestart = FS_proto.onprogress = FS_proto.onwrite = FS_proto.onabort = FS_proto.onerror = FS_proto.onwriteend = null;
+				fs_error();
+			}
+			, FS_proto = FileSaver.prototype
+			, saveAs = function(blob, name, no_auto_bom) {
+				return new FileSaver(blob, name || blob.name || "download", no_auto_bom);
+			}
+		;
+		// IE 10+ (native saveAs)
+		if (typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob) {
+			return function(blob, name, no_auto_bom) {
+				name = name || blob.name || "download";
 
-	return saveAs;
-}(typeof self !== "undefined" && self || typeof window !== "undefined" && window || commonjsGlobal.content);
-// `self` is undefined in Firefox for Android content script context
-// while `this` is nsIContentFrameMessageManager
-// with an attribute `content` that corresponds to the window
+				if (!no_auto_bom) {
+					blob = auto_bom(blob);
+				}
+				return navigator.msSaveOrOpenBlob(blob, name);
+			};
+		}
 
-if (module.exports) {
-	module.exports.saveAs = saveAs;
-}
-});
-var FileSaver_1 = FileSaver.saveAs;
+		FS_proto.abort = function(){};
+		FS_proto.readyState = FS_proto.INIT = 0;
+		FS_proto.WRITING = 1;
+		FS_proto.DONE = 2;
+
+		FS_proto.error =
+		FS_proto.onwritestart =
+		FS_proto.onprogress =
+		FS_proto.onwrite =
+		FS_proto.onabort =
+		FS_proto.onerror =
+		FS_proto.onwriteend =
+			null;
+
+		return saveAs;
+	}(
+		   typeof self !== "undefined" && self
+		|| typeof window !== "undefined" && window
+		|| commonjsGlobal.content
+	));
+	// `self` is undefined in Firefox for Android content script context
+	// while `this` is nsIContentFrameMessageManager
+	// with an attribute `content` that corresponds to the window
+
+	if (module.exports) {
+	  module.exports.saveAs = saveAs;
+	} 
+} (FileSaver));
+
+var FileSaverExports = FileSaver.exports;
 
 /**
  * Export selected data to new csv and download
@@ -1084,12 +1073,11 @@ var FileSaver_1 = FileSaver.saveAs;
 var exportData = function exportData(config, ps, flags) {
   return function (_ref) {
     var _ref$selection = _ref.selection,
-        selection = _ref$selection === undefined ? 'both' : _ref$selection,
-        _ref$filename = _ref.filename,
-        filename = _ref$filename === undefined ? null : _ref$filename,
-        _ref$exportAll = _ref.exportAll,
-        exportAll = _ref$exportAll === undefined ? false : _ref$exportAll;
-
+      selection = _ref$selection === void 0 ? 'both' : _ref$selection,
+      _ref$filename = _ref.filename,
+      filename = _ref$filename === void 0 ? null : _ref$filename,
+      _ref$exportAll = _ref.exportAll,
+      exportAll = _ref$exportAll === void 0 ? false : _ref$exportAll;
     if (filename === null) {
       filename = 'parasol_data.csv';
     }
@@ -1107,15 +1095,16 @@ var exportData = function exportData(config, ps, flags) {
     } else {
       throw "Please specify one of {'brushed', 'marked', 'both'}";
     }
-
     if (d.length > 0) {
       // format data as csv
       // NOTE: include assigned data id number?
-      var csv = csvFormat$1(d, config.vars);
+      var csv = csvFormat(d, config.vars);
 
       // create url and download
-      var file = new Blob([csv], { type: 'text/csv' });
-      FileSaver_1(file, filename);
+      var file = new Blob([csv], {
+        type: 'text/csv'
+      });
+      FileSaverExports.saveAs(file, filename);
     } else {
       throw 'Error: No data selected.';
     }
@@ -1334,7 +1323,6 @@ var brushReset = function brushReset(config, ps, flags) {
     // NOTE: brushed data in config is updated by sync() as consequence of pc.brushReset()
     // currently need to force due to issue with ParCoords.selected() returning entire dataset if brush extents are empty
     config.brushed = [];
-
     if (flags.grid) {
       ps.gridUpdate();
     }
@@ -1367,16 +1355,18 @@ var unhighlight = function unhighlight(config, ps, flags) {
 var DefaultConfig = {
   dataView: false,
   grid: false,
-  chartOptions: {}, // parcoords options, applies to all charts
-  brushed: [], // intersection of all brushed data in linked charts
-  marked: [], // union of all marked data in linked charts
+  chartOptions: {},
+  // parcoords options, applies to all charts
+  brushed: [],
+  // intersection of all brushed data in linked charts
+  marked: [],
+  // union of all marked data in linked charts
   selections: function selections() {
     return union(this.brushed, this.marked);
   }
 };
 
 var _this = undefined;
-
 var initState = function initState(data, userConfig) {
   var config = Object.assign({}, DefaultConfig, userConfig);
   // force attributes for consistent operation
@@ -1398,16 +1388,17 @@ var initState = function initState(data, userConfig) {
   // 'resize',
   // 'highlight',
   // 'mark',
-  'brush', 'brushend', 'brushstart'].concat(keys(config));
-
+  'brush', 'brushend', 'brushstart'
+  // 'axesreorder',
+  ].concat(Object.keys(config));
   var events = dispatch.apply(_this, eventTypes),
-      flags = {
-    linked: false,
-    grid: false
-    // axes: false,
-    // interactive: false,
-    // debug: false,
-  };
+    flags = {
+      linked: false,
+      grid: false
+      // axes: false,
+      // interactive: false,
+      // debug: false,
+    };
   // xscale = scalePoint(),
   // dragging = {},
   // axis = axisLeft().ticks(5),
@@ -1422,17 +1413,13 @@ var initState = function initState(data, userConfig) {
   };
 };
 
-var version = "1.0.1";
+var version = "1.0.2";
 
 //css
-
 var Parasol = function Parasol(data, userConfig) {
   var state = initState(data, userConfig);
   var config = state.config,
-      events = state.events,
-      flags = state.flags;
-
-
+    flags = state.flags;
   var ps = init(config);
 
   // bindEvents();
@@ -1443,43 +1430,41 @@ var Parasol = function Parasol(data, userConfig) {
   ps.version = version;
   ps.grid = config.grid;
   ps.dataview = config.dataview;
-
   ps.attachGrid = attachGrid(config, ps, flags);
-  ps.gridUpdate = gridUpdate(config, ps, flags);
+  ps.gridUpdate = gridUpdate(config);
   ps.linked = linked(config, ps, flags);
   ps.cluster = cluster(config, ps, flags);
   ps.weightedSum = weightedSum(config, ps, flags);
-  ps.hideAxes = hideAxes(config, ps, flags);
-  ps.showAxes = showAxes(config, ps, flags);
-  ps.setAxesLayout = setAxesLayout(config, ps, flags);
+  ps.hideAxes = hideAxes(config, ps);
+  ps.showAxes = showAxes(config, ps);
+  ps.setAxesLayout = setAxesLayout(config, ps);
   ps.keepData = keepData(config, ps, flags);
   ps.removeData = removeData(config, ps, flags);
-  ps.exportData = exportData(config, ps, flags);
-  ps.resetSelections = resetSelections(config, ps, flags);
+  ps.exportData = exportData(config);
+  ps.resetSelections = resetSelections(config, ps);
 
   // parcoords methods (apply to all charts)
-  ps.alpha = alpha(config, ps, flags);
-  ps.color = color(config, ps, flags);
-  ps.alphaOnBrushed = alphaOnBrushed(config, ps, flags);
-  ps.brushedColor = brushedColor(config, ps, flags);
-  ps.reorderable = reorderable(config, ps, flags);
-  ps.composite = composite(config, ps, flags);
-  ps.shadows = shadows(config, ps, flags);
-  ps.mark = mark(config, ps, flags);
-  ps.highlight = highlight(config, ps, flags);
-  ps.dimensions = dimensions(config, ps, flags);
-  ps.scale = scale(config, ps, flags);
-  ps.flipAxes = flipAxes(config, ps, flags);
-  ps.bundleDimension = bundleDimension(config, ps, flags);
-  ps.bundlingStrength = bundlingStrength(config, ps, flags);
-  ps.smoothness = smoothness(config, ps, flags);
-  ps.render = render(config, ps, flags);
+  ps.alpha = alpha(config, ps);
+  ps.color = color(config, ps);
+  ps.alphaOnBrushed = alphaOnBrushed(config, ps);
+  ps.brushedColor = brushedColor(config, ps);
+  ps.reorderable = reorderable(config, ps);
+  ps.composite = composite(config, ps);
+  ps.shadows = shadows(config, ps);
+  ps.mark = mark(config, ps);
+  ps.highlight = highlight(config, ps);
+  ps.dimensions = dimensions(config, ps);
+  ps.scale = scale(config, ps);
+  ps.flipAxes = flipAxes(config, ps);
+  ps.bundleDimension = bundleDimension(config, ps);
+  ps.bundlingStrength = bundlingStrength(config, ps);
+  ps.smoothness = smoothness(config, ps);
+  ps.render = render(config, ps);
   ps.brushReset = brushReset(config, ps, flags);
   ps.unmark = unmark(config, ps, flags);
-  ps.unhighlight = unhighlight(config, ps, flags);
-
+  ps.unhighlight = unhighlight(config, ps);
   return ps;
 };
 
-export default Parasol;
+export { Parasol as default };
 //# sourceMappingURL=parasol.esm.js.map
