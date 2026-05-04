@@ -1,7 +1,7 @@
 language: node_js
 node_js:
-  - "4.0"
-  - "5.0"
+  - "18"
+  - "20"
 before_install:
   - npm install -g npm@latest
   - npm install -g greenkeeper-lockfile@1

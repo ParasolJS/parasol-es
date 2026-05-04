@@ -1,4 +1,4 @@
-import { csvFormat } from 'd3';
+import { csvFormat } from 'd3-dsv';
 import { saveAs } from 'file-saver/FileSaver';
 
 /**

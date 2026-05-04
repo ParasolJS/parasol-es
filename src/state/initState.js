@@ -1,4 +1,4 @@
-import { entries, keys, dispatch } from 'd3';
+import { dispatch } from 'd3';
 
 import DefaultConfig from './defaultConfig';
 import format_data from '../util/format_data';
@@ -28,7 +28,7 @@ const initState = (data, userConfig) => {
     'brushend',
     'brushstart',
     // 'axesreorder',
-  ].concat(keys(config));
+  ].concat(Object.keys(config));
 
   const events = dispatch.apply(this, eventTypes),
     flags = {
