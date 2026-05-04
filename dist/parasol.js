@@ -705,7 +705,7 @@
           chartID = _ref4[0],
           vars = _ref4[1];
         ps.charts[chartID].hideAxis(vars);
-        ps.charts[chartID].render().updateAxes(500);
+        ps.charts[chartID].createAxes().render().updateAxes(500);
       });
       return this;
     };
@@ -749,7 +749,7 @@
           chartID = _ref4[0],
           vars = _ref4[1];
         ps.charts[chartID].hideAxis(vars);
-        ps.charts[chartID].render().updateAxes(500);
+        ps.charts[chartID].createAxes().render().updateAxes(500);
       });
       return this;
     };
@@ -783,7 +783,7 @@
           chartID = _ref4[0],
           vars = _ref4[1];
         ps.charts[chartID].hideAxis(vars);
-        ps.charts[chartID].render().updateAxes(0);
+        ps.charts[chartID].createAxes().render().updateAxes(0);
       });
       return this;
     };
@@ -1306,7 +1306,7 @@
   var render = function render(config, ps, flags) {
     return function () {
       ps.charts.forEach(function (pc, i) {
-        pc.hideAxis(config.partition[i]).render().updateAxes(0);
+        pc.hideAxis(config.partition[i]).createAxes().render().updateAxes(0);
       });
       return this;
     };
