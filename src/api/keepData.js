@@ -16,7 +16,7 @@ const keepData = (config, ps, flags) =>
     } else if (data == 'both') {
       d = config.selections();
     } else {
-      throw "Please specify one of {'brushed', 'marked', 'both'}";
+      throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
     }
 
     if (d.length > 0) {

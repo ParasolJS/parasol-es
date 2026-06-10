@@ -123,7 +123,6 @@ var attachGrid = function attachGrid(config, ps, flags) {
 
     // click header to sort grid column
     config.grid.onSort.subscribe(function (e, args) {
-      args.sortAsc ? 1 : -1;
       sortcol = args.sortCol.field;
       config.dataView.sort(comparer, args.sortAsc);
     });
@@ -808,7 +807,7 @@ var keepData = function keepData(config, ps, flags) {
     } else if (data == 'both') {
       d = config.selections();
     } else {
-      throw "Please specify one of {'brushed', 'marked', 'both'}";
+      throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
     }
     if (d.length > 0) {
       // reset selections and update config
@@ -848,7 +847,7 @@ var removeData = function removeData(config, ps, flags) {
     } else if (data == 'both') {
       d = config.selections();
     } else {
-      throw "Please specify one of {'brushed', 'marked', 'both'}";
+      throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
     }
     d = difference(config.data, d);
     if (d.length > 0 && d.length < config.data.length) {
@@ -1093,7 +1092,7 @@ var exportData = function exportData(config, ps, flags) {
     } else if (selection == 'both') {
       d = config.selections();
     } else {
-      throw "Please specify one of {'brushed', 'marked', 'both'}";
+      throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
     }
     if (d.length > 0) {
       // format data as csv
@@ -1129,7 +1128,7 @@ var resetSelections = function resetSelections(config, ps, flags) {
       ps.brushReset();
       ps.unmark();
     } else {
-      throw "Please specify one of {'brushed', 'marked', 'both'}";
+      throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
     }
   };
 };
@@ -1413,7 +1412,7 @@ var initState = function initState(data, userConfig) {
   };
 };
 
-var version = "1.0.2";
+var version = "2.0.0";
 
 //css
 var Parasol = function Parasol(data, userConfig) {
@@ -1421,8 +1420,6 @@ var Parasol = function Parasol(data, userConfig) {
   var config = state.config,
     flags = state.flags;
   var ps = init(config);
-
-  // bindEvents();
 
   // expose the state of charts and grid
   ps.state = config;

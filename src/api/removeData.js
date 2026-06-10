@@ -18,7 +18,7 @@ const removeData = (config, ps, flags) =>
     } else if (data == 'both') {
       d = config.selections();
     } else {
-      throw "Please specify one of {'brushed', 'marked', 'both'}";
+      throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
     }
     d = difference(config.data, d);
 

@@ -1,6 +1,6 @@
 {
   "name": "parasol-es",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "ES6 module for interactive visualization of multi-objective optimization problems, based on d3-v5 and parcoords-es modules",
   "main": "dist/parasol.js",
   "module": "dist/parasol.esm.js",
@@ -9,23 +9,13 @@
   "directories": {
     "lib": "lib"
   },
-  "nyc": {
-    "require": [
-      "@babel/register"
-    ],
-    "reporter": [
-      "lcov",
-      "text"
-    ],
-    "sourceMap": false,
-    "instrument": false
-  },
   "scripts": {
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
     "prettier": "prettier --single-quote --trailing-comma es5 --write \"{src,__{demo,dist}__}/**/*.js\"",
     "dev": "rollup -c rollup.config.dev.mjs -w",
     "build": "rollup -c rollup.config.mjs",
+    "prepublishOnly": "npm run build",
     "docs": "jsdoc src -r -d docs"
   },
   "files": [
@@ -55,28 +45,22 @@
     "@babel/core": "^7.24.0",
     "@babel/plugin-transform-runtime": "^7.24.0",
     "@babel/preset-env": "^7.24.0",
-    "@babel/register": "^7.23.7",
     "@babel/runtime": "^7.24.0",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
-    "cross-env": "^7.0.3",
     "eslint": "^8.57.0",
     "jsdoc": "^4.0.2",
     "livereload": "^0.9.3",
-    "mocha": "^10.4.0",
     "prettier": "^3.2.5",
     "rollup": "^4.13.0",
     "rollup-plugin-livereload": "^2.0.5",
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-plugin-serve": "^3.0.0"
   },
-  "overrides": {
-    "serialize-javascript": "^7.0.5"
-  },
   "engines": {
-    "node": ">=12"
+    "node": ">=18"
   },
   "dependencies": {
     "d3": "^7.0.0",

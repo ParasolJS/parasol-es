@@ -1,7 +1,7 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('d3'), require('parcoord-es'), require('slickgrid-es6'), require('lodash-es'), require('ml-kmeans'), require('d3-dsv')) :
   typeof define === 'function' && define.amd ? define(['d3', 'parcoord-es', 'slickgrid-es6', 'lodash-es', 'ml-kmeans', 'd3-dsv'], factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Parasol = factory(global.d3, global.ParCoords, global.SlickGrid, global.lodashEs, global.kmeans, global.d3Dsv));
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Parasol = factory(global.d3, global.ParCoords, global.SlickGrid, global._, global.mlKmeans, global.d3));
 })(this, (function (d3, ParCoords, SlickGrid, lodashEs, kmeans, d3Dsv) { 'use strict';
 
   /**
@@ -122,7 +122,6 @@
 
       // click header to sort grid column
       config.grid.onSort.subscribe(function (e, args) {
-        args.sortAsc ? 1 : -1;
         sortcol = args.sortCol.field;
         config.dataView.sort(comparer, args.sortAsc);
       });
@@ -807,7 +806,7 @@
       } else if (data == 'both') {
         d = config.selections();
       } else {
-        throw "Please specify one of {'brushed', 'marked', 'both'}";
+        throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
       }
       if (d.length > 0) {
         // reset selections and update config
@@ -847,7 +846,7 @@
       } else if (data == 'both') {
         d = config.selections();
       } else {
-        throw "Please specify one of {'brushed', 'marked', 'both'}";
+        throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
       }
       d = lodashEs.difference(config.data, d);
       if (d.length > 0 && d.length < config.data.length) {
@@ -1092,7 +1091,7 @@
       } else if (selection == 'both') {
         d = config.selections();
       } else {
-        throw "Please specify one of {'brushed', 'marked', 'both'}";
+        throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
       }
       if (d.length > 0) {
         // format data as csv
@@ -1128,7 +1127,7 @@
         ps.brushReset();
         ps.unmark();
       } else {
-        throw "Please specify one of {'brushed', 'marked', 'both'}";
+        throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
       }
     };
   };
@@ -1412,7 +1411,7 @@
     };
   };
 
-  var version = "1.0.2";
+  var version = "2.0.0";
 
   //css
   var Parasol = function Parasol(data, userConfig) {
@@ -1420,8 +1419,6 @@
     var config = state.config,
       flags = state.flags;
     var ps = init(config);
-
-    // bindEvents();
 
     // expose the state of charts and grid
     ps.state = config;
