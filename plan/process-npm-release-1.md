@@ -76,7 +76,7 @@ This plan tracks the release of parasol-es v2.0.0 to the npm registry. The `mode
 | TASK-018 | Update parasol-es `package.json` dependency to the scoped npm package (`@jrkasprzyk/parcoord-es@^3.0.0`, commit `c565384`). Done pre-release, so it ships in `2.0.0` itself — no `2.0.1` required | ✅ | 2026-06-11 |
 | TASK-019 | Manually verify demo pages (`npm run dev`, opens localhost:3004): `basic.html`, `grid.html`, `cluster.html`, `linked.html` render and brush correctly with the rebuilt standalone bundle | |  |
 | TASK-020 | Add a minimal automated smoke test (jsdom script from TASK-007) as `npm test` and wire it into `.github/workflows/ci.yml`, replacing the deleted mocha setup | |  |
-| TASK-021 | Update `README.md`: installation section (Node >=18, v2.0.0 breaking changes), fix the `parasol.css` reference (shipped file is `dist/parcoords.css`) | |  |
+| TASK-021 | Update `README.md`: installation section (Node >=18, v2.0.0 breaking changes), fix the `parasol.css` reference (shipped file is `dist/parcoords.css`) | ✅ | 2026-06-11 |
 
 ## 3. Alternatives
 
