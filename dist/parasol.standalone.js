@@ -29815,7 +29815,7 @@
           }
         });
       } else {
-        throw 'Error: please provide an object or array as argument.';
+        throw new Error('Please provide an object or array as argument.');
       }
 
       // iterate over partition keys and hide all variables in value array
@@ -29859,7 +29859,7 @@
           }
         });
       } else {
-        throw 'Error: please provide an object or array as argument.';
+        throw new Error('Please provide an object or array as argument.');
       }
 
       // iterate over partition keys and hide only remaining variables in value array
@@ -29893,7 +29893,7 @@
           }
         });
       } else {
-        throw 'Error: please provide layout as a plain object.';
+        throw new Error('Please provide layout as a plain object.');
       }
 
       // iterate over partition keys and hide only remaining variables in value array
@@ -29926,7 +29926,7 @@
       } else if (data == 'both') {
         d = config.selections();
       } else {
-        throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
+        throw new Error('Please specify one of {\'brushed\', \'marked\', \'both\'}');
       }
       if (d.length > 0) {
         // reset selections and update config
@@ -29942,7 +29942,7 @@
           ps.gridUpdate();
         }
       } else {
-        throw 'Error: No data selected.';
+        throw new Error('No data selected.');
       }
       return this;
     };
@@ -29966,7 +29966,7 @@
       } else if (data == 'both') {
         d = config.selections();
       } else {
-        throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
+        throw new Error('Please specify one of {\'brushed\', \'marked\', \'both\'}');
       }
       d = difference(config.data, d);
       if (d.length > 0 && d.length < config.data.length) {
@@ -29983,7 +29983,7 @@
           ps.gridUpdate();
         }
       } else {
-        throw 'Error: No data selected.';
+        throw new Error('No data selected.');
       }
       return this;
     };
@@ -30209,7 +30209,7 @@
       } else if (selection == 'both') {
         d = config.selections();
       } else {
-        throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
+        throw new Error('Please specify one of {\'brushed\', \'marked\', \'both\'}');
       }
       if (d.length > 0) {
         // format data as csv
@@ -30222,7 +30222,7 @@
         });
         FileSaverExports.saveAs(file, filename);
       } else {
-        throw 'Error: No data selected.';
+        throw new Error('No data selected.');
       }
       return this;
     };
@@ -30245,7 +30245,7 @@
         ps.brushReset();
         ps.unmark();
       } else {
-        throw 'Please specify one of {\'brushed\', \'marked\', \'both\'}';
+        throw new Error('Please specify one of {\'brushed\', \'marked\', \'both\'}');
       }
     };
   };

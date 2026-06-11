@@ -19,7 +19,7 @@ const setAxesLayout = (config, ps, flags) =>
         }
       });
     } else {
-      throw 'Error: please provide layout as a plain object.';
+      throw new Error('Please provide layout as a plain object.');
     }
 
     // iterate over partition keys and hide only remaining variables in value array
