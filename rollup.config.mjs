@@ -19,7 +19,7 @@ const globals = {
     'ml-distance-euclidean': 'mlDistanceEuclidean',
     'ml-kmeans': 'mlKmeans',
     'ml-xsadd': 'mlXsadd',
-    'parcoord-es': 'ParCoords',
+    '@jrkasprzyk/parcoord-es': 'ParCoords',
     random: 'random',
     'slickgrid-es6': 'SlickGrid'
 };

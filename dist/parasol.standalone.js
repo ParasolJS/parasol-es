@@ -10376,7 +10376,7 @@
     };
   };
 
-  const version$1 = "2.2.10";
+  const version$1 = "3.0.0";
 
   var DefaultConfig$1 = {
     data: [],

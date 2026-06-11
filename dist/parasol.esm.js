@@ -1,5 +1,5 @@
 import { selectAll, schemeCategory10, scaleOrdinal, dispatch } from 'd3';
-import ParCoords from 'parcoord-es';
+import ParCoords from '@jrkasprzyk/parcoord-es';
 import SlickGrid from 'slickgrid-es6';
 import { difference, union, intersection, includes, isPlainObject } from 'lodash-es';
 import kmeans from 'ml-kmeans';
