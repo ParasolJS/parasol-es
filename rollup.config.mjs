@@ -6,8 +6,10 @@ import json from '@rollup/plugin-json';
 import { readFileSync } from 'fs';
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
-const external = Object.keys(pkg.dependencies);
-
+const dependencyNames = Object.keys(pkg.dependencies);
+const external = id =>
+  dependencyNames.includes(id) ||
+  dependencyNames.some(dep => id.startsWith(`${dep}/`));
 // browser globals for the UMD build's external imports
 const globals = {
     d3: 'd3',
