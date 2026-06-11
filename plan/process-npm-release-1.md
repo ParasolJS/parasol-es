@@ -60,7 +60,7 @@ This plan tracks the release of parasol-es v2.0.0 to the npm registry. The `mode
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-012 | Verify npm publish rights: `npm whoami` and `npm owner ls parasol-es` (see SEC-001). If access is missing, contact Josh Jacobson or npm support before proceeding | |  |
+| TASK-012 | Verify npm publish rights: `npm whoami` and `npm owner ls parasol-es` (see SEC-001). Verified 2026-06-11: sole owner is `joshhjacobson`; `jrkasprzyk` is logged in but NOT an owner — publish would 403. Next: ask Josh to run `npm owner add jrkasprzyk parasol-es`; fallback per RISK-001 is a scoped package | |  |
 | TASK-013 | From an up-to-date `master` checkout: `git tag v2.0.0 && git push origin v2.0.0` | |  |
 | TASK-014 | `npm publish` (runs `prepublishOnly` build automatically). Use `npm publish --dry-run` first to confirm the file list matches the 55 files / ~805 kB tarball verified on 2026-06-09 | |  |
 | TASK-015 | Post-publish verification: in a clean temp dir, `npm install parasol-es@2.0.0`, confirm install succeeds and `dist/parasol.standalone.js` loads in jsdom with `typeof window.Parasol === 'function'` | |  |
