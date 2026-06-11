@@ -3,6 +3,7 @@ const render = (config, ps, flags) =>
   function() {
     ps.charts.forEach((pc, i) => {
       pc.hideAxis(config.partition[i])
+        .createAxes()
         .render()
         .updateAxes(0);
     });

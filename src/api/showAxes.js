@@ -35,7 +35,7 @@ const showAxes = (config, ps, flags) =>
     // iterate over partition keys and hide only remaining variables in value array
     Object.entries(config.partition).forEach(([chartID, vars]) => {
       ps.charts[chartID].hideAxis(vars);
-      ps.charts[chartID].render().updateAxes(500);
+      ps.charts[chartID].createAxes().render().updateAxes(500);
     });
 
     return this;
