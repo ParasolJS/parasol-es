@@ -1,7 +1,7 @@
 {
   "name": "parasol-es",
   "version": "2.0.0",
-  "description": "ES6 module for interactive visualization of multi-objective optimization problems, based on d3-v5 and parcoords-es modules",
+  "description": "ES module for interactive visualization of multi-objective optimization problems, based on d3 v7 and @jrkasprzyk/parcoord-es",
   "main": "dist/parasol.js",
   "module": "dist/parasol.esm.js",
   "jsnext:main": "dist/parasol.esm.js",
