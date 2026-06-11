@@ -3,7 +3,7 @@ goal: Publish parasol-es v2.0.0 to npm with safe, modernized dependencies
 version: 1.1
 date_created: 2026-06-09
 last_updated: 2026-06-11
-owner: Joseph Kasprzyk (jkasprzyk@gmail.com)
+owner: Joseph Kasprzyk (@jrkasprzyk)
 status: 'In progress'
 tags: [process, upgrade, release, security]
 ---
