@@ -77,6 +77,7 @@ This plan tracks the release of parasol-es v2.0.0 to the npm registry. The `mode
 | TASK-019 | Manually verify demo pages (`npm run dev`, opens localhost:3004): `basic.html`, `grid.html`, `cluster.html`, `linked.html` render and brush correctly with the rebuilt standalone bundle | |  |
 | TASK-020 | Add a minimal automated smoke test (jsdom script from TASK-007) as `npm test` and wire it into `.github/workflows/ci.yml`, replacing the deleted mocha setup | |  |
 | TASK-021 | Update `README.md`: installation section (Node >=18, v2.0.0 breaking changes), fix the `parasol.css` reference (shipped file is `dist/parcoords.css`) | ✅ | 2026-06-11 |
+| TASK-022 | Modernize demo pages' page-level scripting: swap `demo/lib/d3.v5.min.js` for d3 v7 and replace the 13 `d3.keys()` calls (removed in d3 v6) with `Object.keys()`. Keep `legacy.html` on d3 v3 (intentionally historical) and keep `demo/parasol.css` (contains grid/page styles beyond the shipped `dist/parcoords.css`). Not a release blocker: demos already work because `parasol.standalone.js` bundles its own d3 v7. Tracked as a GitHub issue | |  |
 
 ## 3. Alternatives
 
