@@ -1174,7 +1174,6 @@ var DefaultConfig = {
   }
 };
 
-var _this = undefined;
 var initState = function initState(data, userConfig) {
   var config = Object.assign({}, DefaultConfig, userConfig);
   // force attributes for consistent operation
@@ -1199,7 +1198,7 @@ var initState = function initState(data, userConfig) {
   'brush', 'brushend', 'brushstart'
   // 'axesreorder',
   ].concat(Object.keys(config));
-  var events = dispatch.apply(_this, eventTypes),
+  var events = dispatch.apply(void 0, _toConsumableArray(eventTypes)),
     flags = {
       linked: false,
       grid: false

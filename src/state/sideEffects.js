@@ -1,8 +1,8 @@
 // side effects for setters
-import { dispatch } from 'd3-dispatch';
+import { dispatch } from 'd3';
 
 const sideEffects = (config, ps, flags) =>
-  dispatch.apply(this, Object.keys(config));
+  dispatch(...Object.keys(config));
 // .on('brush', data => {
 //   if (flags.linked) {
 //     ps.sync(data);

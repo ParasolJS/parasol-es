@@ -1172,7 +1172,6 @@
     }
   };
 
-  var _this = undefined;
   var initState = function initState(data, userConfig) {
     var config = Object.assign({}, DefaultConfig, userConfig);
     // force attributes for consistent operation
@@ -1197,7 +1196,7 @@
     'brush', 'brushend', 'brushstart'
     // 'axesreorder',
     ].concat(Object.keys(config));
-    var events = d3.dispatch.apply(_this, eventTypes),
+    var events = d3.dispatch.apply(void 0, _toConsumableArray(eventTypes)),
       flags = {
         linked: false,
         grid: false

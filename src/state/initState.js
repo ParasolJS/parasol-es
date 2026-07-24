@@ -30,7 +30,7 @@ const initState = (data, userConfig) => {
     // 'axesreorder',
   ].concat(Object.keys(config));
 
-  const events = dispatch.apply(this, eventTypes),
+  const events = dispatch(...eventTypes),
     flags = {
       linked: false,
       grid: false,
