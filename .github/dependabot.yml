@@ -1,0 +1,57 @@
+version: 2
+
+updates:
+  # ---------------------------------------------------------------------------
+  # npm
+  #
+  # NOTE: dist/ is committed to this repo (demos load dist/parasol.standalone.js
+  # directly from the checkout). Dependabot only edits package.json and
+  # package-lock.json -- it does NOT run `npm run build`. So any PR that bumps a
+  # *runtime* dependency leaves dist/ stale relative to the new lockfile. Before
+  # merging one of those, run `npm run build` and commit the result onto the PR
+  # branch. devDependency bumps do not have this problem.
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      prefix-development: chore
+      include: scope
+    groups:
+      # One PR per week for the build/lint/docs toolchain. These never reach
+      # consumers (npm installs only `dependencies` transitively), so they are
+      # safe to batch.
+      dev-tooling:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      # Runtime minor/patch batched separately so the "needs a rebuild" PRs stay
+      # visually distinct from toolchain noise.
+      runtime:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+    # Majors are deliberately left ungrouped so each arrives as its own PR --
+    # d3 v7 -> v8 or rollup 4 -> 5 deserves individual review, not a batch merge.
+
+  # ---------------------------------------------------------------------------
+  # GitHub Actions used by .github/workflows/ci.yml
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions:
+        update-types:
+          - minor
+          - patch
