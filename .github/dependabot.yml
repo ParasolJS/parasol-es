@@ -6,10 +6,20 @@ updates:
   #
   # NOTE: dist/ is committed to this repo (demos load dist/parasol.standalone.js
   # directly from the checkout). Dependabot only edits package.json and
-  # package-lock.json -- it does NOT run `npm run build`. So any PR that bumps a
-  # *runtime* dependency leaves dist/ stale relative to the new lockfile. Before
-  # merging one of those, run `npm run build` and commit the result onto the PR
-  # branch. devDependency bumps do not have this problem.
+  # package-lock.json -- it does NOT run `npm run build`, so a merged PR can
+  # leave dist/ stale relative to the new lockfile.
+  #
+  # This is NOT limited to runtime deps. The build toolchain (rollup, @babel/*)
+  # lives in devDependencies and determines dist/ bytes directly: rollup
+  # 4.60.1 -> 4.62.2 in PR #39 changed identifier deconfliction in the
+  # standalone bundle (exports$1 -> exports) and required a rebuild commit.
+  #
+  # So: after merging ANY npm PR, run `npm run build` and compare against the
+  # committed artifacts --
+  #     git rev-parse :dist/parasol.standalone.js   # committed blob
+  #     git hash-object dist/parasol.standalone.js  # rebuilt blob
+  # Equal hashes mean nothing to do. Comparing raw bytes instead of blob hashes
+  # gives false positives on Windows, where the build writes CRLF.
   # ---------------------------------------------------------------------------
   - package-ecosystem: npm
     directory: /
@@ -24,7 +34,8 @@ updates:
     groups:
       # One PR per week for the build/lint/docs toolchain. These never reach
       # consumers (npm installs only `dependencies` transitively), so they are
-      # safe to batch.
+      # safe to batch -- but see the rebuild note above: rollup and @babel/*
+      # still change dist/ output even though they are dev-scope.
       dev-tooling:
         dependency-type: development
         update-types:
