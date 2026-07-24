@@ -1220,7 +1220,7 @@ var initState = function initState(data, userConfig) {
   };
 };
 
-var version = "2.0.0";
+var version = "2.0.1";
 
 //css
 var Parasol = function Parasol(data, userConfig) {
