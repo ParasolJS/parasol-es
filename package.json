@@ -52,7 +52,7 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "eslint": "^8.57.0",
     "jsdoc": "^4.0.2",
-    "livereload": "^0.9.3",
+    "livereload": "^0.10.3",
     "prettier": "^3.2.5",
     "rollup": "^4.13.0",
     "rollup-plugin-livereload": "^2.0.5",
