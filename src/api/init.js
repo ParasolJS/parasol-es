@@ -1,5 +1,5 @@
 import { selectAll } from 'd3';
-import ParCoords from 'parcoord-es';
+import ParCoords from '@jrkasprzyk/parcoord-es';
 
 /**
  * Setup a new visualization.

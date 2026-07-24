@@ -78,7 +78,6 @@ const attachGrid = (config, ps, flags) =>
     // column sorting
     let sortcol = columns.map(c => c.name);
     sortcol.shift();
-    let sortdir = 1;
 
     const comparer = (a, b) => {
       const x = as_float(a[sortcol]);
@@ -88,7 +87,6 @@ const attachGrid = (config, ps, flags) =>
 
     // click header to sort grid column
     config.grid.onSort.subscribe((e, args) => {
-      sortdir = args.sortAsc ? 1 : -1;
       sortcol = args.sortCol.field;
 
       config.dataView.sort(comparer, args.sortAsc);

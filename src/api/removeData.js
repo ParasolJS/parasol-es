@@ -18,7 +18,7 @@ const removeData = (config, ps, flags) =>
     } else if (data == 'both') {
       d = config.selections();
     } else {
-      throw "Please specify one of {'brushed', 'marked', 'both'}";
+      throw new Error('Please specify one of {\'brushed\', \'marked\', \'both\'}');
     }
     d = difference(config.data, d);
 
@@ -36,7 +36,7 @@ const removeData = (config, ps, flags) =>
         ps.gridUpdate();
       }
     } else {
-      throw 'Error: No data selected.';
+      throw new Error('No data selected.');
     }
 
     return this;

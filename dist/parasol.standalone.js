@@ -10376,7 +10376,7 @@
     };
   };
 
-  const version$1 = "2.2.10";
+  const version$1 = "3.0.0";
 
   var DefaultConfig$1 = {
     data: [],
@@ -25261,7 +25261,6 @@
 
       // click header to sort grid column
       config.grid.onSort.subscribe(function (e, args) {
-        args.sortAsc ? 1 : -1;
         sortcol = args.sortCol.field;
         config.dataView.sort(comparer, args.sortAsc);
       });
@@ -29816,7 +29815,7 @@
           }
         });
       } else {
-        throw 'Error: please provide an object or array as argument.';
+        throw new Error('Please provide an object or array as argument.');
       }
 
       // iterate over partition keys and hide all variables in value array
@@ -29860,7 +29859,7 @@
           }
         });
       } else {
-        throw 'Error: please provide an object or array as argument.';
+        throw new Error('Please provide an object or array as argument.');
       }
 
       // iterate over partition keys and hide only remaining variables in value array
@@ -29894,7 +29893,7 @@
           }
         });
       } else {
-        throw 'Error: please provide layout as a plain object.';
+        throw new Error('Please provide layout as a plain object.');
       }
 
       // iterate over partition keys and hide only remaining variables in value array
@@ -29927,7 +29926,7 @@
       } else if (data == 'both') {
         d = config.selections();
       } else {
-        throw "Please specify one of {'brushed', 'marked', 'both'}";
+        throw new Error('Please specify one of {\'brushed\', \'marked\', \'both\'}');
       }
       if (d.length > 0) {
         // reset selections and update config
@@ -29943,7 +29942,7 @@
           ps.gridUpdate();
         }
       } else {
-        throw 'Error: No data selected.';
+        throw new Error('No data selected.');
       }
       return this;
     };
@@ -29967,7 +29966,7 @@
       } else if (data == 'both') {
         d = config.selections();
       } else {
-        throw "Please specify one of {'brushed', 'marked', 'both'}";
+        throw new Error('Please specify one of {\'brushed\', \'marked\', \'both\'}');
       }
       d = difference(config.data, d);
       if (d.length > 0 && d.length < config.data.length) {
@@ -29984,7 +29983,7 @@
           ps.gridUpdate();
         }
       } else {
-        throw 'Error: No data selected.';
+        throw new Error('No data selected.');
       }
       return this;
     };
@@ -30210,7 +30209,7 @@
       } else if (selection == 'both') {
         d = config.selections();
       } else {
-        throw "Please specify one of {'brushed', 'marked', 'both'}";
+        throw new Error('Please specify one of {\'brushed\', \'marked\', \'both\'}');
       }
       if (d.length > 0) {
         // format data as csv
@@ -30223,7 +30222,7 @@
         });
         FileSaverExports.saveAs(file, filename);
       } else {
-        throw 'Error: No data selected.';
+        throw new Error('No data selected.');
       }
       return this;
     };
@@ -30246,7 +30245,7 @@
         ps.brushReset();
         ps.unmark();
       } else {
-        throw "Please specify one of {'brushed', 'marked', 'both'}";
+        throw new Error('Please specify one of {\'brushed\', \'marked\', \'both\'}');
       }
     };
   };
@@ -30530,7 +30529,7 @@
     };
   };
 
-  var version = "1.0.2";
+  var version = "2.0.0";
 
   //css
   var Parasol = function Parasol(data, userConfig) {
@@ -30538,8 +30537,6 @@
     var config = state.config,
       flags = state.flags;
     var ps = init(config);
-
-    // bindEvents();
 
     // expose the state of charts and grid
     ps.state = config;

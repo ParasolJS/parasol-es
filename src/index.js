@@ -38,16 +38,13 @@ import unmark from './wrap/unmark';
 import unhighlight from './wrap/unhighlight';
 
 import initState from './state/initState';
-// import bindEvents from './bindEvents';
 import { version } from '../package.json';
 
 const Parasol = (data, userConfig) => {
   const state = initState(data, userConfig);
-  const { config, events, flags } = state;
+  const { config, flags } = state;
 
   const ps = init(config);
-
-  // bindEvents();
 
   // expose the state of charts and grid
   ps.state = config;

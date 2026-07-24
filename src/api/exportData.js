@@ -1,5 +1,5 @@
 import { csvFormat } from 'd3-dsv';
-import { saveAs } from 'file-saver/FileSaver';
+import { saveAs } from 'file-saver';
 
 /**
  * Export selected data to new csv and download
@@ -25,7 +25,7 @@ const exportData = (config, ps, flags) =>
     } else if (selection == 'both') {
       d = config.selections();
     } else {
-      throw "Please specify one of {'brushed', 'marked', 'both'}";
+      throw new Error('Please specify one of {\'brushed\', \'marked\', \'both\'}');
     }
 
     if (d.length > 0) {
@@ -37,7 +37,7 @@ const exportData = (config, ps, flags) =>
       const file = new Blob([csv], { type: 'text/csv' });
       saveAs(file, filename);
     } else {
-      throw 'Error: No data selected.';
+      throw new Error('No data selected.');
     }
     return this;
   };
