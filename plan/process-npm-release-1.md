@@ -1,8 +1,8 @@
 ---
 goal: Publish parasol-es v2.0.0 to npm with safe, modernized dependencies
-version: 1.1
+version: 1.2
 date_created: 2026-06-09
-last_updated: 2026-06-11
+last_updated: 2026-07-24
 owner: Joseph Kasprzyk (@jrkasprzyk)
 status: 'In progress'
 tags: [process, upgrade, release, security]
@@ -12,7 +12,7 @@ tags: [process, upgrade, release, security]
 
 ![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
 
-This plan tracks the release of parasol-es v2.0.0 to the npm registry. The `modernization` branch (HEAD: `c565384`) contains the completed modernization work: d3 v5→v7, rollup 0.62→4, Babel 6→7, a rebuilt standalone bundle (previously stale since 2019), GitHub Actions CI, and a clean `npm audit`. Update 2026-06-11: the parcoords fork is now published to npm as `@jrkasprzyk/parcoord-es@3.0.0` and the git dependency has been replaced with it (commit `c565384`), eliminating the consumer-install friction originally deferred to Phase 4. Remaining work is the merge-and-publish sequence.
+This plan tracks the release of parasol-es v2.0.0 to the npm registry. The `modernization` branch (HEAD: `a853597`, 14 commits ahead of `master`) contains the completed modernization work: d3 v5→v7, rollup 0.62→4, Babel 6→7, a rebuilt standalone bundle (previously stale since 2019), GitHub Actions CI, and a clean `npm audit`. Update 2026-06-11: the parcoords fork is now published to npm as `@jrkasprzyk/parcoord-es@3.0.0` and the git dependency has been replaced with it (commit `c565384`), eliminating the consumer-install friction originally deferred to Phase 4. Update 2026-07-24: npm publish rights were granted — `jrkasprzyk` is now a co-owner of `parasol-es`, clearing the last external blocker (SEC-001/RISK-001). Remaining work is the merge-and-publish sequence.
 
 ## 1. Requirements & Constraints
 
@@ -20,7 +20,7 @@ This plan tracks the release of parasol-es v2.0.0 to the npm registry. The `mode
 - **REQ-002**: All three bundles (`dist/parasol.js` UMD, `dist/parasol.esm.js` ESM, `dist/parasol.standalone.js` fully-bundled UMD) must be built from current `src/` by `npm run build` before publish. The `prepublishOnly` script in `package.json` enforces this automatically.
 - **REQ-003**: Version must be `2.0.0` (already set in `package.json`). Major bump justified by d3 v5→v7 upgrade and swap of `parcoord-es` to the modernized fork — both breaking for downstream consumers.
 - **REQ-004**: CI (`.github/workflows/ci.yml`) must pass (lint + build on Node 18, 20, 22) before merging to `master`.
-- **SEC-001**: Publish must be performed by an npm account with publish rights on the `parasol-es` package (original publisher: Josh Jacobson; verify access with `npm owner ls parasol-es` before attempting).
+- **SEC-001**: Publish must be performed by an npm account with publish rights on the `parasol-es` package (original publisher: Josh Jacobson; verify access with `npm owner ls parasol-es` before attempting). Satisfied 2026-07-24: `npm owner ls parasol-es` lists both `joshhjacobson` and `jrkasprzyk`.
 - **CON-001**: Repository has no automated test suite. Verification is limited to lint, build, `npm pack` clean-room install, and manual/jsdom smoke tests of demo pages.
 - **CON-002**: ~~`parcoord-es` is a git dependency (`github:jrkasprzyk/parcoords-es#bb2c964`). Its `prepare` script runs build + mocha on every consumer install (~45 s, requires git on the consumer machine).~~ Resolved 2026-06-11: the fork was published to npm as `@jrkasprzyk/parcoord-es@3.0.0` and this repo now depends on it (`^3.0.0`, commit `c565384`). Consumer installs no longer run a `prepare` build or require git.
 - **CON-003**: CI workflow triggers only on `pull_request` and pushes to `master` — pushes to `modernization` do NOT trigger CI. A PR must be opened to get a CI run.
@@ -50,9 +50,9 @@ This plan tracks the release of parasol-es v2.0.0 to the npm registry. The `mode
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-009 | Open PR `modernization` → `master` on github.com/ParasolJS/parasol-es (e.g., `gh pr create --base master --head modernization`). This triggers the first CI run (see CON-003) | |  |
-| TASK-010 | Confirm CI green on all three Node versions (18, 20, 22); fix any failures on the `modernization` branch and re-push | |  |
-| TASK-011 | Merge the PR into `master` | |  |
+| TASK-009 | Open PR `modernization` → `master` on github.com/ParasolJS/parasol-es (e.g., `gh pr create --base master --head modernization`). This triggers the first CI run (see CON-003) — opened as PR #35 | ✅ | 2026-06-11 |
+| TASK-010 | Confirm CI green on all three Node versions (18, 20, 22); fix any failures on the `modernization` branch and re-push — `build (18)`, `build (20)`, `build (22)` all SUCCESS; PR is `MERGEABLE` / `CLEAN` (re-verified 2026-07-24) | ✅ | 2026-06-11 |
+| TASK-011 | Merge PR #35 into `master` | |  |
 
 ### Implementation Phase 3: Publish v2.0.0 to npm
 
@@ -60,7 +60,7 @@ This plan tracks the release of parasol-es v2.0.0 to the npm registry. The `mode
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-012 | Verify npm publish rights: `npm whoami` and `npm owner ls parasol-es` (see SEC-001). Verified 2026-06-11: sole owner is `joshhjacobson`; `jrkasprzyk` is logged in but NOT an owner — publish would 403. Next: ask Josh to run `npm owner add jrkasprzyk parasol-es`; fallback per RISK-001 is a scoped package | |  |
+| TASK-012 | Verify npm publish rights: `npm whoami` and `npm owner ls parasol-es` (see SEC-001). 2026-06-11: sole owner was `joshhjacobson` — publish would have 403'd. **Resolved 2026-07-24**: `npm owner ls parasol-es` now returns `joshhjacobson` + `jrkasprzyk`, so the scoped-package fallback (RISK-001) is no longer needed. Residual sub-step: the local npm auth token has expired (`npm whoami` → `401 Unauthorized`); run `npm login` and confirm `npm whoami` returns `jrkasprzyk` before TASK-014 | |  |
 | TASK-013 | From an up-to-date `master` checkout: `git tag v2.0.0 && git push origin v2.0.0` | |  |
 | TASK-014 | `npm publish` (runs `prepublishOnly` build automatically). Use `npm publish --dry-run` first to confirm the file list matches the 55 files / ~805 kB tarball verified on 2026-06-09 | |  |
 | TASK-015 | Post-publish verification: in a clean temp dir, `npm install parasol-es@2.0.0`, confirm install succeeds and `dist/parasol.standalone.js` loads in jsdom with `typeof window.Parasol === 'function'` | |  |
@@ -89,7 +89,7 @@ This plan tracks the release of parasol-es v2.0.0 to the npm registry. The `mode
 ## 4. Dependencies
 
 - **DEP-001**: `@jrkasprzyk/parcoord-es@^3.0.0` — npm-published modernized fork (d3 v7-compatible) of `parcoord-es` 2.2.10. Replaced the former git dependency `github:jrkasprzyk/parcoords-es#bb2c964` on 2026-06-11.
-- **DEP-002**: npm account with publish rights on `parasol-es` (currently owned by Josh Jacobson's account; access unverified — see TASK-012).
+- **DEP-002**: ~~npm account with publish rights on `parasol-es` (currently owned by Josh Jacobson's account; access unverified — see TASK-012).~~ Satisfied 2026-07-24: `jrkasprzyk` was added as a co-owner alongside `joshhjacobson`.
 - **DEP-003**: GitHub repository `ParasolJS/parasol-es` — push/merge rights on `master` and ability to create releases.
 - **DEP-004**: Node.js >=18 and git on any machine performing the publish.
 
@@ -113,7 +113,7 @@ This plan tracks the release of parasol-es v2.0.0 to the npm registry. The `mode
 
 ## 7. Risks & Assumptions
 
-- **RISK-001**: npm publish rights on `parasol-es` may be unavailable (original publisher inactive). Mitigation: verify first (TASK-012); fallback is publishing under a new scoped name and deprecating guidance in the README.
+- **RISK-001**: ~~npm publish rights on `parasol-es` may be unavailable (original publisher inactive). Mitigation: verify first (TASK-012); fallback is publishing under a new scoped name and deprecating guidance in the README.~~ Retired 2026-07-24: owner access granted, so v2.0.0 ships under the existing `parasol-es` name and no README deprecation notice is needed.
 - **RISK-002**: ~~Consumer installs fail if the fork's `prepare` (build + mocha) breaks in their environment or git is unavailable.~~ Resolved 2026-06-11 by TASK-017/TASK-018 — registry package ships prebuilt, no install-time build.
 - **RISK-003**: No test suite means a runtime regression in the d3 v7 / forked-parcoords stack could ship undetected. Mitigation: TASK-019 manual demo pass before announcing the release; TASK-020 adds an automated floor.
 - **RISK-004**: ~~The fork pins a SHA; future fixes to the fork require updating the SHA in `package.json` and re-releasing parasol-es.~~ Superseded 2026-06-11: dependency is now the semver range `^3.0.0`, so fork patch/minor releases reach consumers without a parasol-es re-release. Residual risk: a bad fork release within `^3.0.0` propagates automatically.
