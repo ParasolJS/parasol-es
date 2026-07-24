@@ -1,5 +1,8 @@
 import { csvFormat } from 'd3-dsv';
-import { saveAs } from 'file-saver';
+// file-saver 2.x sets `module.exports = saveAs` and assigns `saveAs.saveAs`
+// at runtime, so there is no statically detectable named export -- a named
+// import compiles fine but throws in Node ESM consumers of dist/parasol.esm.js.
+import saveAs from 'file-saver';
 
 /**
  * Export selected data to new csv and download

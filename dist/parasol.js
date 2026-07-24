@@ -2,7 +2,7 @@
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('d3'), require('@jrkasprzyk/parcoord-es'), require('slickgrid-es6'), require('lodash-es'), require('ml-kmeans'), require('d3-dsv'), require('file-saver')) :
   typeof define === 'function' && define.amd ? define(['d3', '@jrkasprzyk/parcoord-es', 'slickgrid-es6', 'lodash-es', 'ml-kmeans', 'd3-dsv', 'file-saver'], factory) :
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Parasol = factory(global.d3, global.ParCoords, global.SlickGrid, global._, global.mlKmeans, global.d3, global.fileSaver));
-})(this, (function (d3, ParCoords, SlickGrid, lodashEs, kmeans, d3Dsv, fileSaver) { 'use strict';
+})(this, (function (d3, ParCoords, SlickGrid, lodashEs, kmeans, d3Dsv, saveAs) { 'use strict';
 
   /**
    * Setup a new visualization.
@@ -910,7 +910,7 @@
         var file = new Blob([csv], {
           type: 'text/csv'
         });
-        fileSaver.saveAs(file, filename);
+        saveAs(file, filename);
       } else {
         throw new Error('No data selected.');
       }

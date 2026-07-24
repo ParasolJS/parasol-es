@@ -4,7 +4,7 @@ import SlickGrid from 'slickgrid-es6';
 import { difference, union, intersection, includes, isPlainObject } from 'lodash-es';
 import kmeans from 'ml-kmeans';
 import { csvParse, csvFormat } from 'd3-dsv';
-import { saveAs } from 'file-saver';
+import saveAs from 'file-saver';
 
 /**
  * Setup a new visualization.
