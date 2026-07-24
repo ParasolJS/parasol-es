@@ -63,6 +63,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@jrkasprzyk/parcoord-es": "^3.0.2",
     "d3": "^7.0.0",
     "d3-dsv": "^3.0.0",
     "file-saver": "^2.0.5",
@@ -70,7 +71,6 @@
     "jquery": "^3.3.1",
     "lodash-es": "^4.17.11",
     "ml-kmeans": "^4.2.1",
-    "@jrkasprzyk/parcoord-es": "^3.0.0",
     "slickgrid-es6": "^3.0.1"
   }
 }

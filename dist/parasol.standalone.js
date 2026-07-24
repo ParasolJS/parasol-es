@@ -6898,10 +6898,12 @@
       }
       var brushRangeMax = config.dimensions[axis].type === 'string' ? config.dimensions[axis].yscale.range()[config.dimensions[axis].yscale.range().length - 1] : config.dimensions[axis].yscale.range()[0];
       var _brush = brushY().extent([[-15, 0], [15, brushRangeMax]]);
-      var convertBrushArguments = function convertBrushArguments(args) {
-        var args_array = Array.prototype.slice.call(args);
-        var axis = args_array[0];
-        var raw = brushSelection(args_array[2][0]) || [];
+
+      // d3 v6+ invokes listeners as (event, datum); the v5 (datum, index, nodes)
+      // layout this used to slice out of `arguments` no longer exists. The axis name
+      // is already in scope above, and the node is the listener's `this`.
+      var convertBrushArguments = function convertBrushArguments(node) {
+        var raw = brushSelection(node) || [];
 
         // handle hidden axes which will not have a yscale
         var yscale = null;
@@ -6912,8 +6914,8 @@
         // ordinal scales do not have invert
         var scaled = invertByScale(raw, yscale);
         return {
-          axis: args_array[0],
-          node: args_array[2][0],
+          axis: axis,
+          node: node,
           selection: {
             raw: raw,
             scaled: scaled
@@ -6921,17 +6923,19 @@
         };
       };
       _brush.on('start', function (event) {
-        if (event.sourceEvent !== null) {
-          events.call('brushstart', pc, config.brushed, convertBrushArguments(arguments));
+        // d3 v6+ leaves sourceEvent undefined for a programmatic brush.move,
+        // where v5 set it to null; `!=` catches both.
+        if (event.sourceEvent != null) {
+          events.call('brushstart', pc, config.brushed, convertBrushArguments(this));
           if (typeof event.sourceEvent.stopPropagation === 'function') {
             event.sourceEvent.stopPropagation();
           }
         }
       }).on('brush', function () {
-        brushUpdated$1(config, pc, events, convertBrushArguments(arguments))(selected$4(state, config, brushGroup)());
+        brushUpdated$1(config, pc, events, convertBrushArguments(this))(selected$4(state, config, brushGroup)());
       }).on('end', function () {
         brushUpdated$1(config, pc, events)(selected$4(state, config, brushGroup)());
-        events.call('brushend', pc, config.brushed, convertBrushArguments(arguments));
+        events.call('brushend', pc, config.brushed, convertBrushArguments(this));
       });
       state.brushes[axis] = _brush;
       state.brushNodes[axis] = _selector.node();
@@ -7348,7 +7352,9 @@
         }];
       }
       brush.on('start', function (event) {
-        if (event.sourceEvent !== null) {
+        // d3 v6+ leaves sourceEvent undefined for a programmatic brush.move,
+        // where v5 set it to null; `!=` catches both.
+        if (event.sourceEvent != null) {
           events.call('brushstart', pc, config.brushed);
           if (typeof event.sourceEvent.stopPropagation === 'function') {
             event.sourceEvent.stopPropagation();
@@ -8656,11 +8662,16 @@
         if (config.dimensions[d] !== undefined) {
           config.dimensions[d]['brush'] = brushY(select(this)).extent([[-15, 0], [15, config.dimensions[d].yscale.range()[0]]]);
           select(this).call(config.dimensions[d]['brush'].on('start', function (event) {
-            if (event.sourceEvent !== null && !event.sourceEvent.ctrlKey) {
+            // `!=` also catches the undefined d3 v6+ uses for a
+            // programmatic brush.move, which `!== null` let through
+            // straight into the .ctrlKey dereference below.
+            if (event.sourceEvent != null && !event.sourceEvent.ctrlKey) {
               pc.brushReset();
             }
           }).on('brush', function (event) {
-            if (!event.sourceEvent.ctrlKey) {
+            // A programmatic brush.move leaves sourceEvent undefined in
+            // d3 v6+; treat that as "no Ctrl key" rather than dereferencing.
+            if (!(event.sourceEvent && event.sourceEvent.ctrlKey)) {
               pc.brush();
             }
           }).on('end', function (event) {
@@ -8668,7 +8679,7 @@
             // store important brush information and
             // the html element of the selection,
             // to make a dummy selection element
-            if (event.sourceEvent.ctrlKey) {
+            if (event.sourceEvent && event.sourceEvent.ctrlKey) {
               var html = select(this).select('.selection').nodes()[0].outerHTML;
               html = html.replace('class="selection"', 'class="selection dummy' + ' selection-' + config.brushes.length + '"');
               var dat = select(this).nodes()[0].__data__;
@@ -10376,7 +10387,7 @@
     };
   };
 
-  const version$1 = "3.0.1";
+  const version$1 = "3.0.2";
 
   var DefaultConfig$1 = {
     data: [],
