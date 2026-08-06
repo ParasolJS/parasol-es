@@ -68,7 +68,7 @@
     "d3-dsv": "^3.0.0",
     "file-saver": "^2.0.5",
     "flatpickr": "^4.5.2",
-    "jquery": "^3.3.1",
+    "jquery": "^4.0.0",
     "lodash-es": "^4.17.11",
     "ml-kmeans": "^4.2.1",
     "slickgrid-es6": "^3.0.1"
