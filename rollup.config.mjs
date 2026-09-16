@@ -16,13 +16,9 @@ const globals = {
     'd3-dsv': 'd3',
     'file-saver': 'fileSaver',
     flatpickr: 'flatpickr',
-    jquery: '$',
     'lodash-es': '_',
-    'ml-distance-euclidean': 'mlDistanceEuclidean',
     'ml-kmeans': 'mlKmeans',
-    'ml-xsadd': 'mlXsadd',
     '@jrkasprzyk/parcoord-es': 'ParCoords',
-    random: 'random',
     'slickgrid-es6': 'SlickGrid'
 };
 
