@@ -2,7 +2,7 @@ import { selectAll, schemeCategory10, scaleOrdinal, dispatch } from 'd3';
 import ParCoords from '@jrkasprzyk/parcoord-es';
 import SlickGrid from 'slickgrid-es6';
 import { difference, union, intersection, includes, isPlainObject } from 'lodash-es';
-import kmeans from 'ml-kmeans';
+import { kmeans } from 'ml-kmeans';
 import { csvParse, csvFormat } from 'd3-dsv';
 import saveAs from 'file-saver';
 

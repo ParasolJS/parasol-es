@@ -69,7 +69,7 @@
     "file-saver": "^2.0.5",
     "flatpickr": "^4.5.2",
     "lodash-es": "^4.17.11",
-    "ml-kmeans": "^4.2.1",
+    "ml-kmeans": "^7.0.1",
     "slickgrid-es6": "^3.0.1"
   }
 }
