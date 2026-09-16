@@ -1,4 +1,4 @@
-import kmeans from 'ml-kmeans';
+import { kmeans } from 'ml-kmeans';
 import { scaleOrdinal, schemeCategory10 } from 'd3';
 
 import standardize from '../util/standardize';
