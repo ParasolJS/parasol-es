@@ -43,7 +43,7 @@
   "devDependencies": {
     "@babel/cli": "^7.24.0",
     "@babel/core": "^7.24.0",
-    "@babel/plugin-transform-runtime": "^7.24.0",
+    "@babel/plugin-transform-runtime": "^8.0.1",
     "@babel/preset-env": "^7.24.0",
     "@babel/runtime": "^7.24.0",
     "@rollup/plugin-babel": "^7.1.0",
